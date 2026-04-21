@@ -1,0 +1,225 @@
+"use client";
+
+import React, { useState, useEffect } from "react";
+import { 
+  Trophy, 
+  Zap, 
+  Shield, 
+  Search, 
+  ChevronRight, 
+  ArrowLeft,
+  Filter,
+  TrendingUp,
+  Award,
+  Users
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { Player, Team } from "@/types";
+import { useTenant } from "@/context/TenantContext";
+
+export default function LeaderboardPage() {
+  const router = useRouter();
+  const { tenant } = useTenant();
+  const [players, setPlayers] = useState<Player[]>([]);
+  const [activeTab, setActiveTab] = useState<"raiders" | "defenders">("raiders");
+  const [searchQuery, setSearchQuery] = useState("");
+
+  useEffect(() => {
+    const activeTenant = tenant || JSON.parse(localStorage.getItem("kabaddihub_current_tenant") || "null") || { id: "global" };
+    const tenantId = activeTenant.id;
+    const playerKey = `kabaddihub_${tenantId}_players`;
+    const savedPlayers = localStorage.getItem(playerKey);
+    
+    if (savedPlayers) {
+      setPlayers(JSON.parse(savedPlayers));
+    } else {
+      // Seed fallback
+      const initialPlayers: Player[] = [
+        { id: "p1", name: "Pawan Sehrawat", number: "17", teamId: "1", role: "RAIDER", stats: { matches: 120, raidPoints: 1100, tacklePoints: 40, superRaids: 50, superTackles: 2, superTens: 40, highFives: 0 } },
+        { id: "p2", name: "Fazel Atrachali", number: "07", teamId: "2", role: "DEFENDER", stats: { matches: 140, raidPoints: 5, tacklePoints: 450, superRaids: 0, superTackles: 25, superTens: 0, highFives: 35 } },
+        { id: "p3", name: "Pardeep Narwal", number: "09", teamId: "1", role: "RAIDER", stats: { matches: 150, raidPoints: 1500, tacklePoints: 10, superRaids: 70, superTackles: 0, superTens: 80, highFives: 0 } }
+      ];
+      setPlayers(initialPlayers);
+      localStorage.setItem(playerKey, JSON.stringify(initialPlayers));
+    }
+  }, [tenant]);
+
+  const filteredPlayers = players.filter(p => 
+    p.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    p.role?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const sortedPlayers = [...filteredPlayers].sort((a, b) => {
+    if (activeTab === "raiders") return b.stats.raidPoints - a.stats.raidPoints;
+    return b.stats.tacklePoints - a.stats.tacklePoints;
+  });
+
+  return (
+    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans pb-40">
+       {/* Top Navigation */}
+       <nav className="bg-white border-b border-slate-200 px-6 py-4 sticky top-10 z-[50]">
+          <div className="max-w-7xl mx-auto flex items-center justify-between">
+             <div className="flex items-center gap-6">
+                <button 
+                  onClick={() => router.back()} 
+                  className="p-3 bg-slate-100 rounded-xl text-slate-500 hover:text-orange-600 transition-all border-none cursor-pointer flex items-center justify-center"
+                >
+                   <ArrowLeft className="w-5 h-5" />
+                </button>
+                <div>
+                   <span className="text-sm font-black italic uppercase tracking-tighter text-slate-900 leading-none block">{tenant?.name || "Athletic"} Registry</span>
+                   <span className="text-[8px] font-black uppercase tracking-widest text-slate-400">Official Roster & Benchmarks</span>
+                </div>
+             </div>
+             
+             <div className="flex items-center gap-4">
+                <div className="flex bg-slate-100 p-1 rounded-xl">
+                   <button 
+                     onClick={() => setActiveTab("raiders")}
+                     className={cn(
+                       "px-6 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
+                       activeTab === "raiders" ? "bg-white text-orange-600 shadow-sm" : "text-slate-400"
+                     )}
+                   >
+                      Top Raiders
+                   </button>
+                   <button 
+                     onClick={() => setActiveTab("defenders")}
+                     className={cn(
+                       "px-6 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
+                       activeTab === "defenders" ? "bg-white text-blue-600 shadow-sm" : "text-slate-400"
+                     )}
+                   >
+                      Top Defenders
+                   </button>
+                </div>
+             </div>
+          </div>
+       </nav>
+
+       <main className="max-w-7xl mx-auto p-6 md:p-12 space-y-12">
+          
+          {/* Podium Highlights */}
+          <div className="grid md:grid-cols-3 gap-8 pb-12">
+             {sortedPlayers.slice(0, 3).map((p, i) => (
+                <div key={p.id} className={cn(
+                  "bg-white ch-card p-10 flex flex-col items-center text-center relative overflow-hidden group transition-all hover:scale-[1.02]",
+                  i === 0 ? "border-orange-600 ring-4 ring-orange-50 items-center justify-center py-14" : ""
+                )}>
+                   {i === 0 && (
+                      <div className="absolute top-0 right-0 p-8 opacity-5">
+                         <Trophy className="w-24 h-24" />
+                      </div>
+                   )}
+                   <div className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 mb-6 flex items-center gap-2">
+                      {i === 0 ? "Championship King" : i === 1 ? "Premier Force" : "Elite Veteran"}
+                   </div>
+                   <div className="relative mb-8">
+                      <div className={cn(
+                        "w-24 h-24 rounded-full bg-slate-100 flex items-center justify-center text-3xl font-black italic",
+                        i === 0 ? "bg-orange-600 text-white w-32 h-32" : "text-slate-400"
+                      )}>
+                         {p.name.charAt(0)}
+                      </div>
+                      <div className={cn(
+                        "absolute -bottom-2 right-0 w-10 h-10 rounded-full flex items-center justify-center text-white border-4 border-white shadow-lg",
+                        i === 0 ? "bg-orange-600" : "bg-slate-900"
+                      )}>
+                         <Zap className="w-4 h-4 fill-current" />
+                      </div>
+                   </div>
+                   <div className="space-y-2 mb-8">
+                      <h3 className="text-2xl font-black italic uppercase tracking-tighter text-slate-900 group-hover:text-orange-600 transition-colors">{p.name}</h3>
+                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Franchise Asset #{p.teamId}</p>
+                   </div>
+                   <div className="grid grid-cols-2 gap-4 w-full">
+                      <div className="p-4 bg-slate-50 rounded-2xl flex flex-col items-center">
+                         <div className="text-sm font-black italic text-slate-900 tabular-nums">{p.stats.raidPoints}</div>
+                         <div className="text-[8px] font-black text-slate-400 uppercase tracking-wider">Raids</div>
+                      </div>
+                      <div className="p-4 bg-slate-50 rounded-2xl flex flex-col items-center">
+                         <div className="text-sm font-black italic text-slate-900 tabular-nums">{p.stats.tacklePoints}</div>
+                         <div className="text-[8px] font-black text-slate-400 uppercase tracking-wider">Tackles</div>
+                      </div>
+                   </div>
+                </div>
+             ))}
+          </div>
+
+          {/* Full List */}
+          <div className="bg-white ch-card overflow-hidden">
+             <div className="p-10 border-b border-slate-100 flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                   <div className="p-3 bg-orange-600 rounded-xl text-white shadow-lg shadow-orange-600/20">
+                      <TrendingUp className="w-5 h-5" />
+                   </div>
+                   <h3 className="text-lg font-black italic uppercase tracking-tighter text-slate-900">Career Momentum</h3>
+                </div>
+                <div className="flex items-center gap-4">
+                   <div className="bg-slate-50 p-1.5 rounded-xl border border-slate-100 flex items-center gap-3">
+                      <Search className="w-4 h-4 text-slate-400 ml-2" />
+                      <input 
+                        placeholder="Filter by Name..." 
+                        className="bg-transparent text-[10px] font-bold uppercase tracking-widest outline-none w-40" 
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                      />
+                   </div>
+                   <button className="p-3 bg-white border border-slate-200 rounded-xl text-slate-400 hover:text-orange-600 hover:border-orange-600/30 transition-all">
+                      <Filter className="w-5 h-5" />
+                   </button>
+                </div>
+             </div>
+
+             <div className="overflow-x-auto">
+                <table className="w-full text-left">
+                   <thead>
+                      <tr className="bg-slate-50/50 text-[10px] font-black uppercase tracking-widest text-slate-400 border-b border-slate-100">
+                         <th className="px-10 py-6">Athlete Profile</th>
+                         <th className="px-10 py-6 text-center">Matches</th>
+                         <th className="px-10 py-6 text-center">Raid Pts</th>
+                         <th className="px-10 py-6 text-center">Tackle Pts</th>
+                         <th className="px-10 py-6 text-right">League Rank</th>
+                      </tr>
+                   </thead>
+                   <tbody className="divide-y divide-slate-50">
+                      {sortedPlayers.map((p, i) => (
+                        <tr key={p.id} className="group hover:bg-slate-50/30 transition-all">
+                           <td className="px-10 py-8">
+                              <div className="flex items-center gap-6">
+                                 <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center font-black italic text-slate-400 relative">
+                                    {p.name.charAt(0)}
+                                    <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 rounded-full border-2 border-white shadow-sm" />
+                                 </div>
+                                 <div className="space-y-1">
+                                    <div className="text-sm font-black uppercase italic text-slate-900 group-hover:text-orange-600 transition-colors leading-none">{p.name}</div>
+                                    <div className="text-[8px] font-bold text-slate-400 uppercase tracking-[0.2em]">{p.role} • Franchise Asset</div>
+                                 </div>
+                              </div>
+                           </td>
+                           <td className="px-10 py-8 text-center text-sm font-black tabular-nums text-slate-900">{p.stats.matches}</td>
+                           <td className="px-10 py-8 text-center text-sm font-black tabular-nums text-orange-600">{p.stats.raidPoints}</td>
+                           <td className="px-10 py-8 text-center text-sm font-black tabular-nums text-blue-600">{p.stats.tacklePoints}</td>
+                           <td className="px-10 py-8 text-right">
+                              <span className="px-5 py-2 bg-slate-900 text-white rounded-xl text-[10px] font-black tabular-nums shadow-lg shadow-slate-900/10">TOP {i + 1}</span>
+                           </td>
+                        </tr>
+                      ))}
+                   </tbody>
+                </table>
+             </div>
+
+             {sortedPlayers.length === 0 && (
+                <div className="py-24 text-center">
+                  <Users className="w-16 h-16 text-slate-100 mx-auto mb-4" />
+                  <h3 className="text-xl font-black italic uppercase text-slate-900 mb-2">No Athletes Found</h3>
+                  <p className="text-sm text-slate-400">Unable to find an athlete matching "{searchQuery}"</p>
+                </div>
+              )}
+          </div>
+       </main>
+    </div>
+  );
+}
