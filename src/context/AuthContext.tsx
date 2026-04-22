@@ -53,25 +53,43 @@ const USER_CREDS_KEY = "kabaddihub_user_creds";
 const SESSION_KEY = "kabaddihub_session";
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [role, setRoleState] = useState<UserRole>("PUBLIC");
-  const [currentUser, setCurrentUser] = useState<AppUser | null>(null);
+  // Initialize state synchronously in the client to prevent "Sign In" flash
+  const [role, setRoleState] = useState<UserRole>(() => {
+    if (typeof window !== "undefined") {
+      const session = localStorage.getItem(SESSION_KEY);
+      if (session) {
+        try {
+          return JSON.parse(session).role;
+        } catch (e) {
+          return "PUBLIC";
+        }
+      }
+      return (localStorage.getItem("kabaddihub_user_role") as UserRole) || "PUBLIC";
+    }
+    return "PUBLIC";
+  });
+
+  const [currentUser, setCurrentUser] = useState<AppUser | null>(() => {
+    if (typeof window !== "undefined") {
+      const session = localStorage.getItem(SESSION_KEY);
+      if (session) {
+        try {
+          return JSON.parse(session).user;
+        } catch (e) {
+          return null;
+        }
+      }
+    }
+    return null;
+  });
+
   const [allUsers, setAllUsers] = useState<AppUser[]>([]);
 
   useEffect(() => {
-    // Load all users
-    const savedUsers = localStorage.getItem(USERS_KEY);
-    if (savedUsers) setAllUsers(JSON.parse(savedUsers));
-
-    // Restore session
-    const session = localStorage.getItem(SESSION_KEY);
-    if (session) {
-      const parsed = JSON.parse(session);
-      setRoleState(parsed.role);
-      setCurrentUser(parsed.user);
-    } else {
-      // Legacy fallback
-      const savedRole = localStorage.getItem("kabaddihub_user_role") as UserRole;
-      if (savedRole) setRoleState(savedRole);
+    if (typeof window !== "undefined") {
+      // Load all users
+      const savedUsers = localStorage.getItem(USERS_KEY);
+      if (savedUsers) setAllUsers(JSON.parse(savedUsers));
     }
   }, []);
 
@@ -86,6 +104,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const setRole = (newRole: UserRole) => {
     setRoleState(newRole);
     localStorage.setItem("kabaddihub_user_role", newRole);
+    if (newRole === "PUBLIC") {
+      localStorage.removeItem(SESSION_KEY);
+    } else {
+      const existingSession = JSON.parse(localStorage.getItem(SESSION_KEY) || "{}");
+      localStorage.setItem(SESSION_KEY, JSON.stringify({ ...existingSession, role: newRole }));
+    }
   };
 
   const registerUser = (data: { 
