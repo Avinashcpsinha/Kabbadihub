@@ -198,8 +198,20 @@ function ScoringContent() {
           <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: 3, color: "#888", textTransform: "uppercase" }}>⚡ Pro Kabaddi Live</div>
           <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
             <span style={{ fontSize: 12, color: "#555", letterSpacing: 1 }}>Half {state.half} / 2</span>
+            
+            {activeMatchId && (
+              <Link 
+                href={`/overlay?id=${activeMatchId}`} 
+                target="_blank" 
+                style={{ background: "#ea580c", color: "#fff", padding: "6px 14px", borderRadius: "8px", fontSize: 11, fontWeight: 800, letterSpacing: 1, textDecoration: "none", display: "flex", alignItems: "center", gap: "6px", boxShadow: "0 4px 12px rgba(234, 88, 12, 0.3)", transition: "all 0.2s" }}
+                className="hover:bg-orange-500 hover:-translate-y-0.5"
+              >
+                📺 OPEN BROADCAST MONITOR
+              </Link>
+            )}
+
             {role === "PUBLIC" && (
-              <Link href="/tournaments" style={{ color: "#555", fontSize: 12, textDecoration: "none" }}>← Back</Link>
+              <Link href="/tournaments" style={{ color: "#555", fontSize: 12, textDecoration: "none", marginLeft: 8 }}>← Back</Link>
             )}
           </div>
         </div>
