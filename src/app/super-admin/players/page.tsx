@@ -295,7 +295,8 @@ export default function GlobalPlayersPoolPage() {
             </div>
           )}
         </AnimatePresence>
-      </main>
+        </div>
+      </DashboardLayout>
     </RoleGate>
   );
 }
