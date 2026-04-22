@@ -19,6 +19,7 @@ import {
   FAN_NAV, 
   ICON_MAP 
 } from "@/config/navigation";
+import MatchSelectorModal from "./scoring/MatchSelectorModal";
 
 // Navigation definitions moved to @/config/navigation.ts
 
@@ -34,6 +35,7 @@ export default function DashboardLayout({
   const { tenant, isSuperAdmin } = useTenant();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const [isMatchSelectorOpen, setIsMatchSelectorOpen] = useState(false);
 
   const getNavItems = () => {
     if (userRole === "SUPER_ADMIN" && variant === "admin") return SUPER_ADMIN_NAV;
@@ -114,41 +116,56 @@ export default function DashboardLayout({
 
         {/* Navigation */}
         <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-          {navItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              onClick={() => setIsMobileOpen(false)}
-              className={cn(
-                "flex items-center gap-3 px-4 py-3 rounded-xl transition-all group text-sm font-bold",
-                isActive(item.href)
-                  ? variant === "admin"
-                    ? "bg-red-50 text-red-600 shadow-sm"
-                    : "bg-orange-50 text-orange-600 shadow-sm"
-                  : "text-slate-500 hover:text-slate-900 hover:bg-slate-50",
-                isCollapsed && "justify-center px-0"
-              )}
-              title={isCollapsed ? item.label : undefined}
-            >
-              <span className={cn(
-                "shrink-0 transition-colors",
-                isActive(item.href)
-                  ? variant === "admin" ? "text-red-600" : variant === "user" ? "text-slate-900" : "text-orange-600"
-                  : "text-slate-400 group-hover:text-slate-600"
-              )}>
-                {React.createElement(ICON_MAP[item.icon] || LayoutDashboard, { className: "w-5 h-5" })}
-              </span>
-              {!isCollapsed && (
-                <span className="text-[11px] font-black uppercase tracking-widest">{item.label}</span>
-              )}
-              {!isCollapsed && item.badge && (
+          {navItems.map((item) => {
+            const isScoring = item.href === "/scoring";
+
+            const LinkOrButton: any = isScoring ? "button" : Link;
+            const props = isScoring ? {
+              onClick: () => {
+                setIsMobileOpen(false);
+                setIsMatchSelectorOpen(true);
+              },
+              type: "button"
+            } : {
+              href: item.href,
+              onClick: () => setIsMobileOpen(false)
+            };
+
+            return (
+              <LinkOrButton
+                key={item.href}
+                {...props}
+                className={cn(
+                  "flex items-center gap-3 px-4 py-3 rounded-xl transition-all group text-sm font-bold w-full text-left",
+                  isActive(item.href) && !isScoring
+                    ? variant === "admin"
+                      ? "bg-red-50 text-red-600 shadow-sm"
+                      : "bg-orange-50 text-orange-600 shadow-sm"
+                    : "text-slate-500 hover:text-slate-900 hover:bg-slate-50",
+                  isCollapsed && "justify-center px-0"
+                )}
+                title={isCollapsed ? item.label : undefined}
+              >
                 <span className={cn(
-                  "ml-auto px-2 py-0.5 rounded-full text-[8px] font-black",
-                  variant === "user" ? "bg-slate-100 text-slate-600" : "bg-orange-100 text-orange-600"
-                )}>{item.badge}</span>
-              )}
-            </Link>
-          ))}
+                  "shrink-0 transition-colors",
+                  isActive(item.href) && !isScoring
+                    ? variant === "admin" ? "text-red-600" : variant === "user" ? "text-slate-900" : "text-orange-600"
+                    : "text-slate-400 group-hover:text-slate-600"
+                )}>
+                  {React.createElement(ICON_MAP[item.icon] || LayoutDashboard, { className: "w-5 h-5" })}
+                </span>
+                {!isCollapsed && (
+                  <span className="text-[11px] font-black uppercase tracking-widest">{item.label}</span>
+                )}
+                {!isCollapsed && item.badge && (
+                  <span className={cn(
+                    "ml-auto px-2 py-0.5 rounded-full text-[8px] font-black",
+                    variant === "user" ? "bg-slate-100 text-slate-600" : "bg-orange-100 text-orange-600"
+                  )}>{item.badge}</span>
+                )}
+              </LinkOrButton>
+            );
+          })}
         </nav>
 
         {/* Sidebar Footer */}
@@ -217,6 +234,11 @@ export default function DashboardLayout({
         </div>
         {children}
       </main>
+
+      <MatchSelectorModal 
+        isOpen={isMatchSelectorOpen} 
+        onClose={() => setIsMatchSelectorOpen(false)} 
+      />
     </div>
   );
 }
