@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { useTenant } from "./TenantContext";
+import { supabase } from "@/lib/supabase";
 
 export type Team = {
   id?: string;
@@ -131,24 +132,60 @@ export function MatchProvider({ children }: { children: React.ReactNode }) {
     }
   }, [tenant, getStorageKey]);
 
-  // Sync with LocalStorage for external updates (Broadcaster)
+  // Sync with Supabase Realtime (Global Cloud Sync)
   useEffect(() => {
     if (!activeMatchId) return;
     
-    const key = getStorageKey(activeMatchId);
-    const syncState = (e: StorageEvent) => {
-      if (e.key === key && e.newValue) {
-        setState(JSON.parse(e.newValue));
+    // 1. Initial Fetch from Cloud DB
+    const fetchCloudState = async () => {
+      const { data } = await supabase
+        .from('live_matches')
+        .select('state')
+        .eq('id', activeMatchId)
+        .single();
+        
+      if (data?.state && Object.keys(data.state).length > 0) {
+        setState(data.state as MatchState);
       }
     };
+    fetchCloudState();
 
-    window.addEventListener("storage", syncState);
-    return () => window.removeEventListener("storage", syncState);
-  }, [tenant, activeMatchId, getStorageKey]);
+    // 2. Subscribe to Global Broadcast Changes
+    const channel = supabase
+      .channel(`schema-db-changes-${activeMatchId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'live_matches', filter: `id=eq.${activeMatchId}` },
+        (payload: any) => {
+          if (payload.new && payload.new.state) {
+            setState(payload.new.state as MatchState);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [activeMatchId]);
 
   const saveAndSetState = (newState: MatchState) => {
     setState(newState);
-    localStorage.setItem(getStorageKey(activeMatchId), JSON.stringify(newState));
+    
+    // Local offline cache
+    const key = getStorageKey(activeMatchId);
+    if (activeMatchId) localStorage.setItem(key, JSON.stringify(newState));
+    
+    // Broadcast to the World via Supabase
+    if (activeMatchId) {
+      supabase.from('live_matches').upsert({
+        id: activeMatchId,
+        state: newState,
+        updated_at: new Date().toISOString()
+      }).then(({ error }) => {
+        if (error) console.error("Cloud Broadcast Error:", error);
+      });
+    }
   };
 
   const recordEvent = (event: Omit<MatchEvent, "id" | "timestamp" | "isUndoable">) => {

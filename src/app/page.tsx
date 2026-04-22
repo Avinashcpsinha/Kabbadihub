@@ -31,6 +31,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion, useScroll, useSpring, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
+import { supabase } from "@/lib/supabase";
 
 function cn(...classes: (string | boolean | undefined)[]) {
   return classes.filter(Boolean).join(" ");
@@ -60,26 +61,41 @@ export default function PremiumLandingPage() {
   const router = useRouter();
   const { isAuthenticated } = useAuth();
 
-  // Function to scan for active matches in local storage
-  const scanMatches = React.useCallback(() => {
-    const live: any[] = [];
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      // Format: kabaddi_match_{matchId}_state
-      if (key?.startsWith('kabaddi_match_') && key.endsWith('_state')) {
-        try {
-          const state = JSON.parse(localStorage.getItem(key) || "{}");
+  // Function to scan for active matches globally via Supabase
+  const scanMatches = React.useCallback(async () => {
+    try {
+      // Fetch live matches updated in the last 2 hours to avoid stale matches
+      const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
+      const { data, error } = await supabase
+        .from('live_matches')
+        .select('id, state')
+        .gte('updated_at', twoHoursAgo);
+
+      if (error) throw error;
+      
+      const live = (data || []).map(row => ({
+        id: row.id,
+        ...row.state
+      }));
+      
+      setActiveMatches(live);
+    } catch (e) {
+      console.error("Error fetching live cloud matches", e);
+      // Fallback to local storage if offline
+      const liveLocal: any[] = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key?.startsWith('kabaddi_match_') && key.endsWith('_state')) {
           const matchId = key.replace('kabaddi_match_', '').replace('_state', '');
-          
           if (matchId && matchId !== 'fallback') {
-            live.push({ id: matchId, ...state });
+            try {
+              liveLocal.push({ id: matchId, ...JSON.parse(localStorage.getItem(key) || "{}") });
+            } catch(e) {}
           }
-        } catch (e) {
-          console.error("Error parsing match state", e);
         }
       }
+      setActiveMatches(liveLocal);
     }
-    setActiveMatches(live);
   }, []);
 
   React.useEffect(() => {
