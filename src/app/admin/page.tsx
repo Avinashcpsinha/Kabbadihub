@@ -24,6 +24,7 @@ export default function AdminDashboard() {
     teams: 0,
     traffic: "0",
     matchData: [] as any[],
+    roles: { raiders: 0, defenders: 0, allRounders: 0 }
   });
 
   React.useEffect(() => {
@@ -35,13 +36,22 @@ export default function AdminDashboard() {
 
     let totalPlayers = 0;
     let teamCount = 0;
+    let raiders = 0;
+    let defenders = 0;
+    let allRounders = 0;
     const teamMap: Record<string, string> = {};
 
     if (savedTeams) {
       const parsedTeams = JSON.parse(savedTeams);
       teamCount = parsedTeams.length;
       parsedTeams.forEach((t: any) => {
-        totalPlayers += (t.players?.length || 0);
+        const teamPlayers = t.players || [];
+        totalPlayers += teamPlayers.length;
+        teamPlayers.forEach((p: any) => {
+          if (p.role === "RAIDER") raiders++;
+          else if (p.role === "DEFENDER") defenders++;
+          else if (p.role === "ALL_ROUNDER") allRounders++;
+        });
         teamMap[t.id] = t.name;
       });
     }
@@ -64,6 +74,7 @@ export default function AdminDashboard() {
       teams: teamCount,
       traffic: `${(totalPlayers * 3.2).toFixed(1)}K`,
       matchData,
+      roles: { raiders, defenders, allRounders }
     });
   }, [tenant]);
 
@@ -86,12 +97,19 @@ export default function AdminDashboard() {
 
         {/* Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          {[
-            { label: "Active Roster", val: stats.players, icon: <Users className="w-5 h-5" />, color: "text-blue-600", bg: "bg-blue-50" },
-            { label: "Teams", val: stats.teams, icon: <Shield className="w-5 h-5" />, color: "text-emerald-600", bg: "bg-emerald-50" },
-            { label: "Total Matches", val: stats.matches, icon: <Zap className="w-5 h-5" />, color: "text-orange-600", bg: "bg-orange-50" },
-            { label: "Portal Traffic", val: stats.traffic, icon: <Globe className="w-5 h-5" />, color: "text-purple-600", bg: "bg-purple-50" },
-          ].map((s, i) => (
+        {[
+          { 
+            label: "Active Players", 
+            val: stats.players, 
+            icon: <Users className="w-5 h-5" />, 
+            color: "text-blue-600", 
+            bg: "bg-blue-50",
+            sub: `${stats.roles.raiders} R | ${stats.roles.defenders} D | ${stats.roles.allRounders} AR`
+          },
+          { label: "Active Teams", val: stats.teams, icon: <Shield className="w-5 h-5" />, color: "text-emerald-600", bg: "bg-emerald-50" },
+          { label: "Total Matches", val: stats.matches, icon: <Zap className="w-5 h-5" />, color: "text-orange-600", bg: "bg-orange-50" },
+          { label: "Portal Traffic", val: stats.traffic, icon: <Globe className="w-5 h-5" />, color: "text-purple-600", bg: "bg-purple-50" },
+        ].map((s, i) => (
             <motion.div
               key={i}
               initial={{ opacity: 0, y: 20 }}
@@ -100,8 +118,13 @@ export default function AdminDashboard() {
               className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm group hover:border-orange-200 transition-all"
             >
               <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center mb-4", s.bg, s.color)}>{s.icon}</div>
-              <div className="text-3xl font-black italic text-slate-900 mb-1">{s.val}</div>
-              <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">{s.label}</div>
+              <div className="text-3xl font-black italic text-slate-900 mb-1 leading-none">{s.val}</div>
+              <div className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-2">{s.label}</div>
+              {s.sub && (
+                <div className="flex items-center gap-2 pt-2 border-t border-slate-50">
+                  <span className="text-[9px] font-bold text-slate-500 uppercase tracking-tight">{s.sub}</span>
+                </div>
+              )}
             </motion.div>
           ))}
         </div>
