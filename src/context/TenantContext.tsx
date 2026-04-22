@@ -32,6 +32,7 @@ interface TenantContextType {
   setIsSuperAdmin: (status: boolean) => void;
   impersonateTenant: (id: string) => void;
   seedAllOrganisations: () => void;
+  deleteTenant: (id: string) => void;
 }
 
 const TenantContext = createContext<TenantContextType | undefined>(undefined);
@@ -222,6 +223,16 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
     }
   }, [allTenants]);
 
+  const deleteTenant = useCallback((id: string) => {
+    const updated = allTenants.filter(t => t.id !== id);
+    setAllTenants(updated);
+    localStorage.setItem("kabaddihub_tenants", JSON.stringify(updated));
+    if (tenant?.id === id) {
+      setTenant(null);
+      localStorage.removeItem("kabaddihub_current_tenant");
+    }
+  }, [allTenants, tenant]);
+
   return (
     <TenantContext.Provider value={{ 
       tenant, 
@@ -237,7 +248,8 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
         localStorage.setItem("kabaddihub_is_super", status ? "true" : "false");
       },
       impersonateTenant,
-      seedAllOrganisations
+      seedAllOrganisations,
+      deleteTenant
     }}>
       {children}
     </TenantContext.Provider>
