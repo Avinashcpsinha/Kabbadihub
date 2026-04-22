@@ -36,16 +36,86 @@ export default function LeaderboardPage() {
     const tenantId = activeTenant.id;
     const playerKey = `kabaddihub_${tenantId}_players`;
     const savedPlayers = localStorage.getItem(playerKey);
-    
+
+    const initialPlayers: Player[] = [
+      // Category A - Raiders
+      { id: "p1", name: "Pawan Sehrawat", number: "17", teamId: "1", role: "RAIDER", stats: { matches: 20, raidPoints: 120, tacklePoints: 5, superRaids: 10, superTackles: 0, superTens: 10, highFives: 0 } },
+      { id: "p2", name: "Naveen Kumar", number: "10", teamId: "2", role: "RAIDER", stats: { matches: 18, raidPoints: 115, tacklePoints: 2, superRaids: 8, superTackles: 0, superTens: 11, highFives: 0 } },
+      { id: "p3", name: "Maninder Singh", number: "09", teamId: "3", role: "RAIDER", stats: { matches: 19, raidPoints: 110, tacklePoints: 1, superRaids: 7, superTackles: 0, superTens: 9, highFives: 0 } },
+      { id: "p4", name: "Pardeep Narwal", number: "01", teamId: "4", role: "RAIDER", stats: { matches: 22, raidPoints: 130, tacklePoints: 0, superRaids: 15, superTackles: 0, superTens: 12, highFives: 0 } },
+      { id: "p5", name: "Arjun Deshwal", number: "04", teamId: "5", role: "RAIDER", stats: { matches: 17, raidPoints: 105, tacklePoints: 3, superRaids: 6, superTackles: 0, superTens: 8, highFives: 0 } },
+      
+      // Category A - Defenders
+      { id: "p6", name: "Fazel Atrachali", number: "07", teamId: "6", role: "DEFENDER", stats: { matches: 22, raidPoints: 0, tacklePoints: 80, superRaids: 0, superTackles: 8, superTens: 0, highFives: 8 } },
+      { id: "p7", name: "Mohammadreza Chiyaneh", number: "13", teamId: "7", role: "DEFENDER", stats: { matches: 21, raidPoints: 5, tacklePoints: 85, superRaids: 0, superTackles: 10, superTens: 0, highFives: 9 } },
+      { id: "p8", name: "Sagar Rathee", number: "05", teamId: "8", role: "DEFENDER", stats: { matches: 20, raidPoints: 0, tacklePoints: 75, superRaids: 0, superTackles: 6, superTens: 0, highFives: 7 } },
+      { id: "p9", name: "Surjeet Singh", number: "06", teamId: "9", role: "DEFENDER", stats: { matches: 22, raidPoints: 0, tacklePoints: 78, superRaids: 0, superTackles: 5, superTens: 0, highFives: 6 } },
+      
+      // Category A - All Rounders
+      { id: "p10", name: "Mohammad Nabibakhsh", number: "11", teamId: "10", role: "ALL_ROUNDER", stats: { matches: 20, raidPoints: 60, tacklePoints: 45, superRaids: 2, superTackles: 5, superTens: 2, highFives: 3 } },
+      { id: "p11", name: "Vijay Malik", number: "08", teamId: "1", role: "ALL_ROUNDER", stats: { matches: 19, raidPoints: 75, tacklePoints: 35, superRaids: 3, superTackles: 2, superTens: 3, highFives: 1 } },
+      
+      // Category B - Raiders
+      { id: "p12", name: "Bharat Hooda", number: "21", teamId: "2", role: "RAIDER", stats: { matches: 18, raidPoints: 85, tacklePoints: 8, superRaids: 4, superTackles: 0, superTens: 5, highFives: 0 } },
+      { id: "p13", name: "Abhishek Singh", number: "12", teamId: "3", role: "RAIDER", stats: { matches: 16, raidPoints: 78, tacklePoints: 4, superRaids: 3, superTackles: 0, superTens: 4, highFives: 0 } },
+      { id: "p14", name: "Vikash Kandola", number: "15", teamId: "4", role: "RAIDER", stats: { matches: 17, raidPoints: 70, tacklePoints: 2, superRaids: 2, superTackles: 0, superTens: 3, highFives: 0 } },
+      { id: "p15", name: "Chandran Ranjit", number: "14", teamId: "5", role: "RAIDER", stats: { matches: 15, raidPoints: 65, tacklePoints: 3, superRaids: 2, superTackles: 0, superTens: 2, highFives: 0 } },
+      { id: "p16", name: "Meet Ibrahim", number: "22", teamId: "6", role: "RAIDER", stats: { matches: 14, raidPoints: 60, tacklePoints: 1, superRaids: 1, superTackles: 0, superTens: 2, highFives: 0 } },
+      { id: "p17", name: "Guman Singh", number: "25", teamId: "7", role: "RAIDER", stats: { matches: 16, raidPoints: 72, tacklePoints: 5, superRaids: 3, superTackles: 0, superTens: 4, highFives: 0 } },
+      { id: "p18", name: "Manjeet Sharma", number: "30", teamId: "8", role: "RAIDER", stats: { matches: 13, raidPoints: 58, tacklePoints: 2, superRaids: 1, superTackles: 0, superTens: 1, highFives: 0 } },
+      
+      // Category B - Defenders
+      { id: "p19", name: "Sahil Singh", number: "03", teamId: "9", role: "DEFENDER", stats: { matches: 18, raidPoints: 0, tacklePoints: 55, superRaids: 0, superTackles: 4, superTens: 0, highFives: 4 } },
+      { id: "p20", name: "Jaideep Dahiya", number: "18", teamId: "10", role: "DEFENDER", stats: { matches: 19, raidPoints: 0, tacklePoints: 62, superRaids: 0, superTackles: 5, superTens: 0, highFives: 5 } },
+      { id: "p21", name: "Saurabh Nandal", number: "16", teamId: "1", role: "DEFENDER", stats: { matches: 17, raidPoints: 0, tacklePoints: 58, superRaids: 0, superTackles: 4, superTens: 0, highFives: 4 } },
+      { id: "p22", name: "Vishal Bhardwaj", number: "02", teamId: "2", role: "DEFENDER", stats: { matches: 16, raidPoints: 2, tacklePoints: 52, superRaids: 0, superTackles: 3, superTens: 0, highFives: 3 } },
+      { id: "p23", name: "Parvesh Bhainswal", number: "19", teamId: "3", role: "DEFENDER", stats: { matches: 18, raidPoints: 0, tacklePoints: 54, superRaids: 0, superTackles: 4, superTens: 0, highFives: 4 } },
+      { id: "p24", name: "Mahender Singh", number: "23", teamId: "4", role: "DEFENDER", stats: { matches: 15, raidPoints: 0, tacklePoints: 48, superRaids: 0, superTackles: 2, superTens: 0, highFives: 2 } },
+      
+      // Category B - All Rounders
+      { id: "p25", name: "Rohit Gulia", number: "20", teamId: "5", role: "ALL_ROUNDER", stats: { matches: 17, raidPoints: 55, tacklePoints: 25, superRaids: 1, superTackles: 1, superTens: 1, highFives: 1 } },
+      { id: "p26", name: "Nitin Rawal", number: "24", teamId: "6", role: "ALL_ROUNDER", stats: { matches: 16, raidPoints: 45, tacklePoints: 30, superRaids: 0, superTackles: 2, superTens: 0, highFives: 2 } },
+      { id: "p27", name: "Akash Shinde", number: "27", teamId: "7", role: "RAIDER", stats: { matches: 14, raidPoints: 52, tacklePoints: 3, superRaids: 1, superTackles: 0, superTens: 1, highFives: 0 } },
+      
+      // Category C - Raiders
+      { id: "p28", name: "Ajinkya Pawar", number: "31", teamId: "8", role: "RAIDER", stats: { matches: 12, raidPoints: 45, tacklePoints: 2, superRaids: 1, superTackles: 0, superTens: 1, highFives: 0 } },
+      { id: "p29", name: "Aslam Inamdar", number: "32", teamId: "9", role: "RAIDER", stats: { matches: 13, raidPoints: 48, tacklePoints: 10, superRaids: 1, superTackles: 1, superTens: 1, highFives: 0 } },
+      { id: "p30", name: "Mohit Goyat", number: "33", teamId: "10", role: "RAIDER", stats: { matches: 12, raidPoints: 42, tacklePoints: 15, superRaids: 0, superTackles: 2, superTens: 0, highFives: 0 } },
+      { id: "p31", name: "Sachin Tanwar", number: "34", teamId: "1", role: "RAIDER", stats: { matches: 14, raidPoints: 50, tacklePoints: 5, superRaids: 1, superTackles: 0, superTens: 1, highFives: 0 } },
+      { id: "p32", name: "Siddharth Desai", number: "35", teamId: "2", role: "RAIDER", stats: { matches: 11, raidPoints: 55, tacklePoints: 0, superRaids: 2, superTackles: 0, superTens: 2, highFives: 0 } },
+      { id: "p33", name: "Monu Goyat", number: "36", teamId: "3", role: "RAIDER", stats: { matches: 13, raidPoints: 38, tacklePoints: 5, superRaids: 0, superTackles: 0, superTens: 0, highFives: 0 } },
+      { id: "p34", name: "Surender Gill", number: "37", teamId: "4", role: "RAIDER", stats: { matches: 14, raidPoints: 46, tacklePoints: 8, superRaids: 1, superTackles: 1, superTens: 1, highFives: 0 } },
+      { id: "p35", name: "K. Prapanjan", number: "38", teamId: "5", role: "RAIDER", stats: { matches: 12, raidPoints: 35, tacklePoints: 2, superRaids: 0, superTackles: 0, superTens: 0, highFives: 0 } },
+      
+      // Category C - Defenders
+      { id: "p36", name: "Mohit Chhillar", number: "39", teamId: "6", role: "DEFENDER", stats: { matches: 15, raidPoints: 0, tacklePoints: 40, superRaids: 0, superTackles: 2, superTens: 0, highFives: 2 } },
+      { id: "p37", name: "Ravinder Pahal", number: "40", teamId: "7", role: "DEFENDER", stats: { matches: 16, raidPoints: 0, tacklePoints: 45, superRaids: 0, superTackles: 3, superTens: 0, highFives: 3 } },
+      { id: "p38", name: "Girish Ernak", number: "41", teamId: "8", role: "DEFENDER", stats: { matches: 14, raidPoints: 0, tacklePoints: 38, superRaids: 0, superTackles: 2, superTens: 0, highFives: 2 } },
+      { id: "p39", name: "Sandeep Dhull", number: "42", teamId: "9", role: "DEFENDER", stats: { matches: 15, raidPoints: 0, tacklePoints: 42, superRaids: 0, superTackles: 2, superTens: 0, highFives: 2 } },
+      { id: "p40", name: "Rinku Narwal", number: "43", teamId: "10", role: "DEFENDER", stats: { matches: 13, raidPoints: 0, tacklePoints: 35, superRaids: 0, superTackles: 1, superTens: 0, highFives: 1 } },
+      { id: "p41", name: "Aman Sehrawat", number: "44", teamId: "1", role: "DEFENDER", stats: { matches: 14, raidPoints: 0, tacklePoints: 37, superRaids: 0, superTackles: 2, superTens: 0, highFives: 2 } },
+      { id: "p42", name: "Nitesh Kumar", number: "45", teamId: "2", role: "DEFENDER", stats: { matches: 16, raidPoints: 0, tacklePoints: 41, superRaids: 0, superTackles: 2, superTens: 0, highFives: 2 } },
+      { id: "p43", name: "Sumit Sangwan", number: "46", teamId: "3", role: "DEFENDER", stats: { matches: 15, raidPoints: 0, tacklePoints: 39, superRaids: 0, superTackles: 2, superTens: 0, highFives: 2 } },
+      
+      // Category C - All Rounders
+      { id: "p44", name: "Deepak Niwas Hooda", number: "47", teamId: "4", role: "ALL_ROUNDER", stats: { matches: 14, raidPoints: 40, tacklePoints: 20, superRaids: 0, superTackles: 0, superTens: 0, highFives: 0 } },
+      { id: "p45", name: "Sandeep Narwal", number: "48", teamId: "5", role: "ALL_ROUNDER", stats: { matches: 16, raidPoints: 30, tacklePoints: 35, superRaids: 0, superTackles: 1, superTens: 0, highFives: 1 } },
+      { id: "p46", name: "Prateek Dahiya", number: "49", teamId: "6", role: "ALL_ROUNDER", stats: { matches: 12, raidPoints: 35, tacklePoints: 15, superRaids: 0, superTackles: 0, superTens: 0, highFives: 0 } },
+      { id: "p47", name: "Amirhossein Bastami", number: "50", teamId: "7", role: "DEFENDER", stats: { matches: 13, raidPoints: 0, tacklePoints: 32, superRaids: 0, superTackles: 1, superTens: 0, highFives: 1 } },
+      { id: "p48", name: "Nitin Dhankar", number: "51", teamId: "8", role: "RAIDER", stats: { matches: 10, raidPoints: 30, tacklePoints: 1, superRaids: 0, superTackles: 0, superTens: 0, highFives: 0 } },
+      { id: "p49", name: "Surender Nada", number: "52", teamId: "9", role: "DEFENDER", stats: { matches: 14, raidPoints: 0, tacklePoints: 38, superRaids: 0, superTackles: 2, superTens: 0, highFives: 2 } },
+      { id: "p50", name: "Ran Singh", number: "53", teamId: "10", role: "ALL_ROUNDER", stats: { matches: 12, raidPoints: 20, tacklePoints: 25, superRaids: 0, superTackles: 0, superTens: 0, highFives: 0 } },
+    ];
+
     if (savedPlayers) {
-      setPlayers(JSON.parse(savedPlayers));
+      const parsed = JSON.parse(savedPlayers);
+      if (parsed.length < initialPlayers.length) {
+        setPlayers(initialPlayers);
+        localStorage.setItem(playerKey, JSON.stringify(initialPlayers));
+      } else {
+        setPlayers(parsed);
+      }
     } else {
-      // Seed fallback
-      const initialPlayers: Player[] = [
-        { id: "p1", name: "Pawan Sehrawat", number: "17", teamId: "1", role: "RAIDER", stats: { matches: 120, raidPoints: 1100, tacklePoints: 40, superRaids: 50, superTackles: 2, superTens: 40, highFives: 0 } },
-        { id: "p2", name: "Fazel Atrachali", number: "07", teamId: "2", role: "DEFENDER", stats: { matches: 140, raidPoints: 5, tacklePoints: 450, superRaids: 0, superTackles: 25, superTens: 0, highFives: 35 } },
-        { id: "p3", name: "Pardeep Narwal", number: "09", teamId: "1", role: "RAIDER", stats: { matches: 150, raidPoints: 1500, tacklePoints: 10, superRaids: 70, superTackles: 0, superTens: 80, highFives: 0 } }
-      ];
       setPlayers(initialPlayers);
       localStorage.setItem(playerKey, JSON.stringify(initialPlayers));
     }
