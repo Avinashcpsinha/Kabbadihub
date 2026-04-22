@@ -87,13 +87,12 @@ export function MatchProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<MatchState>(initialState);
 
   const getStorageKey = useCallback((id: string | null) => {
-    if (!id) return `kabaddi_${tenant?.id || "global"}_match_state`;
-    return `kabaddi_${tenant?.id || "global"}_match_${id}_state`;
-  }, [tenant]);
+    if (!id) return `kabaddi_match_state_fallback`;
+    return `kabaddi_match_${id}_state`; // Global streaming key for this match
+  }, []);
 
   // Handle Match ID switching
   const setMatchId = useCallback((id: string) => {
-    if (!tenant) return;
     setActiveMatchId(id);
     
     const key = getStorageKey(id);
@@ -103,8 +102,9 @@ export function MatchProvider({ children }: { children: React.ReactNode }) {
       setState(JSON.parse(saved));
     } else {
       // Try resolving team names from the tournament list if it's the first time
-      const matchKey = `kabaddihub_${tenant.id}_matches`;
-      const teamKey = `kabaddihub_${tenant.id}_teams`;
+      const targetTenantId = tenant?.id || "global";
+      const matchKey = `kabaddihub_${targetTenantId}_matches`;
+      const teamKey = `kabaddihub_${targetTenantId}_teams`;
       const savedMatches = localStorage.getItem(matchKey);
       const savedTeams = localStorage.getItem(teamKey);
 
@@ -133,7 +133,7 @@ export function MatchProvider({ children }: { children: React.ReactNode }) {
 
   // Sync with LocalStorage for external updates (Broadcaster)
   useEffect(() => {
-    if (!tenant || !activeMatchId) return;
+    if (!activeMatchId) return;
     
     const key = getStorageKey(activeMatchId);
     const syncState = (e: StorageEvent) => {
