@@ -51,6 +51,105 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
       adminEmail: "admin@pkl.com",
       adminPassword: "admin123",
       status: "ENABLED"
+    },
+    {
+      id: "t2",
+      name: "Bengaluru Bulls Franchise",
+      slug: "bengaluru-bulls",
+      primaryColor: "#dc2626",
+      secondaryColor: "#1e293b",
+      subscriptionTier: "PRO",
+      adminEmail: "admin@bulls.com",
+      adminPassword: "password123",
+      status: "ENABLED"
+    },
+    {
+      id: "t3",
+      name: "Dabang Delhi KC",
+      slug: "dabang-delhi",
+      primaryColor: "#2563eb",
+      secondaryColor: "#1e293b",
+      subscriptionTier: "PRO",
+      adminEmail: "admin@delhi.com",
+      adminPassword: "password123",
+      status: "ENABLED"
+    },
+    {
+      id: "t4",
+      name: "Gujarat Giants",
+      slug: "gujarat-giants",
+      primaryColor: "#ea580c",
+      secondaryColor: "#1e293b",
+      subscriptionTier: "PRO",
+      adminEmail: "admin@gujarat.com",
+      adminPassword: "password123",
+      status: "ENABLED"
+    },
+    {
+      id: "t5",
+      name: "Haryana Steelers",
+      slug: "haryana-steelers",
+      primaryColor: "#0891b2",
+      secondaryColor: "#1e293b",
+      subscriptionTier: "PRO",
+      adminEmail: "admin@haryana.com",
+      adminPassword: "password123",
+      status: "ENABLED"
+    },
+    {
+      id: "t6",
+      name: "Jaipur Pink Panthers",
+      slug: "jaipur-pink-panthers",
+      primaryColor: "#db2777",
+      secondaryColor: "#1e293b",
+      subscriptionTier: "PRO",
+      adminEmail: "admin@jaipur.com",
+      adminPassword: "password123",
+      status: "ENABLED"
+    },
+    {
+      id: "t7",
+      name: "Patna Pirates",
+      slug: "patna-pirates",
+      primaryColor: "#16a34a",
+      secondaryColor: "#1e293b",
+      subscriptionTier: "PRO",
+      adminEmail: "admin@patna.com",
+      adminPassword: "password123",
+      status: "ENABLED"
+    },
+    {
+      id: "t8",
+      name: "Puneri Paltan",
+      slug: "puneri-paltan",
+      primaryColor: "#f59e0b",
+      secondaryColor: "#1e293b",
+      subscriptionTier: "PRO",
+      adminEmail: "admin@puneri.com",
+      adminPassword: "password123",
+      status: "ENABLED"
+    },
+    {
+      id: "t9",
+      name: "Tamil Thalaivas",
+      slug: "tamil-thalaivas",
+      primaryColor: "#0369a1",
+      secondaryColor: "#1e293b",
+      subscriptionTier: "PRO",
+      adminEmail: "admin@tamil.com",
+      adminPassword: "password123",
+      status: "ENABLED"
+    },
+    {
+      id: "t10",
+      name: "Telugu Titans",
+      slug: "telugu-titans",
+      primaryColor: "#e11d48",
+      secondaryColor: "#1e293b",
+      subscriptionTier: "PRO",
+      adminEmail: "admin@telugu.com",
+      adminPassword: "password123",
+      status: "ENABLED"
     }
   ];
 
@@ -61,8 +160,16 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
 
     const savedAll = localStorage.getItem("kabaddihub_tenants");
     let currentAll = defaultTenants;
+    
+    // Force update if the tenants list is old/incomplete (e.g. less than 10 tenants)
     if (savedAll) {
-      currentAll = JSON.parse(savedAll);
+      const parsed = JSON.parse(savedAll);
+      if (parsed.length < defaultTenants.length) {
+        currentAll = defaultTenants;
+        localStorage.setItem("kabaddihub_tenants", JSON.stringify(defaultTenants));
+      } else {
+        currentAll = parsed;
+      }
     } else {
       localStorage.setItem("kabaddihub_tenants", JSON.stringify(defaultTenants));
     }
