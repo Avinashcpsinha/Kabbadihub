@@ -230,7 +230,7 @@ export default function CricHeroesStyleTournamentPage() {
 
                               {/* Action */}
                               <div className="p-8 border-t md:border-t-0 md:border-l border-slate-50">
-                                 <Link href={role !== "PUBLIC" ? "/scoring" : `/overlay?id=${match.id}`} className="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center text-slate-300 hover:bg-orange-600 hover:text-white transition-all transform hover:scale-105 active:scale-95">
+                                 <Link href={role !== "PUBLIC" ? `/scoring?id=${match.id}` : `/overlay?id=${match.id}`} className="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center text-slate-300 hover:bg-orange-600 hover:text-white transition-all transform hover:scale-105 active:scale-95">
                                     <ChevronRight className="w-6 h-6" />
                                  </Link>
                               </div>
