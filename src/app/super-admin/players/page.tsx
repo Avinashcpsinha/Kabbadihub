@@ -7,7 +7,7 @@ import {
   Users, Search, Plus, Trash2, Edit3, 
   ShieldCheck, ShieldAlert, Phone, Mail, 
   Trophy, Activity, ChevronRight, X,
-  Save, Camera, MapPin, IDCard, ruler, Scaling,
+  Save, Camera, MapPin, IDCard,
   CheckCircle2, XCircle, AlertCircle
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -273,8 +273,4 @@ export default function GlobalPlayersPoolPage() {
       </DashboardLayout>
     </RoleGate>
   );
-}
-
-function ruler({ className }: { className?: string }) {
-  return <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 3v18"/><path d="M19 3v18"/><path d="M5 7h5"/><path d="M5 11h9"/><path d="M5 15h5"/><path d="M5 19h14"/></svg>;
 }
