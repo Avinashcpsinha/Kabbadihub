@@ -12,13 +12,23 @@ export type Team = {
   matCount: number; // Current active players on mat (starts at 7)
   timeouts: number;
   bonusPoints: number;
+  players?: any[]; // For tracking individual player stats in the state
+};
+
+export type PlayerStats = {
+  touchPoints: number;
+  bonusPoints: number;
+  tackles: number;
+  superTackles: number;
+  superRaids: number;
+  active: boolean;
 };
 
 export type MatchEvent = {
   id: string;
   team: "home" | "away";
   points: number;
-  type: "TOUCH" | "BONUS" | "TACKLE" | "SUPER_TACKLE" | "ALL_OUT" | "TECHNICAL_POINT" | "TIMEOUT";
+  type: "TOUCH" | "BONUS" | "TACKLE" | "SUPER_TACKLE" | "ALL_OUT" | "TECHNICAL_POINT" | "TIMEOUT" | "SUPER_RAID";
   raider?: string;
   defendersTouched?: string[];
   gameTime: number;
@@ -37,6 +47,7 @@ export type MatchState = {
   history: MatchEvent[];
   lastAction: string | null;
   half: 1 | 2;
+  playerStats: { [playerId: string]: PlayerStats };
 };
 
 type MatchContextType = {
@@ -65,6 +76,7 @@ const initialState: MatchState = {
   history: [],
   lastAction: null,
   half: 1,
+  playerStats: {},
 };
 
 const MatchContext = createContext<MatchContextType | undefined>(undefined);
@@ -140,57 +152,72 @@ export function MatchProvider({ children }: { children: React.ReactNode }) {
   };
 
   const recordEvent = (event: Omit<MatchEvent, "id" | "timestamp" | "isUndoable">) => {
-    const newState = { ...state };
-    const { team, points, type, raider, defendersTouched } = event;
+    // Deep-copy mutable sub-objects to avoid reference mutation bugs
+    const newState: MatchState = {
+      ...state,
+      home: { ...state.home },
+      away: { ...state.away },
+      playerStats: { ...state.playerStats },
+    };
+    const { team, points, type, raider } = event;
     const opponent = team === "home" ? "away" : "home";
 
     // 1. Update Core Points
-    newState[team].score += points;
+    newState[team] = { ...newState[team], score: newState[team].score + points };
 
     // 2. Kabaddi Logic: Revivals & Eliminations
     if (type === "TOUCH" || type === "SUPER_TACKLE" || type === "TACKLE") {
-      // Points scored - revive players for the scoring team
       const revivalCount = type === "SUPER_TACKLE" ? 2 : points;
-      newState[team].matCount = Math.min(7, newState[team].matCount + revivalCount);
+      newState[team] = { ...newState[team], matCount: Math.min(7, newState[team].matCount + revivalCount) };
       
-      // If it's a touch or tackle, someone from opponent goes out
       if (type === "TOUCH") {
-        newState[opponent].matCount = Math.max(0, newState[opponent].matCount - points);
-        newState[opponent].outs += points;
-      } else if (type === "TACKLE" || type === "SUPER_TACKLE") {
-        newState[opponent].matCount = Math.max(0, newState[opponent].matCount - 1);
-        newState[opponent].outs += 1;
+        newState[opponent] = { ...newState[opponent], matCount: Math.max(0, newState[opponent].matCount - points), outs: newState[opponent].outs + points };
+      } else {
+        newState[opponent] = { ...newState[opponent], matCount: Math.max(0, newState[opponent].matCount - 1), outs: newState[opponent].outs + 1 };
       }
     }
 
     // 3. All Out Detection
     if (newState[opponent].matCount === 0) {
-      newState[team].score += 2; // All-out bonus points
-      newState[opponent].matCount = 7; // Full revival for opponent
+      newState[team] = { ...newState[team], score: newState[team].score + 2 };
+      newState[opponent] = { ...newState[opponent], matCount: 7 };
       newState.lastAction = `ALL OUT! ${newState[team].name} wipes ${newState[opponent].name}`;
-      
-      // Add All-out to history as sub-event? Or just log it.
     }
 
-    // 4. Update History
+    // 4. Build History Event
     const newHistoryEvent: MatchEvent = {
       ...event,
-      id: `ev_${Date.now()}`,
+      id: `ev_${Date.now()}_${Math.random().toString(36).slice(2,6)}`,
       timestamp: Date.now(),
       isUndoable: true,
-      gameTime: state.timer
+      gameTime: state.timer,
     };
-
     newState.history = [newHistoryEvent, ...state.history].slice(0, 100);
     
-    // Update labels
-    const actionLabel = `${type.replace("_", " ")} +${points}`;
-    newState.lastAction = raider ? `${raider} - ${actionLabel}` : actionLabel;
-    
-    saveAndSetState(newState);
-    if (type === "TOUCH" || type === "BONUS" || type === "TACKLE" || type === "SUPER_TACKLE") {
-      setRaider(null); // Raid over
+    // 5. Update Player Stats
+    if (raider) {
+      const existingStats = newState.playerStats[raider] || { touchPoints: 0, bonusPoints: 0, tackles: 0, superTackles: 0, superRaids: 0, active: true };
+      const updatedStats = { ...existingStats };
+      if (type === "TOUCH")        updatedStats.touchPoints += points;
+      if (type === "BONUS")        updatedStats.bonusPoints += 1;
+      if (type === "SUPER_RAID") { updatedStats.touchPoints += points; updatedStats.superRaids += 1; }
+      if (type === "TACKLE")       updatedStats.tackles += 1;
+      if (type === "SUPER_TACKLE") updatedStats.superTackles += 1;
+      newState.playerStats = { ...newState.playerStats, [raider]: updatedStats };
     }
+    
+    // 6. Last Action label
+    const actionLabel = `${type.replace(/_/g, " ")} +${points}`;
+    newState.lastAction = raider ? `${raider} - ${actionLabel}` : actionLabel;
+
+    // 7. Clear raider inline (within the SAME state update) so we don't
+    //    get a second saveAndSetState call that overwrites history with stale state.
+    if (type === "TOUCH" || type === "BONUS" || type === "TACKLE" || type === "SUPER_TACKLE" || type === "SUPER_RAID") {
+      newState.currentRaider = null;
+      newState.raidClock = 30;
+    }
+
+    saveAndSetState(newState);  // single save — scores + history + cleared raider all in one
   };
 
    const undoToEvent = (eventId: string) => {
@@ -221,6 +248,16 @@ export function MatchProvider({ children }: { children: React.ReactNode }) {
          const opponent = team === "home" ? "away" : "home";
          replayedState[team].score += ev.points;
          
+         // Replay Player Stats
+         if (ev.raider) {
+            if (!replayedState.playerStats[ev.raider]) {
+               replayedState.playerStats[ev.raider] = { touchPoints: 0, bonusPoints: 0, tackles: 0, superTackles: 0, superRaids: 0, active: true };
+            }
+            if (ev.type === "TOUCH") replayedState.playerStats[ev.raider].touchPoints += ev.points;
+            if (ev.type === "BONUS") replayedState.playerStats[ev.raider].bonusPoints += 1;
+            // ... more types as needed
+         }
+
          if (ev.type === "TOUCH" || ev.type === "SUPER_TACKLE" || ev.type === "TACKLE") {
             const rev = ev.type === "SUPER_TACKLE" ? 2 : ev.points;
             replayedState[team].matCount = Math.min(7, replayedState[team].matCount + rev);
@@ -274,26 +311,32 @@ export function MatchProvider({ children }: { children: React.ReactNode }) {
     saveAndSetState({ ...state, raidClock: 30 });
   };
 
-  // Internal Timer Core
+  // Internal Timer Core — uses functional updater to NEVER clobber concurrent state changes
   useEffect(() => {
-    let interval: any = null;
-    if (state.isActive && state.timer > 0) {
-      interval = setInterval(() => {
-        const newState = { ...state, timer: state.timer - 1 };
-        if (state.currentRaider) {
-          newState.raidClock = Math.max(0, state.raidClock - 1);
+    if (!state.isActive || state.timer <= 0) return;
+
+    const interval = setInterval(() => {
+      setState(prev => {
+        // If timer was paused or expired since this interval was set up, do nothing
+        if (!prev.isActive || prev.timer <= 0) return prev;
+
+        const updated: MatchState = {
+          ...prev,
+          timer: prev.timer - 1,
+          raidClock: prev.currentRaider ? Math.max(0, prev.raidClock - 1) : prev.raidClock,
+        };
+
+        // Persist to localStorage every 5 seconds (broadcaster sync)
+        if (updated.timer % 5 === 0) {
+          localStorage.setItem(getStorageKey(activeMatchId), JSON.stringify(updated));
         }
-        setState(newState);
-        // We don't save to localStorage every second for performance, 
-        // but broadcaster will be slightly out of sync unless we do.
-        // For KabaddiHub, let's sync every 5 seconds or on events.
-        if (newState.timer % 5 === 0) {
-           localStorage.setItem(getStorageKey(activeMatchId), JSON.stringify(newState));
-        }
-      }, 1000);
-    }
+
+        return updated;  // ← merges with latest state, NEVER overwrites history
+      });
+    }, 1000);
+
     return () => clearInterval(interval);
-  }, [state.isActive, state.timer, state.raidClock, state.currentRaider, activeMatchId, getStorageKey]);
+  }, [state.isActive, state.timer, activeMatchId, getStorageKey]);
 
   return (
     <MatchContext.Provider value={{ 
