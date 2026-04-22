@@ -65,15 +65,13 @@ export default function PremiumLandingPage() {
     const live: any[] = [];
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
-      // Format: kabaddi_{tenantId}_match_{matchId}_state
-      if (key?.startsWith('kabaddi_') && key.endsWith('_state') && key.includes('_match_')) {
+      // Format: kabaddi_match_{matchId}_state
+      if (key?.startsWith('kabaddi_match_') && key.endsWith('_state')) {
         try {
           const state = JSON.parse(localStorage.getItem(key) || "{}");
-          const parts = key.split('_');
-          const matchIndex = parts.indexOf('match');
-          const matchId = parts[matchIndex + 1];
-          // Skip the generic 'match_state' key to avoid duplicate 'state' IDs
-          if (matchId && matchId !== 'state') {
+          const matchId = key.replace('kabaddi_match_', '').replace('_state', '');
+          
+          if (matchId && matchId !== 'fallback') {
             live.push({ id: matchId, ...state });
           }
         } catch (e) {
