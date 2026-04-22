@@ -7,7 +7,7 @@ import {
   Users, Search, Plus, Trash2, Edit3, 
   ShieldCheck, ShieldAlert, Phone, Mail, 
   Trophy, Activity, ChevronRight, X,
-  Save, Camera, MapPin, IDCard,
+  Save, Camera, MapPin, IdCard,
   CheckCircle2, XCircle, AlertCircle
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -120,7 +120,7 @@ export default function GlobalPlayersPoolPage() {
                       <td className="px-8 py-6">
                         <div className="space-y-1">
                           <div className="flex items-center gap-2 text-[9px] font-black text-slate-500 uppercase">
-                             <IDCard className="w-3 h-3" /> PAN: {p.pan}
+                             <IdCard className="w-3 h-3" /> PAN: {p.pan}
                           </div>
                           <div className="flex items-center gap-2 text-[9px] font-bold text-slate-300 uppercase">
                              <AlertCircle className="w-3 h-3" /> UID: {p.aadhar}
@@ -239,7 +239,7 @@ export default function GlobalPlayersPoolPage() {
                     <div className="grid md:grid-cols-2 gap-8">
                        <div className="bg-slate-900 p-8 rounded-[2.5rem] space-y-4">
                           <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 block flex items-center gap-2">
-                             <IDCard className="w-4 h-4" /> Income Tax (PAN) Card
+                             <IdCard className="w-4 h-4" /> Income Tax (PAN) Card
                           </label>
                           <input className="w-full bg-white/5 border-none rounded-2xl px-6 py-4 text-white text-sm font-black uppercase outline-none" value={editingPlayer.pan} onChange={e => setEditingPlayer({...editingPlayer, pan: e.target.value})} />
                           <div className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Document Registry # Verified by System</div>
