@@ -81,8 +81,7 @@ export default function Breadcrumbs() {
                 <Link 
                   href={href}
                   className={cn(
-                    "transition-colors",
-                    isLast ? "text-slate-900 pointer-events-none" : "text-slate-400 hover:text-orange-600"
+                    isLast ? "text-orange-500 pointer-events-none shadow-sm" : "text-slate-400 hover:text-orange-400"
                   )}
                 >
                   {getDisplayName(p)}

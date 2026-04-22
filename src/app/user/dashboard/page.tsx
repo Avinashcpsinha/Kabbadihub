@@ -26,6 +26,16 @@ export default function UserDashboardPage() {
       return;
     }
 
+    if (role === "SUPER_ADMIN") {
+      router.push("/super-admin");
+      return;
+    }
+
+    if (role === "ORGANISER") {
+      router.push("/admin");
+      return;
+    }
+
     // Aggregate matches from all tenants
     const allTenantsRaw = localStorage.getItem("kabaddihub_tenants");
     if (allTenantsRaw) {
