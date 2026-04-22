@@ -148,14 +148,7 @@ export default function CricHeroesStyleTournamentPage() {
                        Standings
                      </button>
                   </div>
-                  {role !== "PUBLIC" && (
-                     <button 
-                       onClick={() => setIsModalOpen(true)}
-                       className="px-8 py-4 bg-orange-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:bg-orange-700 transition-all shadow-xl shadow-orange-600/20"
-                     >
-                        <Plus className="w-5 h-5" /> Schedule
-                     </button>
-                  )}
+                   {/* Schedule button removed from here to follow unified layout pattern */}
                </div>
             </div>
          </nav>
@@ -167,10 +160,20 @@ export default function CricHeroesStyleTournamentPage() {
                 <h2 className="text-4xl font-black italic uppercase tracking-tighter text-slate-900 leading-none mb-4">{view === "fixtures" ? "Upcoming Battles" : "Elite Standings"}</h2>
                 <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider italic">{view === "fixtures" ? "Confirmed match sessions across the arena." : "Live power ranking of organizational franchises."}</p>
              </div>
-             <button className="px-6 py-3 bg-white border border-slate-200 rounded-xl text-[9px] font-black uppercase tracking-widest text-slate-500 hover:border-orange-600 hover:text-orange-600 transition-all flex items-center gap-3">
-                <Filter className="w-4 h-4" /> Date Filter
-             </button>
-          </div>
+              <div className="flex items-center gap-4">
+                 <button className="px-6 py-3 bg-white border border-slate-200 rounded-xl text-[9px] font-black uppercase tracking-widest text-slate-500 hover:border-orange-600 hover:text-orange-600 transition-all flex items-center gap-3">
+                    <Filter className="w-4 h-4" /> Date Filter
+                 </button>
+                 {role && role !== "PUBLIC" && (
+                    <button 
+                      onClick={() => setIsModalOpen(true)}
+                      className="px-8 py-4 bg-orange-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:bg-orange-700 transition-all shadow-xl shadow-orange-600/20"
+                    >
+                       <Plus className="w-5 h-5" /> Schedule Match
+                    </button>
+                 )}
+              </div>
+           </div>
 
           {view === "fixtures" ? (
              <div className="space-y-6">

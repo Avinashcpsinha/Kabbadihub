@@ -8,7 +8,7 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import {
   Calendar, Clock, ChevronRight, Zap, Activity,
-  Filter, Search, Trophy, Eye, MapPin
+  Filter, Search, Trophy, Eye, MapPin, Plus
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -109,15 +109,25 @@ export default function MatchesIndexPage() {
             </h1>
             <p className="text-sm font-medium text-slate-500">All matches across the KabaddiHub ecosystem.</p>
           </div>
-          <div className="relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Search teams, leagues..."
-              className="ch-input !pl-12 w-72"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
+          <div className="flex items-center gap-4">
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Search teams, leagues..."
+                className="ch-input !pl-12 w-72"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+            {role && role !== "PUBLIC" && (
+              <Link
+                href="/tournaments"
+                className="ch-btn-primary px-8 py-4 shadow-xl shadow-orange-600/20 flex items-center gap-2"
+              >
+                <Plus className="w-5 h-5" /> Schedule Match
+              </Link>
+            )}
           </div>
         </div>
 
