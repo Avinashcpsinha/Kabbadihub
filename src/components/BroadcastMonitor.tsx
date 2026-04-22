@@ -110,10 +110,40 @@ export default function BroadcastMonitor() {
           )}
         </AnimatePresence>
 
-        {!state.currentRaider && (
+        {!state.currentRaider && state.history.length === 0 && (
           <div className="mt-4 flex flex-col items-center justify-center py-6 opacity-20">
              <Trophy className="w-8 h-8 text-slate-500 mb-2" />
              <span className="text-[8px] font-black uppercase tracking-[0.2em] text-slate-400">Awaiting Arena Action</span>
+          </div>
+        )}
+
+        {/* Mini Commentary Feed */}
+        {state.history.length > 0 && (
+          <div className="mt-4 space-y-2 border-t border-white/5 pt-4">
+             {state.history.slice(0, 2).map((h, i) => (
+                <motion.div 
+                  key={h.id}
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className="flex items-center gap-3 bg-white/5 px-3 py-2 rounded-lg border border-white/5 group"
+                >
+                   <div className={cn(
+                     "w-1 h-4 rounded-full",
+                     h.team === "home" ? "bg-orange-600" : "bg-blue-600"
+                   )} />
+                   <div className="flex-1 min-w-0">
+                      <p className="text-[9px] font-black text-white uppercase italic truncate">
+                        {h.raider ? `${h.raider}: ` : ""}{h.type.replace('_', ' ')}
+                      </p>
+                      <p className="text-[7px] font-bold text-slate-500 uppercase tracking-widest truncate">
+                         {h.points > 0 ? `Score +${h.points}` : "Technical Action"}
+                      </p>
+                   </div>
+                   <div className="text-[8px] font-black tabular-nums text-slate-600 bg-black/40 px-1.5 py-0.5 rounded">
+                      {Math.floor(h.gameTime / 60)}:{h.gameTime % 60 < 10 ? "0" : ""}{h.gameTime % 60}
+                   </div>
+                </motion.div>
+             ))}
           </div>
         )}
       </div>

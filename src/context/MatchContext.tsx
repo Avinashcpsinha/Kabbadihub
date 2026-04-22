@@ -51,6 +51,7 @@ type MatchContextType = {
   setDoOrDie: (val: boolean) => void;
   resetRaidClock: () => void;
   switchHalf: () => void;
+  undoToEvent: (eventId: string) => void;
 };
 
 const initialState: MatchState = {
@@ -192,50 +193,62 @@ export function MatchProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const undoLastAction = () => {
-    if (state.history.length === 0) return;
-    const lastEvent = state.history[0];
-    
-    // Check 30s window (optional enforcement, but good for UX)
-    if (Date.now() - lastEvent.timestamp > 30000) {
-       console.warn("Undo window expired");
-       // we can still allow it in admin mode, but maybe show a warning
-    }
+   const undoToEvent = (eventId: string) => {
+     const eventIndex = state.history.findIndex(ev => ev.id === eventId);
+     if (eventIndex === -1) return;
+     
+     // Remove everything from the start of history to this event inclusive
+     // History is [newest, ..., oldest]
+     const updatedHistory = state.history.slice(eventIndex + 1);
+     replayFromHistory(updatedHistory);
+   };
 
-    // This is a simplified "Rebuild from scratch" or "Inverse action"
-    // Since we save full states in a real DB, undo is easier. 
-    // Here we'll just pop the history and let the user manual fix if complex,
-    // OR just use the previous state if we had a state history.
-    // Let's implement State Snapshots for true undo.
-    const updatedHistory = state.history.slice(1);
-    
-    // Reset to initial and re-play all events (the safest way)
-    let replayedState = { ...initialState };
-    
-    // Replay history in chronological order
-    [...updatedHistory].reverse().forEach(ev => {
-       const team = ev.team;
-       const opponent = team === "home" ? "away" : "home";
-       replayedState[team].score += ev.points;
-       if (ev.type === "TOUCH" || ev.type === "SUPER_TACKLE" || ev.type === "TACKLE") {
-          const rev = ev.type === "SUPER_TACKLE" ? 2 : ev.points;
-          replayedState[team].matCount = Math.min(7, replayedState[team].matCount + rev);
-          if (ev.type === "TOUCH") {
-            replayedState[opponent].matCount = Math.max(0, replayedState[opponent].matCount - ev.points);
-          } else {
-            replayedState[opponent].matCount = Math.max(0, replayedState[opponent].matCount - 1);
-          }
-       }
-       if (replayedState[opponent].matCount === 0) {
-          replayedState[team].score += 2;
-          replayedState[opponent].matCount = 7;
-       }
-    });
+   const replayFromHistory = (history: MatchEvent[]) => {
+      // Reset to initial and re-play all events (the safest way)
+      let replayedState = { 
+        ...initialState,
+        home: { ...initialState.home, name: state.home.name, shortName: state.home.shortName },
+        away: { ...initialState.away, name: state.away.name, shortName: state.away.shortName },
+        timer: state.timer,
+        half: state.half,
+        history: history,
+        lastAction: history.length > 0 ? "Undo Successful" : "Match Reset"
+      };
+      
+      // Replay history in chronological order (oldest first)
+      [...history].reverse().forEach(ev => {
+         const team = ev.team;
+         const opponent = team === "home" ? "away" : "home";
+         replayedState[team].score += ev.points;
+         
+         if (ev.type === "TOUCH" || ev.type === "SUPER_TACKLE" || ev.type === "TACKLE") {
+            const rev = ev.type === "SUPER_TACKLE" ? 2 : ev.points;
+            replayedState[team].matCount = Math.min(7, replayedState[team].matCount + rev);
+            
+            if (ev.type === "TOUCH") {
+              replayedState[opponent].matCount = Math.max(0, replayedState[opponent].matCount - ev.points);
+              replayedState[opponent].outs += ev.points;
+            } else {
+              replayedState[opponent].matCount = Math.max(0, replayedState[opponent].matCount - 1);
+              replayedState[opponent].outs += 1;
+            }
+         }
+         
+         // All out detection during replay
+         if (replayedState[opponent].matCount === 0) {
+            replayedState[team].score += 2;
+            replayedState[opponent].matCount = 7;
+         }
+      });
 
-    replayedState.history = updatedHistory;
-    replayedState.timer = state.timer; // keep timer
-    saveAndSetState(replayedState);
-  };
+      saveAndSetState(replayedState);
+   };
+
+   const undoLastAction = () => {
+     if (state.history.length === 0) return;
+     const updatedHistory = state.history.slice(1);
+     replayFromHistory(updatedHistory);
+   };
 
   const switchHalf = () => {
     saveAndSetState({ ...state, half: state.half === 1 ? 2 : 1, timer: 1200, isActive: false });
@@ -294,7 +307,8 @@ export function MatchProvider({ children }: { children: React.ReactNode }) {
       setRaider, 
       setDoOrDie, 
       resetRaidClock,
-      switchHalf
+      switchHalf,
+      undoToEvent
     }}>
       {children}
     </MatchContext.Provider>

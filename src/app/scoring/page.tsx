@@ -32,7 +32,7 @@ function ScoringContent() {
   const { role } = useAuth();
   const searchParams = useSearchParams();
   const matchId = searchParams.get("id");
-  const { state, activeMatchId, setMatchId, recordEvent, undoLastAction, toggleTimer, resetMatch, setRaider, setDoOrDie, switchHalf } = useMatch();
+  const { state, activeMatchId, setMatchId, recordEvent, undoLastAction, undoToEvent, toggleTimer, resetMatch, setRaider, setDoOrDie, switchHalf } = useMatch();
   const [rosters, setRosters] = React.useState<{ home: any[], away: any[] }>({ home: [], away: [] });
 
   React.useEffect(() => {
@@ -342,8 +342,10 @@ function ScoringContent() {
                              <button onClick={() => recordEvent({ team: "away", points: 0, type: "TECHNICAL_POINT", gameTime: state.timer })} className="py-3 bg-slate-50 text-slate-300 rounded-xl text-[9px] font-black uppercase tracking-widest active:scale-95 transition-all">Tech Pt</button>
                          </div>
                       </div>
-                   </div>
-                </div>                 <div className="bg-white ch-card p-10">
+                    </div>
+                 </div>
+
+                 <div className="bg-white ch-card p-10">
                     <h3 className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 mb-8 flex items-center gap-2">
                        <Activity className="w-4 h-4 text-orange-600" /> Live Commentary Feed
                     </h3>
@@ -376,6 +378,13 @@ function ScoringContent() {
                                      h.type === "ALL_OUT" ? `ALL-OUT! ${state[h.team].name} wipes the floor.` : 
                                      "Technical point awarded."}
                                </p>
+                               {/* Per-event Undo Button */}
+                               <button 
+                                 onClick={() => undoToEvent(h.id)}
+                                 className="mt-3 flex items-center gap-1.5 text-[7px] font-black uppercase tracking-widest text-slate-300 hover:text-red-600 transition-colors opacity-0 group-hover:opacity-100"
+                               >
+                                  <RotateCcw className="w-2.5 h-2.5" /> Revert To This Point
+                               </button>
                             </div>
                          </div>
                        )) : (
