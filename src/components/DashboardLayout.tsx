@@ -69,7 +69,7 @@ export default function DashboardLayout({
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed top-0 left-0 h-full bg-white border-r border-slate-200 z-[70] flex flex-col transition-all duration-300",
+          "fixed top-10 left-0 h-[calc(100vh-2.5rem)] bg-white border-r border-slate-200 z-[70] flex flex-col transition-all duration-300",
           isCollapsed ? "w-[80px]" : "w-[280px]",
           isMobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         )}
@@ -204,7 +204,7 @@ export default function DashboardLayout({
         isCollapsed ? "lg:ml-[80px]" : "lg:ml-[280px]"
       )}>
         {/* Mobile Topbar */}
-        <div className="lg:hidden sticky top-0 z-50 bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between">
+        <div className="lg:hidden sticky top-10 z-50 bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between">
           <button onClick={() => setIsMobileOpen(true)} className="p-2 bg-slate-100 rounded-xl">
             <Menu className="w-5 h-5 text-slate-600" />
           </button>
