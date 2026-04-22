@@ -2,12 +2,15 @@
 
 import React, { useState, useEffect } from "react";
 import PublicLayout from "@/components/PublicLayout";
+import DashboardLayout from "@/components/DashboardLayout";
+import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { Trophy, Calendar, ChevronRight, Star, Award, Filter } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function ResultsPage() {
+  const { role } = useAuth();
   const [results, setResults] = useState<any[]>([]);
 
   useEffect(() => {
@@ -56,9 +59,8 @@ export default function ResultsPage() {
     setResults(allResults);
   }, []);
 
-  return (
-    <PublicLayout>
-      <div className="max-w-7xl mx-auto px-6 md:px-12 py-12 pb-20">
+  const Content = (
+    <div className="max-w-7xl mx-auto px-6 md:px-12 py-12 pb-20 bg-transparent">
         <div className="flex items-center justify-between mb-10">
           <div>
             <h1 className="text-4xl font-black italic uppercase tracking-tighter text-slate-900 leading-none mb-2">
@@ -146,6 +148,12 @@ export default function ResultsPage() {
           </div>
         )}
       </div>
-    </PublicLayout>
+  );
+
+  if (role === "PUBLIC") return <PublicLayout>{Content}</PublicLayout>;
+  return (
+    <DashboardLayout variant={role === "USER" ? "user" : "organiser"}>
+       {Content}
+    </DashboardLayout>
   );
 }

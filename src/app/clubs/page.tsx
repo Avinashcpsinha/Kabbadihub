@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import PublicLayout from "@/components/PublicLayout";
+import DashboardLayout from "@/components/DashboardLayout";
 import { 
   ShoppingBag, MapPin, Clock, TrendingUp, Plus, 
   Settings, Search, ChevronRight, ShieldCheck, 
@@ -47,40 +48,41 @@ export default function ClubManagementPage() {
     }
   ];
 
-  return (
-    <PublicLayout>
-      <div className="max-w-7xl mx-auto px-6 md:px-12 py-12 pb-20 space-y-12">
-        
-        {/* Header Section */}
-        <header className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="flex items-center gap-6">
-            <button 
-              onClick={() => router.back()} 
-              className="p-3 bg-white border border-slate-200 rounded-2xl hover:bg-slate-50 transition-colors cursor-pointer flex items-center justify-center shadow-sm"
-            >
-              <ArrowLeft className="w-5 h-5 text-slate-400" />
-            </button>
-            <div>
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-100 mb-2">
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-                <span className="text-[10px] font-black uppercase tracking-widest text-emerald-600">Verified Facility Owner</span>
-              </div>
-              <h1 className="text-4xl font-black italic tracking-tighter uppercase text-slate-900 leading-none">Club Management</h1>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-4">
-            <div className="hidden md:flex flex-col items-end mr-4">
-              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Facility ID: #F-7721</span>
-              <span className="text-sm font-black text-slate-900 italic">SHIVAJI SPORTS HUB</span>
-            </div>
-            {role === "ORGANISER" && (
-              <button className="ch-btn-primary px-8 py-4 shadow-xl shadow-orange-600/20">
-                <Plus className="w-5 h-5" /> Add Ground
-              </button>
-            )}
-          </div>
-        </header>
+  const Content = (
+    <div className="max-w-7xl mx-auto px-6 md:px-12 py-12 pb-20 space-y-12 bg-transparent">
+       
+       {/* Header Section - Only show if Public */}
+       {role === "PUBLIC" && (
+         <header className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+           <div className="flex items-center gap-6">
+             <button 
+               onClick={() => router.back()} 
+               className="p-3 bg-white border border-slate-200 rounded-2xl hover:bg-slate-50 transition-colors cursor-pointer flex items-center justify-center shadow-sm"
+             >
+               <ArrowLeft className="w-5 h-5 text-slate-400" />
+             </button>
+             <div>
+               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-100 mb-2">
+                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+                 <span className="text-[10px] font-black uppercase tracking-widest text-emerald-600">Verified Facility Owner</span>
+               </div>
+               <h1 className="text-4xl font-black italic tracking-tighter uppercase text-slate-900 leading-none">Club Management</h1>
+             </div>
+           </div>
+           
+           <div className="flex items-center gap-4">
+             <div className="hidden md:flex flex-col items-end mr-4">
+               <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Facility ID: #F-7721</span>
+               <span className="text-sm font-black text-slate-900 italic">SHIVAJI SPORTS HUB</span>
+             </div>
+             {role === "ORGANISER" && (
+               <button className="ch-btn-primary px-8 py-4 shadow-xl shadow-orange-600/20">
+                 <Plus className="w-5 h-5" /> Add Ground
+               </button>
+             )}
+           </div>
+         </header>
+       )}
 
         {/* Analytics Highlights */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -231,6 +233,12 @@ export default function ClubManagementPage() {
            </div>
         </section>
       </div>
-    </PublicLayout>
+    );
+
+  if (role === "PUBLIC") return <PublicLayout>{Content}</PublicLayout>;
+  return (
+    <DashboardLayout variant="user">
+       {Content}
+    </DashboardLayout>
   );
 }

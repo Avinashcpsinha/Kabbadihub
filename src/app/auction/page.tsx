@@ -1,6 +1,9 @@
 "use client";
 
 import React, { useState } from "react";
+import DashboardLayout from "@/components/DashboardLayout";
+import PublicLayout from "@/components/PublicLayout";
+import { useAuth } from "@/context/AuthContext";
 import { 
   Gavel, 
   Users, 
@@ -25,6 +28,7 @@ import { useAuction } from "@/context/AuctionContext";
 import { useTenant } from "@/context/TenantContext";
 
 export default function AuctionDashboard() {
+  const { role } = useAuth();
   const { tenant } = useTenant();
   const { players, session, teams, currentPlayer, lastBid, startAuction, putPlayerOnBlock, markSold, markUnsold } = useAuction();
   const [searchTerm, setSearchTerm] = useState("");
@@ -34,47 +38,47 @@ export default function AuctionDashboard() {
     p.role.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  if (!session) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6 text-center">
-         <div className="w-24 h-24 rounded-[3rem] bg-orange-100 flex items-center justify-center mb-8 border border-orange-200">
-            <Gavel className="w-12 h-12 text-orange-600" />
+  const Content = (
+    <div className="min-h-screen bg-transparent text-slate-900 font-sans pb-40">
+       {!session ? (
+         <div className="min-h-[70vh] bg-transparent flex flex-col items-center justify-center p-6 text-center">
+            <div className="w-24 h-24 rounded-[3rem] bg-orange-100 flex items-center justify-center mb-8 border border-orange-200">
+               <Gavel className="w-12 h-12 text-orange-600" />
+            </div>
+            <h1 className="text-5xl font-black italic uppercase tracking-tighter text-slate-900 mb-4">Auction Center</h1>
+            <p className="text-slate-500 max-w-sm mb-12 italic">Initialize the player draft session for the current tournament organization.</p>
+            <button 
+              onClick={() => startAuction("t1")}
+              className="ch-btn-primary px-12 py-5 shadow-2xl shadow-orange-600/20 flex items-center gap-3"
+            >
+               Initialize Session <Play className="w-5 h-5 fill-current" />
+            </button>
          </div>
-         <h1 className="text-5xl font-black italic uppercase tracking-tighter text-slate-900 mb-4">Auction Center</h1>
-         <p className="text-slate-500 max-w-sm mb-12 italic">Initialize the player draft session for the current tournament organization.</p>
-         <button 
-           onClick={() => startAuction("t1")}
-           className="ch-btn-primary px-12 py-5 shadow-2xl shadow-orange-600/20 flex items-center gap-3"
-         >
-            Initialize Session <Play className="w-5 h-5 fill-current" />
-         </button>
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen bg-[#f8fafc] text-slate-900 font-sans pb-40">
-       <nav className="bg-white border-b border-slate-200 px-6 py-4 sticky top-0 z-50">
-          <div className="max-w-7xl mx-auto flex items-center justify-between">
-             <div className="flex items-center gap-6">
-                <Link href="/" className="p-3 bg-slate-100 rounded-xl text-slate-500 hover:text-orange-600 transition-all">
-                   <Users className="w-5 h-5" />
-                </Link>
-                <div>
-                   <span className="text-sm font-black italic uppercase tracking-tighter text-slate-900 leading-none block">Auction Console</span>
-                   <span className="text-[8px] font-black uppercase tracking-widest text-slate-400">Live Draft Management • {tenant?.name || "Global"}</span>
+       ) : (
+         <>
+           {role === "PUBLIC" && (
+             <nav className="bg-white border-b border-slate-200 px-6 py-4 sticky top-10 z-50">
+                <div className="max-w-7xl mx-auto flex items-center justify-between">
+                   <div className="flex items-center gap-6">
+                      <Link href="/" className="p-3 bg-slate-100 rounded-xl text-slate-500 hover:text-orange-600 transition-all">
+                         <Users className="w-5 h-5" />
+                      </Link>
+                      <div>
+                         <span className="text-sm font-black italic uppercase tracking-tighter text-slate-900 leading-none block">Auction Console</span>
+                         <span className="text-[8px] font-black uppercase tracking-widest text-slate-400">Live Draft Management • {tenant?.name || "Global"}</span>
+                      </div>
+                   </div>
+                   <div className="flex items-center gap-4">
+                      <Link href="/auction/presentation" target="_blank" className="px-6 py-3 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:bg-black transition-all">
+                         <Monitor className="w-4 h-4" /> Presentation Mode
+                      </Link>
+                      <button className="p-3 bg-slate-100 rounded-xl text-slate-500">
+                         <Settings2 className="w-5 h-5" />
+                      </button>
+                   </div>
                 </div>
-             </div>
-             <div className="flex items-center gap-4">
-                <Link href="/auction/presentation" target="_blank" className="px-6 py-3 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:bg-black transition-all">
-                   <Monitor className="w-4 h-4" /> Presentation Mode
-                </Link>
-                <button className="p-3 bg-slate-100 rounded-xl text-slate-500">
-                   <Settings2 className="w-5 h-5" />
-                </button>
-             </div>
-          </div>
-       </nav>
+             </nav>
+           )}
 
        <main className="max-w-7xl mx-auto p-6 md:p-12 space-y-12">
           {/* Active Player Status */}
@@ -259,6 +263,14 @@ export default function AuctionDashboard() {
        <footer className="py-20 text-center text-[10px] font-black uppercase tracking-[0.5em] text-slate-300">
           Certified Auction Node • High-Frequency Trading Protocol
        </footer>
+       )}
     </div>
+  );
+
+  if (role === "PUBLIC") return <PublicLayout>{Content}</PublicLayout>;
+  return (
+    <DashboardLayout variant="organiser">
+       {Content}
+    </DashboardLayout>
   );
 }

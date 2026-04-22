@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import PublicLayout from "@/components/PublicLayout";
+import DashboardLayout from "@/components/DashboardLayout";
 import { 
   Zap, MessageSquare, UserPlus, Target, Clock, 
   MapPin, Swords, ChevronRight, Search, Users, 
@@ -14,7 +15,7 @@ import { useAuth } from "@/context/AuthContext";
 
 export default function ChallengesPage() {
   const router = useRouter();
-  const { isAuthenticated, currentUser } = useAuth();
+  const { role, currentUser } = useAuth();
   const [activeTab, setActiveTab] = useState("discover");
 
   const openChallenges = [
@@ -50,36 +51,37 @@ export default function ChallengesPage() {
     }
   ];
 
-  return (
-    <PublicLayout>
-      <div className="max-w-7xl mx-auto px-6 md:px-12 py-12 pb-20 space-y-12 relative">
-        {/* Background Decor */}
-        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-orange-600/5 blur-[120px] rounded-full -z-10" />
+  const Content = (
+    <div className="max-w-7xl mx-auto px-6 md:px-12 py-12 pb-20 space-y-12 relative bg-transparent">
+       {/* Background Decor */}
+       <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-orange-600/5 blur-[120px] rounded-full -z-10" />
 
-        {/* Header Section */}
-        <header className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="flex items-center gap-6">
-            <button 
-              onClick={() => router.back()} 
-              className="p-3 bg-white border border-slate-200 rounded-2xl hover:bg-slate-50 transition-colors cursor-pointer flex items-center justify-center shadow-sm"
-            >
-              <ArrowLeft className="w-5 h-5 text-slate-400" />
-            </button>
-            <div>
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-50 border border-orange-100 mb-2">
-                <Swords className="w-3.5 h-3.5 text-orange-600" />
-                <span className="text-[10px] font-black uppercase tracking-widest text-orange-600">The Arena Matchmaking</span>
-              </div>
-              <h1 className="text-4xl font-black italic tracking-tighter uppercase text-slate-900 leading-none">Global Challenges</h1>
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-4">
-             <button className="ch-btn-primary px-8 py-4 shadow-xl shadow-orange-600/20">
-                <Plus className="w-5 h-5" /> Post a Challenge
+       {/* Header Section - Only show if Public or needed */}
+       {role === "PUBLIC" && (
+         <header className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+           <div className="flex items-center gap-6">
+             <button 
+               onClick={() => router.back()} 
+               className="p-3 bg-white border border-slate-200 rounded-2xl hover:bg-slate-50 transition-colors cursor-pointer flex items-center justify-center shadow-sm"
+             >
+               <ArrowLeft className="w-5 h-5 text-slate-400" />
              </button>
-          </div>
-        </header>
+             <div>
+               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-50 border border-orange-100 mb-2">
+                 <Swords className="w-3.5 h-3.5 text-orange-600" />
+                 <span className="text-[10px] font-black uppercase tracking-widest text-orange-600">The Arena Matchmaking</span>
+               </div>
+               <h1 className="text-4xl font-black italic tracking-tighter uppercase text-slate-900 leading-none">Global Challenges</h1>
+             </div>
+           </div>
+           
+           <div className="flex items-center gap-4">
+              <button className="ch-btn-primary px-8 py-4 shadow-xl shadow-orange-600/20">
+                 <Plus className="w-5 h-5" /> Post a Challenge
+              </button>
+           </div>
+         </header>
+       )}
 
         {/* Global Stats */}
         <div className="flex flex-wrap gap-4">
@@ -241,7 +243,13 @@ export default function ChallengesPage() {
            </div>
 
         </main>
-      </div>
-    </PublicLayout>
+    </div>
+  );
+
+  if (role === "PUBLIC") return <PublicLayout>{Content}</PublicLayout>;
+  return (
+    <DashboardLayout variant="user">
+       {Content}
+    </DashboardLayout>
   );
 }

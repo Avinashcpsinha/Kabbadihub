@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import DashboardLayout from "@/components/DashboardLayout";
+import PublicLayout from "@/components/PublicLayout";
 import { 
   Users, 
   Plus, 
@@ -129,46 +131,48 @@ export default function CricHeroesStyleTeamsPage() {
     t.city?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  return (
-    <div className="min-h-screen bg-[#f8fafc] text-slate-900 font-sans pb-40">
-       {/* Top Navigation */}
-       <nav className="bg-white border-b border-slate-200 px-6 py-4 sticky top-10 z-[50]">
-          <div className="max-w-7xl mx-auto flex items-center justify-between">
-             <div className="flex items-center gap-6">
-                <button 
-                  onClick={() => router.back()} 
-                  className="p-3 bg-slate-100 rounded-xl text-slate-500 hover:text-orange-600 transition-all border-none cursor-pointer flex items-center justify-center"
-                >
-                   <ArrowLeft className="w-5 h-5" />
-                </button>
-                <div>
-                   <span className="text-sm font-black italic uppercase tracking-tighter text-slate-900 leading-none block">Squad Registry</span>
-                   <span className="text-[8px] font-black uppercase tracking-widest text-slate-400">{tenant?.name || "Global"} Management</span>
-                </div>
-             </div>
-             
-             <div className="flex items-center gap-4">
-                <div className="relative hidden md:block">
-                   <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                   <input 
-                    type="text" 
-                    placeholder="Search Franchise..."
-                    className="ch-input !pl-12 w-64 py-3"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                   />
-                </div>
-                {role !== "PUBLIC" && (
+  const Content = (
+    <div className="min-h-screen bg-transparent text-slate-900 font-sans pb-40">
+       {/* Top Navigation - Only show if Public */}
+       {role === "PUBLIC" && (
+         <nav className="bg-white border-b border-slate-200 px-6 py-4 sticky top-10 z-[50]">
+            <div className="max-w-7xl mx-auto flex items-center justify-between">
+               <div className="flex items-center gap-6">
                   <button 
-                   onClick={() => setIsModalOpen(true)}
-                   className="ch-btn-primary py-3"
+                    onClick={() => router.back()} 
+                    className="p-3 bg-slate-100 rounded-xl text-slate-500 hover:text-orange-600 transition-all border-none cursor-pointer flex items-center justify-center"
                   >
-                     <Plus className="w-5 h-5" /> Register
+                     <ArrowLeft className="w-5 h-5" />
                   </button>
-                )}
-             </div>
-          </div>
-       </nav>
+                  <div>
+                     <span className="text-sm font-black italic uppercase tracking-tighter text-slate-900 leading-none block">Squad Registry</span>
+                     <span className="text-[8px] font-black uppercase tracking-widest text-slate-400">{tenant?.name || "Global"} Management</span>
+                  </div>
+               </div>
+               
+               <div className="flex items-center gap-4">
+                  <div className="relative hidden md:block">
+                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                     <input 
+                      type="text" 
+                      placeholder="Search Franchise..."
+                      className="ch-input !pl-12 w-64 py-3"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                     />
+                  </div>
+                  {role !== "PUBLIC" && (
+                    <button 
+                     onClick={() => setIsModalOpen(true)}
+                     className="ch-btn-primary py-3"
+                    >
+                       <Plus className="w-5 h-5" /> Register
+                    </button>
+                  )}
+               </div>
+            </div>
+         </nav>
+       )}
 
        <main className="max-w-7xl mx-auto p-6 md:p-12 space-y-12">
           <div className="flex items-center justify-between mb-8">
@@ -341,5 +345,12 @@ export default function CricHeroesStyleTeamsPage() {
           )}
        </AnimatePresence>
     </div>
+  );
+
+  if (role === "PUBLIC") return <PublicLayout>{Content}</PublicLayout>;
+  return (
+    <DashboardLayout variant={role === "USER" ? "user" : "organiser"}>
+       {Content}
+    </DashboardLayout>
   );
 }

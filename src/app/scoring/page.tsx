@@ -1,6 +1,9 @@
 "use client";
 
 import React from "react";
+import DashboardLayout from "@/components/DashboardLayout";
+import PublicLayout from "@/components/PublicLayout";
+import { useAuth } from "@/context/AuthContext";
 import { 
   Zap, 
   ArrowLeft, 
@@ -25,6 +28,7 @@ import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 
 function ScoringContent() {
+  const { role } = useAuth();
   const searchParams = useSearchParams();
   const matchId = searchParams.get("id");
   const { state, activeMatchId, setMatchId, recordEvent, undoLastAction, toggleTimer, resetMatch, setRaider, setDoOrDie, switchHalf } = useMatch();
@@ -80,37 +84,39 @@ function ScoringContent() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] text-slate-900 font-sans pb-40">
-       {/* Scoring Navbar */}
-       <nav className="bg-white border-b border-slate-200 px-6 py-4 sticky top-0 z-50">
-          <div className="max-w-7xl mx-auto flex items-center justify-between">
-             <div className="flex items-center gap-6">
-                <Link href="/tournaments" className="p-3 bg-slate-100 rounded-xl text-slate-500 hover:text-orange-600 transition-all">
-                   <ArrowLeft className="w-5 h-5" />
-                </Link>
-                <div>
-                   <span className="text-sm font-black italic uppercase tracking-tighter text-slate-900 leading-none block">Match Console</span>
-                   <span className="text-[8px] font-black uppercase tracking-widest text-slate-400">Match Instance #{activeMatchId || "102"} • Verified Session</span>
-                </div>
-             </div>
-             
-             <div className="flex items-center gap-4">
-                <div className="px-4 py-1.5 rounded-full bg-orange-100 text-orange-600 border border-orange-200 text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
-                   <div className="w-1.5 h-1.5 rounded-full bg-orange-600 animate-pulse" />
-                   Sync Mode: Active
-                </div>
-                 <button 
-                   onClick={undoLastAction}
-                   className="p-3 bg-red-50 rounded-xl text-red-600 hover:bg-red-600 hover:text-white transition-all flex items-center gap-2 text-[8px] font-black uppercase px-4"
-                 >
-                    <RotateCcw className="w-4 h-4" /> Undo
-                 </button>
-                 <button className="p-3 bg-slate-100 rounded-xl text-slate-500">
-                    <Settings2 className="w-5 h-5" />
-                 </button>
-             </div>
-          </div>
-       </nav>
+    <div className="min-h-screen bg-transparent text-slate-900 font-sans pb-40">
+       {/* Scoring Navbar - Only show if Public */}
+       {role === "PUBLIC" && (
+         <nav className="bg-white border-b border-slate-200 px-6 py-4 sticky top-10 z-50">
+            <div className="max-w-7xl mx-auto flex items-center justify-between">
+               <div className="flex items-center gap-6">
+                  <Link href="/tournaments" className="p-3 bg-slate-100 rounded-xl text-slate-500 hover:text-orange-600 transition-all">
+                     <ArrowLeft className="w-5 h-5" />
+                  </Link>
+                  <div>
+                     <span className="text-sm font-black italic uppercase tracking-tighter text-slate-900 leading-none block">Match Console</span>
+                     <span className="text-[8px] font-black uppercase tracking-widest text-slate-400">Match Instance #{activeMatchId || "102"} • Verified Session</span>
+                  </div>
+               </div>
+               
+               <div className="flex items-center gap-4">
+                  <div className="px-4 py-1.5 rounded-full bg-orange-100 text-orange-600 border border-orange-200 text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
+                     <div className="w-1.5 h-1.5 rounded-full bg-orange-600 animate-pulse" />
+                     Sync Mode: Active
+                  </div>
+                   <button 
+                     onClick={undoLastAction}
+                     className="p-3 bg-red-50 rounded-xl text-red-600 hover:bg-red-600 hover:text-white transition-all flex items-center gap-2 text-[8px] font-black uppercase px-4"
+                   >
+                      <RotateCcw className="w-4 h-4" /> Undo
+                   </button>
+                   <button className="p-3 bg-slate-100 rounded-xl text-slate-500">
+                      <Settings2 className="w-5 h-5" />
+                   </button>
+               </div>
+            </div>
+         </nav>
+       )}
 
        <main className="max-w-7xl mx-auto p-4 md:p-8 space-y-8">
           
@@ -381,9 +387,18 @@ function ScoringContent() {
 }
 
 export default function CricHeroesStyleScoringPage() {
-  return (
+  const { role } = useAuth();
+  
+  const Content = (
     <Suspense fallback={<div className="p-20 text-center uppercase font-black italic">Loading Console...</div>}>
       <ScoringContent />
     </Suspense>
+  );
+
+  if (role === "PUBLIC") return <PublicLayout>{Content}</PublicLayout>;
+  return (
+    <DashboardLayout variant="organiser">
+       {Content}
+    </DashboardLayout>
   );
 }

@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect } from "react";
 import PublicLayout from "@/components/PublicLayout";
+import DashboardLayout from "@/components/DashboardLayout";
+import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import {
@@ -29,6 +31,7 @@ type AggregatedMatch = {
 };
 
 export default function MatchesIndexPage() {
+  const { role } = useAuth();
   const [matches, setMatches] = useState<AggregatedMatch[]>([]);
   const [activeTab, setActiveTab] = useState<"ALL" | "UPCOMING" | "LIVE" | "COMPLETED">("ALL");
   const [searchQuery, setSearchQuery] = useState("");
@@ -96,9 +99,8 @@ export default function MatchesIndexPage() {
     return tabMatch && searchMatch;
   });
 
-  return (
-    <PublicLayout>
-      <div className="max-w-7xl mx-auto px-6 md:px-12 py-12 pb-20">
+  const Content = (
+    <div className="max-w-7xl mx-auto px-6 md:px-12 py-12 pb-20 bg-transparent">
         {/* Header */}
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-10">
           <div>
@@ -230,8 +232,14 @@ export default function MatchesIndexPage() {
               <p className="text-sm text-slate-400">Try a different filter or check back later.</p>
             </div>
           )}
-        </div>
       </div>
-    </PublicLayout>
+    </div>
+  );
+
+  if (role === "PUBLIC") return <PublicLayout>{Content}</PublicLayout>;
+  return (
+    <DashboardLayout variant={role === "USER" ? "user" : "organiser"}>
+       {Content}
+    </DashboardLayout>
   );
 }
