@@ -125,10 +125,13 @@ export function MatchProvider({ children }: { children: React.ReactNode }) {
           };
           setState(newMatchState);
           localStorage.setItem(key, JSON.stringify(newMatchState));
+          supabase.from('live_matches').upsert({ id, state: newMatchState, updated_at: new Date().toISOString() }).then();
           return;
         }
       }
       setState(initialState);
+      localStorage.setItem(key, JSON.stringify(initialState));
+      supabase.from('live_matches').upsert({ id, state: initialState, updated_at: new Date().toISOString() }).then();
     }
   }, [tenant, getStorageKey]);
 
@@ -363,9 +366,10 @@ export function MatchProvider({ children }: { children: React.ReactNode }) {
           raidClock: prev.currentRaider ? Math.max(0, prev.raidClock - 1) : prev.raidClock,
         };
 
-        // Persist to localStorage every 5 seconds (broadcaster sync)
-        if (updated.timer % 5 === 0) {
+        // Persist to storage and cloud every 5 seconds (broadcaster live sync)
+        if (updated.timer % 5 === 0 && activeMatchId) {
           localStorage.setItem(getStorageKey(activeMatchId), JSON.stringify(updated));
+          supabase.from('live_matches').upsert({ id: activeMatchId, state: updated, updated_at: new Date().toISOString() }).then();
         }
 
         return updated;  // ← merges with latest state, NEVER overwrites history
