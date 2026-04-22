@@ -11,7 +11,6 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
-import { Player } from "@/types";
 
 export default function GlobalPlayersPoolPage() {
   const [players, setPlayers] = useState<any[]>([]);
@@ -19,15 +18,11 @@ export default function GlobalPlayersPoolPage() {
   const [editingPlayer, setEditingPlayer] = useState<any | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Load global players
   useEffect(() => {
     const saved = localStorage.getItem("kabaddihub_global_players");
     if (saved) {
       setPlayers(JSON.parse(saved));
     } else {
-      // Fetch the 50 player list from our "Seed" (mocked here for speed)
-      // In a real app we'd pull from a shared constant
-      // Generating with dummy phone/email for the 50 players
       const initial = Array.from({ length: 50 }).map((_, i) => ({
         id: `p${i + 1}`,
         name: i === 0 ? "Pawan Sehrawat" : i === 1 ? "Naveen Kumar" : `Player ${i + 1}`,
@@ -52,17 +47,6 @@ export default function GlobalPlayersPoolPage() {
   const savePlayers = (updated: any[]) => {
     setPlayers(updated);
     localStorage.setItem("kabaddihub_global_players", JSON.stringify(updated));
-  };
-
-  const handleEdit = (player: any) => {
-    setEditingPlayer({ ...player });
-    setIsModalOpen(true);
-  };
-
-  const handleDelete = (id: string) => {
-    if (confirm("Are you sure you want to remove this player from the global pool?")) {
-      savePlayers(players.filter(p => p.id !== id));
-    }
   };
 
   const toggleStatus = (id: string) => {
@@ -91,7 +75,6 @@ export default function GlobalPlayersPoolPage() {
             </button>
           </div>
 
-          {/* Search Bar */}
           <div className="flex items-center gap-4 bg-white p-5 rounded-3xl border border-slate-100 shadow-sm">
             <Search className="w-5 h-5 text-slate-300" />
             <input 
@@ -136,10 +119,10 @@ export default function GlobalPlayersPoolPage() {
                       <td className="px-8 py-6">
                         <div className="space-y-1">
                           <div className="flex items-center gap-2 text-[10px] font-bold text-slate-600">
-                             <Phone className="w-3 h-3" /> {p.phone || "Not Registered"}
+                             <Phone className="w-3 h-3" /> {p.phone}
                           </div>
                           <div className="flex items-center gap-2 text-[10px] font-medium text-slate-400 lowercase italic">
-                             <Mail className="w-3 h-3" /> {p.email || "no-contact@kabaddi.in"}
+                             <Mail className="w-3 h-3" /> {p.email}
                           </div>
                         </div>
                       </td>
@@ -172,13 +155,13 @@ export default function GlobalPlayersPoolPage() {
                       <td className="px-8 py-6">
                         <div className="flex items-center justify-end gap-2">
                            <button 
-                             onClick={() => handleEdit(p)}
-                             className="p-2.5 bg-white border border-slate-100 rounded-xl text-slate-400 hover:text-blue-600 hover:border-blue-100 hover:shadow-sm transition-all"
+                             onClick={() => { setEditingPlayer({...p}); setIsModalOpen(true); }}
+                             className="p-2.5 bg-white border border-slate-100 rounded-xl text-slate-400 hover:text-blue-600 hover:border-blue-100 transition-all"
                            >
                               <Edit3 className="w-4 h-4" />
                            </button>
                            <button 
-                             onClick={() => handleDelete(p.id)}
+                             onClick={() => { if(confirm("Delete?")) savePlayers(players.filter(x => x.id !== p.id)); }}
                              className="p-2.5 bg-white border border-slate-100 rounded-xl text-slate-400 hover:text-red-600 hover:border-red-100 transition-all"
                            >
                               <Trash2 className="w-4 h-4" />
@@ -193,109 +176,44 @@ export default function GlobalPlayersPoolPage() {
           </div>
         </div>
 
-        {/* Edit Modal */}
         <AnimatePresence>
           {isModalOpen && editingPlayer && (
             <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-6">
               <motion.div 
-                initial={{ opacity: 0, scale: 0.9, y: 20 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }}
                 className="bg-white rounded-[2.5rem] w-full max-w-2xl overflow-hidden shadow-2xl"
               >
                  <div className="p-8 border-b border-slate-100 flex items-center justify-between">
-                    <div>
-                      <h2 className="text-2xl font-black italic uppercase tracking-tighter text-slate-900 leading-none mb-1">Athlete Dossier</h2>
-                      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Universal Player Registry Management</p>
-                    </div>
-                    <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-slate-50 rounded-full transition-colors"><X className="w-5 h-5 text-slate-400" /></button>
+                    <h2 className="text-2xl font-black italic uppercase text-slate-900">Athlete Dossier</h2>
+                    <button onClick={() => setIsModalOpen(false)}><X className="w-5 h-5 text-slate-400" /></button>
                  </div>
-
                  <div className="p-10 grid md:grid-cols-2 gap-8">
                     <div className="space-y-6">
-                       <div className="space-y-4">
-                          <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 ml-2 block">Full Professional Name</label>
-                          <input 
-                            className="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 text-sm font-bold outline-none" 
-                            value={editingPlayer.name}
-                            onChange={e => setEditingPlayer({...editingPlayer, name: e.target.value})}
-                          />
-                       </div>
+                       <input className="w-full bg-slate-50 rounded-2xl px-6 py-4 text-sm font-bold outline-none" value={editingPlayer.name} onChange={e => setEditingPlayer({...editingPlayer, name: e.target.value})} />
                        <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-4">
-                            <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 ml-2 block">Primary Role</label>
-                            <select 
-                              className="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 text-sm font-bold outline-none appearance-none"
-                              value={editingPlayer.role}
-                              onChange={e => setEditingPlayer({...editingPlayer, role: e.target.value})}
-                            >
-                               <option value="RAIDER">RAIDER</option>
-                               <option value="DEFENDER">DEFENDER</option>
-                               <option value="ALL_ROUNDER">ALL ROUNDER</option>
-                            </select>
-                          </div>
-                          <div className="space-y-4">
-                            <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 ml-2 block">Jersey #</label>
-                            <input 
-                              className="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 text-sm font-bold outline-none" 
-                              value={editingPlayer.number}
-                              onChange={e => setEditingPlayer({...editingPlayer, number: e.target.value})}
-                            />
-                          </div>
+                          <select className="bg-slate-50 rounded-2xl px-6 py-4 text-sm font-bold outline-none" value={editingPlayer.role} onChange={e => setEditingPlayer({...editingPlayer, role: e.target.value})}>
+                             <option value="RAIDER">RAIDER</option>
+                             <option value="DEFENDER">DEFENDER</option>
+                             <option value="ALL_ROUNDER">ALL ROUNDER</option>
+                          </select>
+                          <input className="bg-slate-50 rounded-2xl px-6 py-4 text-sm font-bold outline-none" value={editingPlayer.number} onChange={e => setEditingPlayer({...editingPlayer, number: e.target.value})} />
                        </div>
                     </div>
-
                     <div className="space-y-6">
-                       <div className="space-y-4">
-                          <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 ml-2 block">Phone Number</label>
-                          <input 
-                            className="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 text-sm font-bold outline-none" 
-                            value={editingPlayer.phone}
-                            onChange={e => setEditingPlayer({...editingPlayer, phone: e.target.value})}
-                          />
-                       </div>
-                       <div className="space-y-4">
-                          <label className="text-[9px] font-black uppercase tracking-widest text-slate-400 ml-2 block">Official Email ID</label>
-                          <input 
-                            className="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 text-sm font-bold outline-none" 
-                            value={editingPlayer.email}
-                            onChange={e => setEditingPlayer({...editingPlayer, email: e.target.value})}
-                          />
-                       </div>
+                       <input className="w-full bg-slate-50 rounded-2xl px-6 py-4 text-sm font-bold outline-none" value={editingPlayer.phone} onChange={e => setEditingPlayer({...editingPlayer, phone: e.target.value})} />
+                       <input className="w-full bg-slate-50 rounded-2xl px-6 py-4 text-sm font-bold outline-none" value={editingPlayer.email} onChange={e => setEditingPlayer({...editingPlayer, email: e.target.value})} />
                     </div>
-
-                    <div className="md:col-span-2 pt-6 border-t border-slate-50 flex items-center justify-between">
-                       <div className="flex items-center gap-3">
-                          <button 
-                            className={cn(
-                              "px-6 py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all",
-                              editingPlayer.status === "ENABLED" ? "bg-emerald-50 text-emerald-600" : "bg-red-50 text-red-600"
-                            )}
-                            onClick={() => setEditingPlayer({...editingPlayer, status: editingPlayer.status === "ENABLED" ? "DISABLED" : "ENABLED"})}
-                          >
-                            Set {editingPlayer.status === "ENABLED" ? "BANNED" : "ACTIVE"}
-                          </button>
-                       </div>
-                       <div className="flex items-center gap-4">
-                          <button onClick={() => setIsModalOpen(false)} className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-6">Discard</button>
-                          <button 
-                            onClick={() => {
-                               const updated = players.map(p => p.id === editingPlayer.id ? editingPlayer : p);
-                               savePlayers(updated);
-                               setIsModalOpen(false);
-                            }}
-                            className="px-10 py-5 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl flex items-center gap-3"
-                          >
-                             <Save className="w-4 h-4" /> Save Record
-                          </button>
-                       </div>
+                    <div className="md:col-span-2 pt-6 flex justify-end gap-4">
+                       <button onClick={() => setIsModalOpen(false)} className="text-[10px] font-black uppercase text-slate-400 px-6">Discard</button>
+                       <button onClick={() => { savePlayers(players.map(p => p.id === editingPlayer.id ? editingPlayer : p)); setIsModalOpen(false); }} className="px-10 py-5 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl flex items-center gap-3">
+                          <Save className="w-4 h-4" /> Save Record
+                       </button>
                     </div>
                  </div>
               </motion.div>
             </div>
           )}
         </AnimatePresence>
-        </div>
       </DashboardLayout>
     </RoleGate>
   );
