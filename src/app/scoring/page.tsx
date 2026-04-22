@@ -5,6 +5,7 @@ import DashboardLayout from "@/components/DashboardLayout";
 import PublicLayout from "@/components/PublicLayout";
 import { useAuth } from "@/context/AuthContext";
 import { useMatch } from "@/context/MatchContext";
+import { useTenant } from "@/context/TenantContext";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import Link from "next/link";
@@ -50,6 +51,7 @@ function Toast({ toasts }: { toasts: { id: number; msg: string; color: string; i
 // ─── Main Scorer ──────────────────────────────────────────────────────────────
 function ScoringContent() {
   const { role } = useAuth();
+  const { tenant } = useTenant();
   const searchParams = useSearchParams();
   const matchId = searchParams.get("id");
   const { state, activeMatchId, setMatchId, recordEvent, undoLastAction, undoToEvent, toggleTimer, resetMatch, setRaider, setDoOrDie, switchHalf } = useMatch();
@@ -80,21 +82,19 @@ function ScoringContent() {
   React.useEffect(() => {
     if (matchId) {
       setMatchId(matchId);
-      let foundMatch: any = null;
-      let usedTenantId = "";
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key?.includes("_matches")) {
-          const matches = JSON.parse(localStorage.getItem(key) || "[]");
-          const m = matches.find((m: any) => m.id === matchId);
-          if (m) { foundMatch = m; usedTenantId = key.split("_")[1]; break; }
-        }
-      }
-      if (foundMatch && usedTenantId) {
-        const teamKey = `kabaddihub_${usedTenantId}_teams`;
+      
+      // Explicitly read from the active tenant's context to avoid pulling dummy data from other tenants
+      const targetTenantId = tenant?.id || "global";
+      const matchKey = `kabaddihub_${targetTenantId}_matches`;
+      const matches = JSON.parse(localStorage.getItem(matchKey) || "[]");
+      const foundMatch = matches.find((m: any) => m.id === matchId);
+
+      if (foundMatch) {
+        const teamKey = `kabaddihub_${targetTenantId}_teams`;
         const teams = JSON.parse(localStorage.getItem(teamKey) || "[]");
         const homeT = teams.find((t: any) => t.id === foundMatch.homeTeamId);
         const awayT = teams.find((t: any) => t.id === foundMatch.awayTeamId);
+        
         const mk = (n: number, prefix: string) => Array.from({ length: 7 }, (_, i) => ({ id: `${prefix}_${i + 1}`, name: `Raider ${i + 1}`, number: n + i }));
         const homeRoster = homeT?.players?.length ? homeT.players : mk(3, "h");
         const awayRoster = awayT?.players?.length ? awayT.players : mk(3, "a");
