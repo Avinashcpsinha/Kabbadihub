@@ -15,6 +15,7 @@ export interface NavItem {
 
 export const SUPER_ADMIN_NAV: NavItem[] = [
   { label: "Tenant Registry", href: "/super-admin", icon: "Building2" },
+  { label: "Global Roster", href: "/super-admin/players", icon: "Users" },
   { label: "Platform Analytics", href: "/super-admin/analytics", icon: "PieChart" },
   { label: "Audit Logs", href: "/super-admin/audit", icon: "FileText" },
   { label: "Seed Data", href: "/super-admin/seed", icon: "Activity" },
