@@ -258,11 +258,12 @@ export default function AuctionDashboard() {
                 </div>
              </div>
           </section>
-       </main>
+        </main>
 
-       <footer className="py-20 text-center text-[10px] font-black uppercase tracking-[0.5em] text-slate-300">
-          Certified Auction Node • High-Frequency Trading Protocol
-       </footer>
+        <footer className="py-20 text-center text-[10px] font-black uppercase tracking-[0.5em] text-slate-300">
+           Certified Auction Node • High-Frequency Trading Protocol
+        </footer>
+        </>
        )}
     </div>
   );

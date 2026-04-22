@@ -70,16 +70,9 @@ export default function ClubManagementPage() {
              </div>
            </div>
            
-           <div className="flex items-center gap-4">
-             <div className="hidden md:flex flex-col items-end mr-4">
-               <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Facility ID: #F-7721</span>
-               <span className="text-sm font-black text-slate-900 italic">SHIVAJI SPORTS HUB</span>
-             </div>
-             {role === "ORGANISER" && (
-               <button className="ch-btn-primary px-8 py-4 shadow-xl shadow-orange-600/20">
-                 <Plus className="w-5 h-5" /> Add Ground
-               </button>
-             )}
+           <div className="hidden md:flex flex-col items-end mr-4">
+             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Facility ID: #F-7721</span>
+             <span className="text-sm font-black text-slate-900 italic">SHIVAJI SPORTS HUB</span>
            </div>
          </header>
        )}
@@ -118,13 +111,20 @@ export default function ClubManagementPage() {
                <ShoppingBag className="w-6 h-6 text-orange-600" />
                Your Grounds & Mats
              </h2>
-             <div className="relative">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                <input 
-                  type="text" 
-                  placeholder="Search grounds..."
-                  className="pl-12 pr-6 py-3 bg-white border border-slate-200 rounded-xl text-sm w-[280px] focus:outline-none focus:border-orange-500/50 shadow-sm"
-                />
+             <div className="flex items-center gap-4">
+               <div className="relative">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <input 
+                    type="text" 
+                    placeholder="Search grounds..."
+                    className="pl-12 pr-6 py-3 bg-white border border-slate-200 rounded-xl text-sm w-[280px] focus:outline-none focus:border-orange-500/50 shadow-sm"
+                  />
+               </div>
+               {role === "ORGANISER" && (
+                 <button className="ch-btn-primary px-8 py-4 shadow-xl shadow-orange-600/20">
+                   <Plus className="w-5 h-5" /> Add Ground
+                 </button>
+               )}
              </div>
           </div>
 
