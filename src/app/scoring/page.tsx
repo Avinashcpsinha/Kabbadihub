@@ -3,6 +3,7 @@
 import React from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import PublicLayout from "@/components/PublicLayout";
+import BroadcastMonitor from "@/components/BroadcastMonitor";
 import { useAuth } from "@/context/AuthContext";
 import { 
   Zap, 
@@ -225,6 +226,9 @@ function ScoringContent() {
 
              {/* Scoring Interface Controller */}
              <div className="lg:col-span-4 space-y-8">
+                {/* Live Monitor Preview */}
+                <BroadcastMonitor />
+
                 <div className="bg-white ch-card p-10 flex flex-col gap-10">
                    {/* Raider Selection */}
                    <div>
