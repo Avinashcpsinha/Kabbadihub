@@ -282,6 +282,7 @@ export default function DashboardLayout({
           {children}
         </div>
       </main>
+    </div>
 
       <MatchSelectorModal 
         isOpen={isMatchSelectorOpen} 
