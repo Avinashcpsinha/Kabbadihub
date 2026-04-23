@@ -153,12 +153,9 @@ export default function PremiumLandingPage() {
                </Link>
                <div className="hidden lg:flex items-center gap-8">
                   {[
-                    { label: "Matches", href: "/matches" },
-                    { label: "Tournaments", href: "/tournaments" },
-                    { label: "Players", href: "/players" },
-                    { label: "Teams", href: "/teams" },
-                    { label: "Results", href: "/results" },
-                    { label: "Challenges", href: "/challenges" },
+                    { label: "Match Schedules", href: "/matches?view=spectator" },
+                    { label: "Register Org", href: "/register" },
+                    { label: "Join as Athlete", href: "/user/register?type=athlete" },
                   ].map(l => (
                     <Link 
                       key={l.label} 
@@ -496,11 +493,9 @@ export default function PremiumLandingPage() {
                   <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400">Platform</h4>
                   <ul className="space-y-4">
                     {[
-                      { label: "Matches", href: "/matches" },
-                      { label: "Tournaments", href: "/tournaments" },
-                      { label: "Players", href: "/players" },
-                      { label: "Teams", href: "/teams" },
-                      { label: "Results", href: "/results" }
+                      { label: "Match Schedules", href: "/matches?view=spectator" },
+                      { label: "Official Results", href: "/results?view=spectator" },
+                      { label: "Pro Leaderboard", href: "/players?view=spectator" },
                     ].map(l => (
                       <li key={l.label}><Link href={l.href} className="text-sm font-bold text-slate-600 hover:text-orange-600 transition-colors">{l.label}</Link></li>
                     ))}
@@ -528,9 +523,7 @@ export default function PremiumLandingPage() {
                     {[
                       { label: "Admin Console", href: "/login" },
                       { label: "Register Org", href: "/register" },
-                      { label: "Super Admin", href: "/login" },
-                      { label: "API Portal", href: "#" },
-                      { label: "Security", href: "#" }
+                      { label: "Join as Athlete", href: "/user/register?type=athlete" },
                     ].map(l => (
                       <li key={l.label}><Link href={l.href} className="text-sm font-bold text-slate-600 hover:text-orange-600 transition-colors">{l.label}</Link></li>
                     ))}
