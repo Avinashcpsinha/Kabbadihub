@@ -57,6 +57,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [allUsers, setAllUsers] = useState<AppUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Safety Break: Never let the spinner run for more than 2 seconds
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (isLoading) {
+        console.warn("Auth Safety Break: Force-clearing verify screen.");
+        setIsLoading(false);
+      }
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, [isLoading]);
+
   const fetchProfile = async (userId: string) => {
     const { data: profile, error } = await supabase
       .from('profiles')
