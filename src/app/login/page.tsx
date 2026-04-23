@@ -34,15 +34,31 @@ export default function CricHeroesStyleLoginPage() {
     setIsError(false);
     setIsAuthenticating(true);
     
-    const result = await loginUser(email, password);
-    
-    if (result.success) {
-      // AuthContext will handle the role and redirection automatically via onAuthStateChange
-      // but we can help it along here
-      router.push("/user/dashboard");
-    } else {
+    // Safety Timeout: Reset if login takes more than 10 seconds
+    const timeout = setTimeout(() => {
+      if (isAuthenticating) {
+        setIsAuthenticating(false);
+        setIsError(true);
+        setErrorMessage("Login session timed out. Please check your connection and try again.");
+      }
+    }, 10000);
+
+    try {
+      const result = await loginUser(email, password);
+      
+      if (result.success) {
+        // Redirection will happen naturally but we can force it
+        router.push("/user/dashboard");
+      } else {
+        setIsError(true);
+        setErrorMessage(result.error || "Invalid credentials. Please check your Email and Password.");
+      }
+    } catch (err) {
+      console.error("Login crash caught:", err);
       setIsError(true);
-      setErrorMessage(result.error || "Invalid credentials. Please check your Email and Password.");
+      setErrorMessage("A critical network error occurred. Please refresh and try again.");
+    } finally {
+      clearTimeout(timeout);
       setIsAuthenticating(false);
     }
   };
