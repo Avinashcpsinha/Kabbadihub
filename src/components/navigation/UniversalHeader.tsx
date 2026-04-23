@@ -142,7 +142,7 @@ export default function UniversalHeader({
                             <div className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1.5">{currentUser?.email}</div>
                           </div>
                           <div className="p-2">
-                            {(role === "USER" || role === "ATHLETE") && (
+                            {role === "USER" && (
                               <>
                                 <Link href="/user/dashboard" onClick={() => setUserMenuOpen(false)} className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all">
                                   <Activity className="w-4 h-4 text-slate-400" /> {currentUser?.position ? "Pro Dashboard" : "Fan Dashboard"}
