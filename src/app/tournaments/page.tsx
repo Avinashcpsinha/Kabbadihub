@@ -51,8 +51,8 @@ function TournamentContent() {
   const fetchData = async () => {
     setIsLoading(true);
     
-    // 1. Fetch Teams
-    let teamQuery = supabase.from('teams').select('*');
+    // 1. Fetch Teams for the current tenant (to populate the dropdown)
+    let teamQuery = supabase.from('teams').select('id, name, short_name, primary_color, city');
     if (currentTenantId && currentTenantId !== 'global') {
       teamQuery = teamQuery.eq('tenant_id', currentTenantId);
     }
@@ -69,19 +69,59 @@ function TournamentContent() {
       })));
     }
 
-    // 2. Fetch Matches
-    let matchQuery = supabase.from('live_matches').select('*').order('scheduled_at', { ascending: true });
+    // 2. Fetch Matches with joined team data
+    // We join home and away teams so we don't rely on the 'teams' state for rendering
+    let matchQuery = supabase
+      .from('live_matches')
+      .select(`
+        id,
+        home_team_id,
+        away_team_id,
+        scheduled_at,
+        status,
+        home:home_team_id(id, name, short_name, primary_color, city),
+        away:away_team_id(id, name, short_name, primary_color, city)
+      `)
+      .order('scheduled_at', { ascending: true });
     
-    const { data: matchData } = await matchQuery;
+    // If organiser, only show their tenant's matches to speed up load
+    if (role === 'ORGANISER' && currentTenantId) {
+      matchQuery = matchQuery.eq('tenant_id', currentTenantId);
+    }
+
+    const { data: matchData, error: matchError } = await matchQuery;
     
+    if (matchError) {
+      console.error("Error fetching matches:", matchError);
+    }
+
     if (matchData) {
-      setMatches(matchData.map(m => ({
-        id: m.id,
-        homeTeamId: m.home_team_id,
-        awayTeamId: m.away_team_id,
-        scheduledAt: new Date(m.scheduled_at),
-        status: m.status as any
-      })));
+      setMatches(matchData.map(m => {
+        const home = m.home as any;
+        const away = m.away as any;
+        return {
+          id: m.id,
+          homeTeamId: m.home_team_id,
+          awayTeamId: m.away_team_id,
+          scheduledAt: new Date(m.scheduled_at),
+          status: m.status as any,
+          // We'll store the joined data in the object to use it during render
+          homeTeam: home ? {
+            id: home.id,
+            name: home.name,
+            shortName: home.short_name,
+            primaryColor: home.primary_color,
+            city: home.city
+          } : null,
+          awayTeam: away ? {
+            id: away.id,
+            name: away.name,
+            shortName: away.short_name,
+            primaryColor: away.primary_color,
+            city: away.city
+          } : null
+        };
+      }));
     }
     
     setIsLoading(false);
@@ -159,9 +199,9 @@ function TournamentContent() {
           ) : view === "fixtures" ? (
              <div className="space-y-6">
                 <AnimatePresence mode="popLayout">
-                   {matches.map((match) => {
-                      const home = getTeam(match.homeTeamId);
-                      const away = getTeam(match.awayTeamId);
+                   {matches.map((match: any) => {
+                      const home = match.homeTeam;
+                      const away = match.awayTeam;
                       
                       return (
                         <motion.div key={match.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }} className="bg-white ch-card overflow-hidden group hover:border-orange-600/30 transition-all duration-500">
