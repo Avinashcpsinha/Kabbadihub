@@ -170,7 +170,7 @@ export default function DashboardLayout({
 
         {/* Sidebar Footer */}
         <div className="p-4 border-t border-slate-100 space-y-2">
-          {variant === "organiser" && isSuperAdmin && (
+          {variant === "organiser" && (isSuperAdmin || userRole === "SUPER_ADMIN") && (
             <button
               onClick={exitImpersonation}
               className={cn(
