@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { Player, Team } from "@/types";
 
@@ -34,6 +35,7 @@ interface TenantContextType {
   impersonateTenant: (id: string) => void;
   deleteTenant: (id: string) => Promise<void>;
   refreshTenants: () => Promise<void>;
+  exitImpersonation: () => void;
 }
 
 const TenantContext = createContext<TenantContextType | undefined>(undefined);
@@ -174,12 +176,19 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const router = useRouter();
+
   const impersonateTenant = (id: string) => {
     const target = allTenants.find(t => t.id === id);
     if (target) {
       updateTenantState(target);
-      window.location.href = "/admin";
+      router.push("/admin");
     }
+  };
+
+  const exitImpersonation = () => {
+    updateTenantState(null);
+    router.push("/super-admin");
   };
 
   const deleteTenant = async (id: string) => {
@@ -217,7 +226,8 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
       },
       impersonateTenant,
       deleteTenant,
-      refreshTenants: fetchTenants
+      refreshTenants: fetchTenants,
+      exitImpersonation
     }}>
       {children}
     </TenantContext.Provider>

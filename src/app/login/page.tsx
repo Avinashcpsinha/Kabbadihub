@@ -20,7 +20,7 @@ import { motion } from "framer-motion";
 
 export default function CricHeroesStyleLoginPage() {
   const { setTenant, tenants, setIsSuperAdmin } = useTenant();
-  const { setRole } = useAuth();
+  const { loginUser } = useAuth();
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -29,42 +29,22 @@ export default function CricHeroesStyleLoginPage() {
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsError(false);
     setIsAuthenticating(true);
     
-    setTimeout(() => {
-      if (email === "superadmin@kabaddihub.com" && password === "godmode2026") {
-        setRole("SUPER_ADMIN");
-        setIsSuperAdmin(true);
-        setTenant(null);
-        router.push("/super-admin");
-        setIsAuthenticating(false);
-        return;
-      }
-
-      const found = tenants.find(t => 
-        t.adminEmail?.toLowerCase() === email.toLowerCase() && 
-        t.adminPassword === password
-      );
-
-      if (found) {
-        if (found.status === "DISABLED") {
-          setIsError(true);
-          setErrorMessage("This organization account has been disabled by the System Director.");
-        } else {
-          setRole("ORGANISER");
-          setIsSuperAdmin(false);
-          setTenant(found);
-          router.push("/admin");
-        }
-      } else {
-        setIsError(true);
-        setErrorMessage("Invalid credentials. Please check your Email and Password.");
-      }
+    const result = await loginUser(email, password);
+    
+    if (result.success) {
+      // AuthContext will handle the role and redirection automatically via onAuthStateChange
+      // but we can help it along here
+      router.push("/user/dashboard");
+    } else {
+      setIsError(true);
+      setErrorMessage(result.error || "Invalid credentials. Please check your Email and Password.");
       setIsAuthenticating(false);
-    }, 1000);
+    }
   };
 
   return (

@@ -32,7 +32,7 @@ export default function DashboardLayout({
 }) {
   const pathname = usePathname();
   const { logout, currentUser, role: userRole } = useAuth();
-  const { tenant, isSuperAdmin } = useTenant();
+  const { tenant, isSuperAdmin, exitImpersonation } = useTenant();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isMatchSelectorOpen, setIsMatchSelectorOpen] = useState(false);
@@ -171,17 +171,17 @@ export default function DashboardLayout({
         {/* Sidebar Footer */}
         <div className="p-4 border-t border-slate-100 space-y-2">
           {variant === "organiser" && isSuperAdmin && (
-            <Link
-              href="/super-admin"
+            <button
+              onClick={exitImpersonation}
               className={cn(
-                "flex items-center gap-3 px-4 py-3 rounded-xl text-red-600 bg-red-50 hover:bg-red-100 transition-all",
+                "flex items-center gap-3 px-4 py-3 rounded-xl text-red-600 bg-red-50 hover:bg-red-100 transition-all w-full text-left",
                 isCollapsed && "justify-center px-0"
               )}
               title={isCollapsed ? "System Control" : undefined}
             >
               <ShieldAlert className="w-5 h-5 shrink-0" />
               {!isCollapsed && <span className="text-[10px] font-black uppercase tracking-widest">System Control</span>}
-            </Link>
+            </button>
           )}
           <Link
             href="/"

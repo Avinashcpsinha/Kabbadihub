@@ -16,13 +16,19 @@ export default function RoleGate({
   allowedRoles,
   redirectTo = "/user/dashboard"
 }: RoleGateProps) {
-  const { role, isAuthenticated } = useAuth();
+  const { role, isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
+    if (isLoading) return;
+
     if (!isAuthenticated) {
       router.push("/login");
       return;
+    }
+
+    if (role === "SUPER_ADMIN") {
+      return; // Absolute bypass for security director
     }
 
     if (!allowedRoles.includes(role)) {
@@ -30,7 +36,16 @@ export default function RoleGate({
     }
   }, [role, isAuthenticated, allowedRoles, router, redirectTo]);
 
-  if (!isAuthenticated || !allowedRoles.includes(role)) {
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-slate-50">
+        <div className="w-12 h-12 border-4 border-orange-200 border-t-orange-600 rounded-full animate-spin mb-4" />
+        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Verifying Protocol...</p>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated || (role !== "SUPER_ADMIN" && !allowedRoles.includes(role))) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-6 bg-slate-50">
         <div className="w-16 h-16 bg-red-100 rounded-2xl flex items-center justify-center text-red-600 mb-6 shadow-xl shadow-red-600/10">
