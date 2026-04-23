@@ -95,48 +95,71 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Check active sessions and sets the user
     const initializeAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (session?.user) {
-        const userEmail = session.user.email || "";
-        const profile = await fetchProfile(session.user.id);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
         
-        if (profile) {
-          setCurrentUser({ ...profile, email: userEmail });
-          setRoleState(profile.role);
-        } else {
-          // Fallback if profile trigger failed or hasn't run yet
-          const fallbackUser: AppUser = {
-            id: session.user.id,
-            name: session.user.user_metadata?.name || "User",
-            email: userEmail,
-            role: (session.user.user_metadata?.role as UserRole) || "USER",
-            avatarInitial: (session.user.user_metadata?.name || "U")[0].toUpperCase(),
-            followedTeams: [],
-            joinedAt: Date.now(),
-          };
-          setCurrentUser(fallbackUser);
-          setRoleState(fallbackUser.role);
+        if (session?.user) {
+          const userEmail = session.user.email || "";
+          const profile = await fetchProfile(session.user.id);
+          
+          if (profile) {
+            setCurrentUser({ ...profile, email: userEmail });
+            setRoleState(profile.role);
+          } else {
+            // Fallback if profile trigger failed or hasn't run yet
+            const fallbackUser: AppUser = {
+              id: session.user.id,
+              name: session.user.user_metadata?.name || "User",
+              email: userEmail,
+              role: (session.user.user_metadata?.role as UserRole) || "USER",
+              avatarInitial: (session.user.user_metadata?.name || "U")[0].toUpperCase(),
+              followedTeams: [],
+              joinedAt: Date.now(),
+            };
+            setCurrentUser(fallbackUser);
+            setRoleState(fallbackUser.role);
+          }
         }
+      } catch (err) {
+        console.error("Auth init error:", err);
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false);
     };
 
     initializeAuth();
 
     // Listen for changes on auth state (logged in, signed out, etc.)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (session?.user) {
-        const profile = await fetchProfile(session.user.id);
-        if (profile) {
-          setCurrentUser({ ...profile, email: session.user.email || "" });
-          setRoleState(profile.role);
+      try {
+        if (session?.user) {
+          setIsLoading(true);
+          const profile = await fetchProfile(session.user.id);
+          if (profile) {
+            setCurrentUser({ ...profile, email: session.user.email || "" });
+            setRoleState(profile.role);
+          } else {
+            const fallbackUser: AppUser = {
+              id: session.user.id,
+              name: session.user.user_metadata?.name || "User",
+              email: session.user.email || "",
+              role: (session.user.user_metadata?.role as UserRole) || "USER",
+              avatarInitial: (session.user.user_metadata?.name || "U")[0].toUpperCase(),
+              followedTeams: [],
+              joinedAt: Date.now(),
+            };
+            setCurrentUser(fallbackUser);
+            setRoleState(fallbackUser.role);
+          }
+        } else {
+          setCurrentUser(null);
+          setRoleState("PUBLIC");
         }
-      } else {
-        setCurrentUser(null);
-        setRoleState("PUBLIC");
+      } catch (err) {
+        console.error("Auth change error catch:", err);
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false);
     });
 
     return () => subscription.unsubscribe();
