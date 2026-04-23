@@ -106,16 +106,16 @@ function ScoringContent() {
             .eq('team_id', match.away_team_id);
 
           const homeRoster = (homePlayers || []).map((p: any) => ({
-            id: p.athletes.id,
-            name: p.athletes.name,
-            number: p.jersey_number || p.athletes.jersey_no || "0",
-          }));
+            id: p.athletes?.id,
+            name: p.athletes?.name || "Unknown Player",
+            number: p.jersey_number || p.athletes?.jersey_no || "0",
+          })).filter(p => p.id);
 
           const awayRoster = (awayPlayers || []).map((p: any) => ({
-            id: p.athletes.id,
-            name: p.athletes.name,
-            number: p.jersey_number || p.athletes.jersey_no || "0",
-          }));
+            id: p.athletes?.id,
+            name: p.athletes?.name || "Unknown Player",
+            number: p.jersey_number || p.athletes?.jersey_no || "0",
+          })).filter(p => p.id);
 
           setRosters({ home: homeRoster, away: awayRoster });
 
