@@ -22,6 +22,7 @@ import {
   ICON_MAP 
 } from "@/config/navigation";
 import MatchSelectorModal from "./scoring/MatchSelectorModal";
+import UniversalHeader from "./navigation/UniversalHeader";
 
 // Navigation definitions moved to @/config/navigation.ts
 
@@ -62,91 +63,12 @@ export default function DashboardLayout({
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
-      {/* Universal Dual-Layer Header (Same as Homepage) */}
-      <div className="sticky top-0 z-[100] shadow-sm">
-        {/* Tier 1: Dark Informational Bar */}
-        <div className="bg-slate-950 text-white/60 py-2.5 px-6 border-b border-white/5 flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest hover:text-white transition-colors cursor-pointer">
-              <Mail className="w-3 h-3 text-orange-500" /> support@kabaddihub.com
-            </div>
-            <div className="hidden sm:flex items-center gap-2 text-[10px] font-black uppercase tracking-widest hover:text-white transition-colors cursor-pointer">
-              <Activity className="w-3 h-3 text-orange-500" /> Global Live Mat Feed
-            </div>
-          </div>
-          <div className="flex items-center gap-6">
-            <div className="text-[10px] font-black uppercase tracking-widest text-white/40">
-              {userRole === "SUPER_ADMIN" ? "God Mode: Active" : "Identity Verified"}
-            </div>
-            <div className="h-3 w-px bg-white/10" />
-            <div className="flex items-center gap-3">
-               <span className="text-[10px] font-black uppercase tracking-widest text-orange-400">
-                 Hi, {currentUser?.name.split(" ")[0]}
-               </span>
-               {variant === "organiser" && (isSuperAdmin || userRole === "SUPER_ADMIN") && (
-                 <button
-                   onClick={exitImpersonation}
-                   className="text-[9px] font-black uppercase tracking-widest text-red-400 hover:text-red-500"
-                 >
-                   [ Exit Portal ]
-                 </button>
-               )}
-            </div>
-          </div>
-        </div>
-
-        {/* Tier 2: Public-Style Navbar */}
-        <nav className="bg-white/95 backdrop-blur-xl border-b border-slate-200 px-6 py-4">
-          <div className="max-w-full mx-auto flex items-center justify-between">
-             <div className="flex items-center gap-4 xl:gap-10">
-                <button 
-                  onClick={() => setIsMobileOpen(true)}
-                  className="lg:hidden p-2 bg-slate-100 rounded-xl hover:bg-slate-200 transition-all border border-slate-200"
-                >
-                  <Menu className="w-5 h-5 text-slate-600" />
-                </button>
-
-                <Link href="/" className="flex items-center gap-2 group">
-                  <div className="w-10 h-10 bg-orange-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-orange-600/20 group-hover:rotate-12 transition-transform">
-                    <Zap className="w-6 h-6 fill-current" />
-                  </div>
-                  <span className="text-2xl font-black italic tracking-tighter uppercase text-slate-900">KabaddiHub</span>
-                </Link>
-
-                <div className="hidden xl:flex items-center gap-8">
-                  {[
-                    { label: "Match Schedules", href: "/matches?view=spectator" },
-                    { label: "Register Org", href: "/register" },
-                    { label: "Join as Athlete", href: "/user/register?type=athlete" },
-                  ].map(l => (
-                    <Link 
-                      key={l.label} 
-                      href={l.href} 
-                      className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 hover:text-orange-600 transition-colors"
-                    >
-                      {l.label}
-                    </Link>
-                  ))}
-                </div>
-             </div>
-
-             <div className="flex items-center gap-4">
-                <div className="hidden sm:flex flex-col items-end mr-2">
-                  <span className="text-[11px] font-black text-slate-900 uppercase">Management Portal</span>
-                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">
-                    {variant === "admin" ? "SuperAdmin Console" : (tenant?.name || "Official Console")}
-                  </span>
-                </div>
-                <button
-                  onClick={logout}
-                  className="ch-btn-outline px-6 py-2.5 text-[10px] shadow-sm"
-                >
-                  Sign Out
-                </button>
-             </div>
-          </div>
-        </nav>
-      </div>
+      {/* Master Unified Header */}
+      <UniversalHeader 
+        onMobileMenuToggle={() => setIsMobileOpen(true)}
+        showManagementPortal={true}
+        variant={variant}
+      />
 
       <div className="flex flex-1">
         {/* Mobile Overlay */}
