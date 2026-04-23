@@ -7,56 +7,62 @@ import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { Trophy, Calendar, ChevronRight, Star, Award, Filter } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import { supabase } from "@/lib/supabase";
 
 export default function ResultsPage() {
   const { role } = useAuth();
   const [results, setResults] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const allTenantsRaw = localStorage.getItem("kabaddihub_tenants");
-    if (!allTenantsRaw) return;
-    const tenants = JSON.parse(allTenantsRaw);
-    const allResults: any[] = [];
+    const fetchResults = async () => {
+      setIsLoading(true);
+      const { data: matches, error } = await supabase
+        .from('live_matches')
+        .select(`
+          id,
+          scheduled_at,
+          status,
+          state,
+          home:home_team_id(name, short_name, primary_color),
+          away:away_team_id(name, short_name, primary_color),
+          tenants(name)
+        `)
+        .not('state', 'is', null)
+        .order('scheduled_at', { ascending: false });
 
-    tenants.forEach((t: any) => {
-      const matchesRaw = localStorage.getItem(`kabaddihub_${t.id}_matches`);
-      const teamsRaw = localStorage.getItem(`kabaddihub_${t.id}_teams`);
-      if (!matchesRaw) return;
-      const matches = JSON.parse(matchesRaw);
-      const teams = teamsRaw ? JSON.parse(teamsRaw) : [];
+      if (matches) {
+        const mapped = matches.filter(m => {
+          const state = m.state as any;
+          return state?.home?.score > 0 || state?.away?.score > 0;
+        }).map(m => {
+          const state = m.state as any;
+          const homeTeam = m.home as any;
+          const awayTeam = m.away as any;
+          const tenant = m.tenants as any;
 
-      matches.forEach((m: any) => {
-        const stateKey = `kabaddi_${t.id}_match_${m.id}_state`;
-        const liveState = localStorage.getItem(stateKey);
-        if (liveState) {
-          const parsed = JSON.parse(liveState);
-          if (parsed.home?.score > 0 || parsed.away?.score > 0) {
-            const homeT = teams.find((tm: any) => tm.id === m.homeTeamId);
-            const awayT = teams.find((tm: any) => tm.id === m.awayTeamId);
-            allResults.push({
-              id: m.id,
-              homeName: homeT?.name || parsed.home?.name || "Home",
-              awayName: awayT?.name || parsed.away?.name || "Away",
-              homeShort: homeT?.shortName || parsed.home?.shortName || "HME",
-              awayShort: awayT?.shortName || parsed.away?.shortName || "AWY",
-              homeColor: homeT?.primaryColor || "#f97316",
-              awayColor: awayT?.primaryColor || "#2563eb",
-              homeScore: parsed.home?.score || 0,
-              awayScore: parsed.away?.score || 0,
-              date: m.scheduledAt,
-              tenantName: t.name,
-              status: m.status,
-              half: parsed.half || 1,
-              timer: parsed.timer || 0,
-            });
-          }
-        }
-      });
-    });
+          return {
+            id: m.id,
+            homeName: homeTeam?.name || "Home",
+            awayName: awayTeam?.name || "Away",
+            homeShort: homeTeam?.short_name || "HME",
+            awayShort: awayTeam?.short_name || "AWY",
+            homeColor: homeTeam?.primary_color || "#f97316",
+            awayColor: awayTeam?.primary_color || "#2563eb",
+            homeScore: state?.home?.score || 0,
+            awayScore: state?.away?.score || 0,
+            date: m.scheduled_at,
+            tenantName: tenant?.name || "Global",
+            status: m.status
+          };
+        });
+        setResults(mapped);
+      }
+      setIsLoading(false);
+    };
 
-    allResults.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-    setResults(allResults);
+    fetchResults();
   }, []);
 
   const Content = (
@@ -69,13 +75,13 @@ export default function ResultsPage() {
             <p className="text-sm font-medium text-slate-500">Scorecards and outcomes from across the platform.</p>
           </div>
           <div className="flex items-center gap-3">
-            <button className="px-6 py-3 bg-white border border-slate-200 rounded-xl text-[9px] font-black uppercase tracking-widest text-slate-500 hover:border-orange-600 hover:text-orange-600 transition-all flex items-center gap-2">
-              <Filter className="w-4 h-4" /> Filter
-            </button>
+             {/* Filter placeholder */}
           </div>
         </div>
 
-        {results.length > 0 ? (
+        {isLoading ? (
+          <div className="py-20 flex justify-center"><div className="w-12 h-12 border-4 border-orange-600 border-t-transparent rounded-full animate-spin"></div></div>
+        ) : results.length > 0 ? (
           <div className="space-y-6">
             {results.map((r, i) => {
               const homeWin = r.homeScore > r.awayScore;
@@ -102,11 +108,11 @@ export default function ResultsPage() {
 
                     <div className="flex-1 p-6 flex items-center justify-center gap-8">
                       <div className="flex items-center gap-4 text-right flex-1 justify-end">
-                        <div>
+                        <div className="hidden md:block">
                           <div className={cn("text-lg font-black italic uppercase leading-none", homeWin ? "text-slate-900" : "text-slate-400")}>{r.homeName}</div>
                           {homeWin && <div className="text-[8px] font-black text-emerald-600 mt-1 flex items-center gap-1 justify-end"><Award className="w-3 h-3" /> WINNER</div>}
                         </div>
-                        <div className="w-12 h-12 rounded-xl flex items-center justify-center text-sm font-black text-white shadow-md" style={{ backgroundColor: r.homeColor }}>
+                        <div className="w-12 h-12 rounded-xl flex items-center justify-center text-sm font-black text-white shadow-md shrink-0" style={{ backgroundColor: r.homeColor }}>
                           {r.homeShort}
                         </div>
                       </div>
@@ -119,10 +125,10 @@ export default function ResultsPage() {
                       </div>
 
                       <div className="flex items-center gap-4 text-left flex-1">
-                        <div className="w-12 h-12 rounded-xl flex items-center justify-center text-sm font-black text-white shadow-md" style={{ backgroundColor: r.awayColor }}>
+                        <div className="w-12 h-12 rounded-xl flex items-center justify-center text-sm font-black text-white shadow-md shrink-0" style={{ backgroundColor: r.awayColor }}>
                           {r.awayShort}
                         </div>
-                        <div>
+                        <div className="hidden md:block">
                           <div className={cn("text-lg font-black italic uppercase leading-none", awayWin ? "text-slate-900" : "text-slate-400")}>{r.awayName}</div>
                           {awayWin && <div className="text-[8px] font-black text-emerald-600 mt-1 flex items-center gap-1"><Award className="w-3 h-3" /> WINNER</div>}
                         </div>

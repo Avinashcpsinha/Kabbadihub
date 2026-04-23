@@ -2,9 +2,10 @@
 
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Zap, Calendar, Clock } from "lucide-react";
+import { X, Zap, Calendar } from "lucide-react";
 import Link from "next/link";
 import { useTenant } from "@/context/TenantContext";
+import { supabase } from "@/lib/supabase";
 import { Team, MatchSession } from "@/types";
 
 interface MatchSelectorModalProps {
@@ -14,44 +15,59 @@ interface MatchSelectorModalProps {
 
 export default function MatchSelectorModal({ isOpen, onClose }: MatchSelectorModalProps) {
   const { tenant } = useTenant();
+  const currentTenantId = tenant?.id;
   const [matches, setMatches] = useState<MatchSession[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen || !currentTenantId) return;
 
-    const activeTenant = tenant || JSON.parse(localStorage.getItem("kabaddihub_current_tenant") || "null") || { id: "global" };
-    const tenantId = activeTenant.id;
-    
-    // Load Teams
-    const teamKey = `kabaddihub_${tenantId}_teams`;
-    const savedTeams = localStorage.getItem(teamKey);
-    if (savedTeams) {
-      setTeams(JSON.parse(savedTeams));
-    } else {
-      const globalTeams = localStorage.getItem('kabaddihub_global_teams');
-      if (globalTeams) setTeams(JSON.parse(globalTeams));
-    }
+    const fetchData = async () => {
+      setIsLoading(true);
+      
+      // Load Teams
+      const { data: teamsData, error: teamsError } = await supabase
+        .from('teams')
+        .select('*')
+        .eq('tenant_id', currentTenantId);
 
-    // Load Matches
-    const matchKey = `kabaddihub_${tenantId}_matches`;
-    const savedMatches = localStorage.getItem(matchKey);
-    if (savedMatches) {
-      setMatches(JSON.parse(savedMatches));
-    } else if (tenantId !== "global") {
-        // Fallback for demo
-        const initialMatches: MatchSession[] = [
-            {
-              id: `m1`,
-              homeTeamId: "1",
-              awayTeamId: "2",
-              scheduledAt: new Date(Date.now() + 86400000), 
-              status: "UPCOMING"
-            }
-          ];
-          setMatches(initialMatches);
-    }
-  }, [isOpen, tenant]);
+      if (teamsData) {
+        setTeams(teamsData.map(t => ({
+          id: t.id,
+          name: t.name,
+          shortName: t.short_name,
+          primaryColor: t.primary_color,
+          secondaryColor: t.secondary_color,
+          city: t.city,
+          logoUrl: t.logo_url,
+          players: []
+        })));
+      }
+
+      // Load Matches
+      const { data: matchesData, error: matchesError } = await supabase
+        .from('live_matches')
+        .select('*')
+        .eq('tenant_id', currentTenantId)
+        .order('created_at', { ascending: false });
+
+      if (matchesData) {
+        setMatches(matchesData.map(m => ({
+          id: m.id,
+          homeTeamId: m.home_team_id,
+          awayTeamId: m.away_team_id,
+          status: m.status as any,
+          scheduledAt: new Date(m.created_at), // Fallback if no specific scheduled_at column
+          tenantId: m.tenant_id
+        })));
+      }
+      
+      setIsLoading(false);
+    };
+
+    fetchData();
+  }, [isOpen, currentTenantId]);
 
   const getTeam = (id: string) => teams.find(t => t.id === id);
 
@@ -83,7 +99,11 @@ export default function MatchSelectorModal({ isOpen, onClose }: MatchSelectorMod
             </div>
 
             <div className="p-8 overflow-y-auto flex-1 space-y-6 bg-[#0a0a0f]">
-              {matches.length === 0 ? (
+              {isLoading ? (
+                <div className="py-20 flex justify-center">
+                  <div className="w-12 h-12 border-4 border-orange-600 border-t-transparent rounded-full animate-spin"></div>
+                </div>
+              ) : matches.length === 0 ? (
                 <div className="text-center py-20 bg-white/5 rounded-3xl border border-white/5">
                   <div className="w-20 h-20 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-6 text-slate-400">
                     <Calendar className="w-10 h-10" />
@@ -110,7 +130,7 @@ export default function MatchSelectorModal({ isOpen, onClose }: MatchSelectorMod
                         <div className="px-6 text-center">
                           <div className="text-orange-500 font-black italic text-2xl tracking-tighter mb-2">VS</div>
                           <div className="text-xs font-black text-slate-300 uppercase tracking-widest px-4 py-1.5 bg-white/10 rounded-full whitespace-nowrap">
-                             {new Date(match.scheduledAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric'})}
+                             {match.status}
                           </div>
                         </div>
 

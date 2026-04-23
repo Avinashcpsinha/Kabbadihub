@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import RoleGate from "@/components/RoleGate";
 import DashboardLayout from "@/components/DashboardLayout";
 import { useTenant } from "@/context/TenantContext";
@@ -11,51 +11,79 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
+import { supabase } from "@/lib/supabase";
 
 export default function SuperAdminRegistryPage() {
   const { tenants, createTenant, impersonateTenant, deleteTenant, updateTenantStatus } = useTenant();
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [tenantStats, setTenantStats] = useState<Record<string, any>>({});
+  const [isLoading, setIsLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     city: "",
     primaryColor: "#f97316"
   });
 
-  const getTenantStats = (tenantId: string) => {
-    const teamKey = `kabaddihub_${tenantId}_teams`;
-    const savedTeams = localStorage.getItem(teamKey);
-    let teamCount = 0;
-    let playerCount = 0;
-    let raiders = 0;
-    let defenders = 0;
-    let ars = 0;
+  const fetchGlobalStats = async () => {
+    setIsLoading(true);
+    const stats: Record<string, any> = {};
 
-    if (savedTeams) {
-      const teams = JSON.parse(savedTeams);
-      teamCount = teams.length;
-      teams.forEach((t: any) => {
-        const players = t.players || [];
-        playerCount += players.length;
-        players.forEach((p: any) => {
-          if (p.role === "RAIDER") raiders++;
-          else if (p.role === "DEFENDER") defenders++;
-          else if (p.role === "ALL_ROUNDER") ars++;
-        });
-      });
+    for (const t of tenants) {
+      // Fetch Teams for this tenant
+      const { data: teams } = await supabase.from('teams').select('id').eq('tenant_id', t.id);
+      const teamIds = teams?.map(team => team.id) || [];
+      
+      // Fetch Players for those teams
+      let playerCount = 0;
+      let raiders = 0;
+      let defenders = 0;
+      let ars = 0;
+
+      if (teamIds.length > 0) {
+        const { data: roster } = await supabase
+          .from('team_athletes')
+          .select('athletes(role)')
+          .in('team_id', teamIds);
+        
+        if (roster) {
+          playerCount = roster.length;
+          roster.forEach((r: any) => {
+            const role = (r.athletes as any)?.role;
+            if (role === 'RAIDER') raiders++;
+            else if (role === 'DEFENDER') defenders++;
+            else ars++;
+          });
+        }
+      }
+
+      stats[t.id] = {
+        teamCount: teamIds.length,
+        playerCount,
+        raiders,
+        defenders,
+        ars
+      };
     }
 
-    return { teamCount, playerCount, raiders, defenders, ars };
+    setTenantStats(stats);
+    setIsLoading(false);
   };
+
+  useEffect(() => {
+    if (tenants.length > 0) {
+      fetchGlobalStats();
+    }
+  }, [tenants]);
 
   const filteredTenants = tenants.filter(t => 
     t.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     t.city?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    createTenant(formData.name, formData.city, formData.primaryColor);
+    await createTenant(formData.name, formData.city, formData.primaryColor);
     setIsModalOpen(false);
     setFormData({ name: "", city: "", primaryColor: "#f97316" });
   };
@@ -81,7 +109,6 @@ export default function SuperAdminRegistryPage() {
           </button>
         </div>
 
-        {/* Search Bar */}
         <div className="flex items-center gap-4 bg-white p-5 rounded-3xl border border-slate-100 shadow-sm">
           <Search className="w-5 h-5 text-slate-300" />
           <input 
@@ -93,7 +120,6 @@ export default function SuperAdminRegistryPage() {
           />
         </div>
 
-        {/* Tenant Table */}
         <div className="bg-white rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
@@ -109,7 +135,7 @@ export default function SuperAdminRegistryPage() {
               </thead>
               <tbody className="divide-y divide-slate-50">
                 {filteredTenants.map((t) => {
-                  const stats = getTenantStats(t.id);
+                  const stats = tenantStats[t.id] || { teamCount: 0, playerCount: 0, raiders: 0, defenders: 0, ars: 0 };
                   return (
                     <tr key={t.id} className="group hover:bg-slate-50/30 transition-all">
                       <td className="px-8 py-6">
@@ -204,7 +230,6 @@ export default function SuperAdminRegistryPage() {
           </div>
         </div>
 
-        {/* Modal remains the same */}
         <AnimatePresence>
           {isModalOpen && (
             <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-6">

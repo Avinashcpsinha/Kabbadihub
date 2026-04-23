@@ -30,7 +30,7 @@ export interface Team {
   shortName: string;
   logoUrl?: string;
   primaryColor: string;
-  secondaryColor: string;
+  secondaryColor?: string;
   city: string;
   players: Player[];
 }

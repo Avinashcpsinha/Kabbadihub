@@ -184,6 +184,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { error: profileError } = await supabase
         .from('profiles')
         .update({
+          name: data.name,
           city: data.city,
           position: data.position,
           height: data.height,
@@ -194,9 +195,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         })
         .eq('id', authData.user.id);
 
+      if (profileError) console.error("Error updating profile fields:", profileError);
+
       // If they provided athlete info, also register them in the global pool
       if (data.position && data.height) {
-        await supabase
+        const { error: athleteError } = await supabase
           .from('athletes')
           .insert([{
             name: data.name,
@@ -211,6 +214,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             status: 'ENABLED',
             kyc_status: 'PENDING'
           }]);
+        
+        if (athleteError) console.error("Error inserting into global athlete pool:", athleteError);
       }
 
       const profile = await fetchProfile(authData.user.id);

@@ -9,6 +9,7 @@ import { useTenant } from "@/context/TenantContext";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import Link from "next/link";
+import { supabase } from "@/lib/supabase";
 
 // ─── Raid Outcomes ────────────────────────────────────────────────────────────
 const RAID_OUTCOMES = [
@@ -83,27 +84,51 @@ function ScoringContent() {
     if (matchId) {
       setMatchId(matchId);
       
-      // Explicitly read from the active tenant's context to avoid pulling dummy data from other tenants
-      const targetTenantId = tenant?.id || "global";
-      const matchKey = `kabaddihub_${targetTenantId}_matches`;
-      const matches = JSON.parse(localStorage.getItem(matchKey) || "[]");
-      const foundMatch = matches.find((m: any) => m.id === matchId);
+      const fetchRosters = async () => {
+        // Fetch Match to get Team IDs
+        const { data: match } = await supabase
+          .from('live_matches')
+          .select('home_team_id, away_team_id')
+          .eq('id', matchId)
+          .single();
 
-      if (foundMatch) {
-        const teamKey = `kabaddihub_${targetTenantId}_teams`;
-        const teams = JSON.parse(localStorage.getItem(teamKey) || "[]");
-        const homeT = teams.find((t: any) => t.id === foundMatch.homeTeamId);
-        const awayT = teams.find((t: any) => t.id === foundMatch.awayTeamId);
-        
-        const mk = (n: number, prefix: string) => Array.from({ length: 7 }, (_, i) => ({ id: `${prefix}_${i + 1}`, name: `Raider ${i + 1}`, number: n + i }));
-        const homeRoster = homeT?.players?.length ? homeT.players : mk(3, "h");
-        const awayRoster = awayT?.players?.length ? awayT.players : mk(3, "a");
-        setRosters({ home: homeRoster, away: awayRoster });
-        // Init player stats
-        const stats: typeof playerStats = {};
-        [...homeRoster, ...awayRoster].forEach((p: any) => { stats[p.id] = { touchPoints: 0, bonusPoints: 0, tackles: 0, active: true }; });
-        setPlayerStats(stats);
-      }
+        if (match) {
+          // Fetch Home Roster
+          const { data: homePlayers } = await supabase
+            .from('team_athletes')
+            .select('jersey_number, athletes(*)')
+            .eq('team_id', match.home_team_id);
+
+          // Fetch Away Roster
+          const { data: awayPlayers } = await supabase
+            .from('team_athletes')
+            .select('jersey_number, athletes(*)')
+            .eq('team_id', match.away_team_id);
+
+          const homeRoster = (homePlayers || []).map((p: any) => ({
+            id: p.athletes.id,
+            name: p.athletes.name,
+            number: p.jersey_number || p.athletes.jersey_no || "0",
+          }));
+
+          const awayRoster = (awayPlayers || []).map((p: any) => ({
+            id: p.athletes.id,
+            name: p.athletes.name,
+            number: p.jersey_number || p.athletes.jersey_no || "0",
+          }));
+
+          setRosters({ home: homeRoster, away: awayRoster });
+
+          // Init player stats
+          const stats: typeof playerStats = {};
+          [...homeRoster, ...awayRoster].forEach((p: any) => { 
+            stats[p.id] = { touchPoints: 0, bonusPoints: 0, tackles: 0, active: true }; 
+          });
+          setPlayerStats(stats);
+        }
+      };
+
+      fetchRosters();
     }
   }, [matchId, setMatchId]);
 

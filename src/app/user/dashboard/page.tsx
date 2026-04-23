@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import PublicLayout from "@/components/PublicLayout";
 import DashboardLayout from "@/components/DashboardLayout";
 import { useAuth } from "@/context/AuthContext";
@@ -8,20 +8,22 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   Trophy, Calendar, Users, Activity, Zap, ChevronRight,
-  Target, Star, TrendingUp, Eye, Shield, Heart,
-  MapPin, Award
+  Target, Star, TrendingUp, Eye, Heart,
+  MapPin, Award, Loader2
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/lib/supabase";
 
 export default function UserDashboardPage() {
-  const { currentUser, role, updateUser } = useAuth();
+  const { currentUser, role } = useAuth();
   const router = useRouter();
-  const [recentMatches, setRecentMatches] = React.useState<any[]>([]);
-  const [followedTeams, setFollowedTeams] = React.useState<any[]>([]);
+  const [recentMatches, setRecentMatches] = useState<any[]>([]);
+  const [followedTeams, setFollowedTeams] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  React.useEffect(() => {
-    if (role === "PUBLIC") {
+  useEffect(() => {
+    if (role === "PUBLIC" && !isLoading) {
       router.push("/login");
       return;
     }
@@ -36,28 +38,57 @@ export default function UserDashboardPage() {
       return;
     }
 
-    // Aggregate matches from all tenants
-    const allTenantsRaw = localStorage.getItem("kabaddihub_tenants");
-    if (allTenantsRaw) {
-      const tenants = JSON.parse(allTenantsRaw);
-      let allMatches: any[] = [];
-      let allTeams: any[] = [];
-      tenants.forEach((t: any) => {
-        const m = localStorage.getItem(`kabaddihub_${t.id}_matches`);
-        const tm = localStorage.getItem(`kabaddihub_${t.id}_teams`);
-        if (m) allMatches = [...allMatches, ...JSON.parse(m).map((match: any) => ({ ...match, tenantName: t.name }))];
-        if (tm) allTeams = [...allTeams, ...JSON.parse(tm)];
-      });
-      setRecentMatches(allMatches.slice(0, 5));
+    const fetchUserSpecificData = async () => {
+      setIsLoading(true);
+      try {
+        // 1. Fetch global recent matches
+        const { data: matches } = await supabase
+          .from('live_matches')
+          .select('*, tenants(name)')
+          .order('updated_at', { ascending: false })
+          .limit(5);
+        
+        if (matches) {
+          setRecentMatches(matches.map(m => ({
+            id: m.id,
+            status: m.status,
+            scheduledAt: m.updated_at,
+            tenantName: (m as any).tenants?.name || 'Local League',
+            homeTeamId: (m.state as any)?.home?.name || 'Home',
+            awayTeamId: (m.state as any)?.away?.name || 'Away'
+          })));
+        }
 
-      // Get followed teams
-      if (currentUser?.followedTeams?.length) {
-        const followed = allTeams.filter(t => currentUser.followedTeams.includes(t.id));
-        setFollowedTeams(followed);
+        // 2. Fetch followed teams if any
+        if (currentUser?.followedTeams?.length) {
+          const { data: teams } = await supabase
+            .from('teams')
+            .select('*')
+            .in('id', currentUser.followedTeams);
+          
+          if (teams) {
+            setFollowedTeams(teams.map(t => ({
+              id: t.id,
+              name: t.name,
+              shortName: t.short_name,
+              primaryColor: t.primary_color,
+              city: t.city
+            })));
+          }
+        }
+      } catch (err) {
+        console.error("Dashboard fetch error:", err);
+      } finally {
+        setIsLoading(false);
       }
+    };
+
+    if (currentUser) {
+      fetchUserSpecificData();
     }
   }, [role, router, currentUser]);
 
+  if (isLoading) return <div className="min-h-screen flex items-center justify-center bg-slate-50"><Loader2 className="w-12 h-12 text-orange-600 animate-spin" /></div>;
   if (!currentUser) return null;
 
   const DashboardContent = (
@@ -84,7 +115,7 @@ export default function UserDashboardPage() {
                 </div>
              </div>
              <div className="flex gap-4 w-full md:w-auto">
-                <Link href="/user/profile" className="flex-1 md:flex-none px-8 py-4 bg-white text-orange-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all text-center">
+                <Link href="/user/profile" className="flex-1 md:flex-none px-8 py-4 bg-white text-orange-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all text-center border-none">
                    Update Experience
                 </Link>
                 <button className="flex-1 md:flex-none px-8 py-4 bg-slate-900/50 text-white border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-900 transition-all">
@@ -106,9 +137,9 @@ export default function UserDashboardPage() {
           <div className="flex items-center gap-6">
             <div className="w-20 h-20 bg-orange-600 rounded-3xl flex items-center justify-center text-4xl font-black italic shadow-2xl shadow-orange-600/30">
               {currentUser.photoUrl ? (
-                <img src={currentUser.photoUrl} className="w-full h-full object-cover rounded-3xl" />
+                <img src={currentUser.photoUrl} className="w-full h-full object-cover rounded-3xl" alt="User" />
               ) : (
-                currentUser.avatarInitial
+                <span className="text-white">{currentUser.avatarInitial}</span>
               )}
             </div>
             <div>
@@ -125,10 +156,10 @@ export default function UserDashboardPage() {
             </div>
           </div>
           <div className="flex gap-4">
-            <Link href="/user/profile" className="px-6 py-3 bg-white/10 text-white border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-white/20 transition-all">
+            <Link href="/user/profile" className="px-6 py-3 bg-white/10 text-white border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-white/20 transition-all border-none">
               Edit Profile
             </Link>
-            <Link href="/matches" className="px-6 py-3 bg-orange-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-orange-500 transition-all shadow-lg shadow-orange-600/30">
+            <Link href="/matches" className="px-6 py-3 bg-orange-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-orange-500 transition-all shadow-lg shadow-orange-600/30 border-none">
               Browse Matches
             </Link>
           </div>
@@ -138,19 +169,19 @@ export default function UserDashboardPage() {
       {/* Quick Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
         {[
-          { label: "Followed Teams", val: currentUser.followedTeams?.length || 0, icon: <Heart className="w-5 h-5" />, color: "text-pink-600", bg: "bg-pink-50" },
-          { label: "Matches Watched", val: Math.floor(Math.random() * 50) + 10, icon: <Eye className="w-5 h-5" />, color: "text-blue-600", bg: "bg-blue-50" },
-          { label: "Challenges", val: Math.floor(Math.random() * 10), icon: <Zap className="w-5 h-5" />, color: "text-orange-600", bg: "bg-orange-50" },
-          { label: "Arena Reputation", val: `${Math.floor(Math.random() * 5000) + 1000}`, icon: <Award className="w-5 h-5" />, color: "text-emerald-600", bg: "bg-emerald-50" },
+          { label: "Followed Teams", val: followedTeams.length, icon: <Heart className="w-5 h-5" />, color: "text-pink-600", bg: "bg-pink-50" },
+          { label: "Matches Watched", val: 0, icon: <Eye className="w-5 h-5" />, color: "text-blue-600", bg: "bg-blue-50" },
+          { label: "Challenges", val: 0, icon: <Zap className="w-5 h-5" />, color: "text-orange-600", bg: "bg-orange-50" },
+          { label: "Arena Reputation", val: `Verified`, icon: <Award className="w-5 h-5" />, color: "text-emerald-600", bg: "bg-emerald-50" },
         ].map((s, i) => (
           <motion.div
             key={i}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.1 }}
-            className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm"
+            className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm group hover:border-orange-100 transition-all"
           >
-            <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center mb-4", s.bg, s.color)}>{s.icon}</div>
+            <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center mb-4 transition-transform group-hover:scale-110", s.bg, s.color)}>{s.icon}</div>
             <div className="text-2xl font-black italic text-slate-900 mb-1">{s.val}</div>
             <div className="text-[9px] font-black uppercase tracking-widest text-slate-400">{s.label}</div>
           </motion.div>
@@ -163,7 +194,7 @@ export default function UserDashboardPage() {
           <div className="bg-white ch-card p-8">
             <div className="flex items-center justify-between mb-8">
               <h2 className="text-xl font-black italic uppercase tracking-tighter flex items-center gap-3">
-                <Trophy className="w-5 h-5 text-orange-600" /> Upcoming Matches
+                <Trophy className="w-5 h-5 text-orange-600" /> Recent Results
               </h2>
               <Link href="/matches" className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-orange-600 flex items-center gap-1">
                 View All <ChevronRight className="w-3 h-3" />
@@ -200,8 +231,8 @@ export default function UserDashboardPage() {
             ) : (
               <div className="py-16 text-center">
                 <Calendar className="w-12 h-12 text-slate-200 mx-auto mb-4" />
-                <p className="text-sm font-bold text-slate-400">No matches yet. Browse tournaments to find some!</p>
-                <Link href="/tournaments" className="ch-btn-primary px-6 py-3 mt-4 inline-block">Explore Tournaments</Link>
+                <p className="text-sm font-bold text-slate-400 italic">No historical matches found in registry.</p>
+                <Link href="/matches" className="ch-btn-primary px-6 py-3 mt-4 inline-block border-none">Explore Global Matches</Link>
               </div>
             )}
           </div>
@@ -217,22 +248,22 @@ export default function UserDashboardPage() {
             {followedTeams.length > 0 ? (
               <div className="space-y-4">
                 {followedTeams.map((t: any) => (
-                  <Link key={t.id} href={`/teams/${t.id}`} className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 transition-all">
-                    <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white text-xs font-black" style={{ backgroundColor: t.primaryColor }}>
+                  <Link key={t.id} href={`/teams/${t.id}`} className="flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 transition-all group">
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white text-xs font-black shadow-lg" style={{ backgroundColor: t.primaryColor }}>
                       {t.shortName}
                     </div>
                     <div>
-                      <div className="text-sm font-black italic uppercase text-slate-900">{t.name}</div>
+                      <div className="text-sm font-black italic uppercase text-slate-900 group-hover:text-orange-600 transition-colors">{t.name}</div>
                       <div className="text-[8px] font-bold text-slate-400 uppercase tracking-widest">{t.city}</div>
                     </div>
                   </Link>
                 ))}
               </div>
             ) : (
-              <div className="py-8 text-center">
+              <div className="py-8 text-center bg-slate-50 rounded-3xl border border-dashed border-slate-100">
                 <Users className="w-8 h-8 text-slate-200 mx-auto mb-3" />
                 <p className="text-[10px] font-black uppercase tracking-widest text-slate-300">No teams followed yet</p>
-                <Link href="/teams" className="text-[10px] font-black text-orange-600 mt-2 inline-block">Browse Teams →</Link>
+                <Link href="/teams" className="text-[10px] font-black text-orange-600 mt-2 inline-block hover:underline">Browse Teams →</Link>
               </div>
             )}
           </div>
@@ -241,22 +272,22 @@ export default function UserDashboardPage() {
           <div className="bg-slate-900 rounded-[2rem] p-8 text-white space-y-6">
             <h3 className="text-sm font-black italic uppercase tracking-tighter">Quick Actions</h3>
             <div className="space-y-3">
-              <Link href="/challenges" className="flex items-center gap-3 p-4 bg-white/5 rounded-xl hover:bg-white/10 transition-all border border-white/5">
-                <Zap className="w-5 h-5 text-orange-500" />
-                <span className="text-xs font-bold">Find a Challenge</span>
+              <Link href="/matches" className="flex items-center gap-3 p-4 bg-white/5 rounded-xl hover:bg-white/10 transition-all border border-white/5 group">
+                <Zap className="w-5 h-5 text-orange-500 group-hover:animate-bounce" />
+                <span className="text-xs font-bold">Live Arena Center</span>
               </Link>
-              {currentUser.position && (
-                <Link href="/teams" className="flex items-center gap-3 p-4 bg-orange-600/20 rounded-xl hover:bg-orange-600/30 transition-all border border-orange-500/20">
-                  <Users className="w-5 h-5 text-orange-500" />
+              {currentUser.role === 'USER' && (
+                <Link href="/teams" className="flex items-center gap-3 p-4 bg-orange-600/20 rounded-xl hover:bg-orange-600/30 transition-all border border-orange-500/20 group">
+                  <Users className="w-5 h-5 text-orange-500 group-hover:scale-110 transition-transform" />
                   <span className="text-xs font-bold">Join a Club / Trial</span>
                 </Link>
               )}
-              <Link href="/players" className="flex items-center gap-3 p-4 bg-white/5 rounded-xl hover:bg-white/10 transition-all border border-white/5">
-                <TrendingUp className="w-5 h-5 text-blue-500" />
-                <span className="text-xs font-bold">Leaderboard</span>
+              <Link href="/players" className="flex items-center gap-3 p-4 bg-white/5 rounded-xl hover:bg-white/10 transition-all border border-white/5 group">
+                <TrendingUp className="w-5 h-5 text-blue-500 group-hover:translate-y-[-2px] transition-transform" />
+                <span className="text-xs font-bold">Global Leaderboard</span>
               </Link>
-              <Link href="/results" className="flex items-center gap-3 p-4 bg-white/5 rounded-xl hover:bg-white/10 transition-all border border-white/5">
-                <Star className="w-5 h-5 text-amber-500" />
+              <Link href="/results" className="flex items-center gap-3 p-4 bg-white/5 rounded-xl hover:bg-white/10 transition-all border border-white/5 group">
+                <Star className="w-5 h-5 text-amber-500 group-hover:rotate-12 transition-transform" />
                 <span className="text-xs font-bold">Recent Results</span>
               </Link>
             </div>

@@ -9,10 +9,10 @@ import {
   Zap, 
   Mail, 
   Lock, 
-  Palette, 
   ImageIcon,
   CheckCircle2,
-  ArrowLeft
+  ArrowLeft,
+  Loader2
 } from "lucide-react";
 import Link from "next/link";
 import { useTenant } from "@/context/TenantContext";
@@ -20,11 +20,12 @@ import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 
-export default function CricHeroesStyleRegisterPage() {
+export default function OrganisationRegisterPage() {
   const { createTenant, setTenant } = useTenant();
   const { setRole } = useAuth();
   const router = useRouter();
   const [step, setStep] = useState(1);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     city: "Mumbai",
@@ -39,21 +40,29 @@ export default function CricHeroesStyleRegisterPage() {
   const nextStep = () => setStep(s => s + 1);
   const prevStep = () => setStep(s => s - 1);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const newTenant = createTenant(formData.name, formData.city, formData.primaryColor);
-    setRole("ORGANISER");
-    setTenant(newTenant);
-    router.push("/admin");
+    setIsSubmitting(true);
+    try {
+      const newTenant = await createTenant(formData.name, formData.city, formData.primaryColor);
+      if (newTenant) {
+        setRole("ORGANISER");
+        setTenant(newTenant);
+        router.push("/organiser/dashboard");
+      }
+    } catch (err) {
+      console.error("Organisation registration failed", err);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-900 font-sans flex flex-col">
-       {/* Top Static Header */}
-       <header className="bg-white border-b border-slate-200 px-6 py-4">
+       <header className="bg-white border-b border-slate-200 px-6 py-4 sticky top-0 z-50">
           <div className="max-w-7xl mx-auto flex items-center justify-between">
-             <Link href="/" className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-orange-600 rounded-lg flex items-center justify-center text-white">
+             <Link href="/" className="flex items-center gap-2 group">
+                <div className="w-8 h-8 bg-orange-600 rounded-lg flex items-center justify-center text-white shadow-lg shadow-orange-600/20 group-hover:rotate-12 transition-transform">
                    <Zap className="w-5 h-5 fill-current" />
                 </div>
                 <span className="text-lg font-black italic uppercase tracking-tighter text-slate-900">KabaddiHub</span>
@@ -72,7 +81,7 @@ export default function CricHeroesStyleRegisterPage() {
        <main className="flex-1 flex items-center justify-center p-6 bg-slate-50/50">
           <div className="max-w-xl w-full">
              <div className="bg-white ch-card p-10 md:p-14 relative overflow-hidden">
-                <div className="absolute top-0 right-0 p-8 opacity-[0.03]">
+                <div className="absolute top-0 right-0 p-8 opacity-[0.03] pointer-events-none">
                    <Building2 className="w-32 h-32" />
                 </div>
 
@@ -140,9 +149,9 @@ export default function CricHeroesStyleRegisterPage() {
                            <button 
                              onClick={nextStep}
                              disabled={!formData.name || !formData.adminEmail}
-                             className="w-full ch-btn-primary py-5 mt-4"
+                             className="w-full ch-btn-primary py-5 mt-4 group"
                            >
-                             Continue to Branding <ChevronRight className="w-4 h-4" />
+                             Continue to Branding <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                            </button>
                         </div>
                      </motion.div>
@@ -205,28 +214,19 @@ export default function CricHeroesStyleRegisterPage() {
 
                            <button 
                              onClick={handleSubmit}
-                             className="w-full ch-btn-primary py-5 shadow-xl shadow-orange-600/20"
+                             disabled={isSubmitting}
+                             className="w-full ch-btn-primary py-5 shadow-xl shadow-orange-600/20 disabled:opacity-50"
                            >
-                             Finalize Registration <ShieldCheck className="w-4 h-4" />
+                             {isSubmitting ? (
+                               <span className="flex items-center gap-2"><Loader2 className="w-4 h-4 animate-spin" /> Provisioning...</span>
+                             ) : (
+                               <span className="flex items-center gap-2">Finalize Registration <ShieldCheck className="w-4 h-4" /></span>
+                             )}
                            </button>
                         </div>
                      </motion.div>
                    )}
                 </AnimatePresence>
-             </div>
-
-             <div className="mt-12 flex flex-col items-center gap-6">
-                <div className="flex items-center gap-8 opacity-40 grayscale hover:grayscale-0 hover:opacity-100 transition-all cursor-crosshair">
-                   <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
-                      <Trophy className="w-4 h-4" /> Elite Tier
-                   </div>
-                   <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
-                      <CheckCircle2 className="w-4 h-4" /> ISO Certified
-                   </div>
-                   <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest">
-                      <ShieldCheck className="w-4 h-4" /> Secure Auth
-                   </div>
-                </div>
              </div>
           </div>
        </main>

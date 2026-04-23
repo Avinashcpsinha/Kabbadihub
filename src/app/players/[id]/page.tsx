@@ -10,6 +10,7 @@ import {
   TrendingUp, Award, Users, BarChart3
 } from "lucide-react";
 import { motion } from "framer-motion";
+import { supabase } from "@/lib/supabase";
 
 export default function PlayerDetailPage() {
   const params = useParams();
@@ -17,38 +18,52 @@ export default function PlayerDetailPage() {
   const playerId = params.id as string;
   const [player, setPlayer] = useState<any>(null);
   const [teamName, setTeamName] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const allTenantsRaw = localStorage.getItem("kabaddihub_tenants");
-    if (!allTenantsRaw) return;
-    const tenants = JSON.parse(allTenantsRaw);
-
-    for (const t of tenants) {
-      const teamsRaw = localStorage.getItem(`kabaddihub_${t.id}_teams`);
-      if (!teamsRaw) continue;
-      const teams = JSON.parse(teamsRaw);
-      for (const team of teams) {
-        if (team.players) {
-          const found = team.players.find((p: any) => p.id === playerId);
-          if (found) {
-            setPlayer({ ...found, teamId: team.id });
-            setTeamName(team.name);
-            return;
+    const fetchPlayerData = async () => {
+      setIsLoading(true);
+      
+      // 1. Fetch Athlete Main Data
+      const { data: athlete } = await supabase
+        .from('athletes')
+        .select('*')
+        .eq('id', playerId)
+        .single();
+      
+      if (athlete) {
+        // 2. Fetch Team Association
+        const { data: teamAssoc } = await supabase
+          .from('team_athletes')
+          .select('jersey_number, teams(name, id)')
+          .eq('athlete_id', playerId)
+          .single();
+        
+        setPlayer({
+          ...athlete,
+          number: teamAssoc?.jersey_number || athlete.jersey_no || "00",
+          stats: {
+            matches: 0,
+            raidPoints: 0,
+            tacklePoints: 0,
+            superTens: 0,
+            highFives: 0
           }
+        });
+        
+        if (teamAssoc?.teams) {
+          setTeamName((teamAssoc.teams as any).name);
+        } else {
+          setTeamName("Free Agent");
         }
       }
-      const playersRaw = localStorage.getItem(`kabaddihub_${t.id}_players`);
-      if (playersRaw) {
-        const players = JSON.parse(playersRaw);
-        const found = players.find((p: any) => p.id === playerId);
-        if (found) {
-          setPlayer(found);
-          setTeamName(found.teamName || `Franchise #${found.teamId || "N/A"}`);
-          return;
-        }
-      }
-    }
+      setIsLoading(false);
+    };
+
+    fetchPlayerData();
   }, [playerId]);
+
+  if (isLoading) return <PublicLayout><div className="min-h-screen bg-slate-50 flex items-center justify-center"><div className="w-12 h-12 border-4 border-orange-600 border-t-transparent rounded-full animate-spin" /></div></PublicLayout>;
 
   if (!player) {
     return (
@@ -69,8 +84,8 @@ export default function PlayerDetailPage() {
     { label: "Raid Points", val: stats.raidPoints || 0, max: 2000, color: "bg-orange-600" },
     { label: "Tackle Points", val: stats.tacklePoints || 0, max: 600, color: "bg-blue-600" },
     { label: "Matches", val: stats.matches || 0, max: 200, color: "bg-emerald-600" },
-    { label: "Super Tens", val: stats.superTens || stats.superRaids || 0, max: 100, color: "bg-purple-600" },
-    { label: "High Fives", val: stats.highFives || stats.superTackles || 0, max: 50, color: "bg-amber-600" },
+    { label: "Super Tens", val: stats.superTens || 0, max: 100, color: "bg-purple-600" },
+    { label: "High Fives", val: stats.highFives || 0, max: 50, color: "bg-amber-600" },
   ];
 
   return (
@@ -114,8 +129,8 @@ export default function PlayerDetailPage() {
               { label: "Matches", val: stats.matches || 0, icon: <Activity className="w-4 h-4" /> },
               { label: "Raid Pts", val: stats.raidPoints || 0, icon: <Zap className="w-4 h-4" /> },
               { label: "Tackle Pts", val: stats.tacklePoints || 0, icon: <Shield className="w-4 h-4" /> },
-              { label: "Super 10s", val: stats.superTens || stats.superRaids || 0, icon: <TrendingUp className="w-4 h-4" /> },
-              { label: "High 5s", val: stats.highFives || stats.superTackles || 0, icon: <Award className="w-4 h-4" /> },
+              { label: "Super 10s", val: stats.superTens || 0, icon: <TrendingUp className="w-4 h-4" /> },
+              { label: "High 5s", val: stats.highFives || 0, icon: <Award className="w-4 h-4" /> },
             ].map((s, i) => (
               <div key={i} className="p-6 text-center hover:bg-slate-50/50 transition-colors">
                 <div className="text-2xl font-black italic text-slate-900 tabular-nums">{s.val}</div>
@@ -153,8 +168,8 @@ export default function PlayerDetailPage() {
           <div className="grid md:grid-cols-3 gap-6">
             {[
               { label: "Avg Points/Match", val: stats.matches ? ((stats.raidPoints + stats.tacklePoints) / stats.matches).toFixed(1) : "0" },
-              { label: "Raid Success Rate", val: `${Math.floor(60 + Math.random() * 30)}%` },
-              { label: "Tackle Efficiency", val: `${Math.floor(50 + Math.random() * 40)}%` },
+              { label: "Raid Success Rate", val: `0%` },
+              { label: "Tackle Efficiency", val: `0%` },
             ].map((h, i) => (
               <div key={i} className="p-6 bg-white/5 rounded-2xl border border-white/5 text-center">
                 <div className="text-3xl font-black italic text-white tabular-nums mb-2">{h.val}</div>

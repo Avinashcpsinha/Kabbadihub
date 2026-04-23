@@ -22,6 +22,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Team } from "@/types";
 import { motion, AnimatePresence } from "framer-motion";
+import { supabase } from "@/lib/supabase";
 
 import { useAuth } from "@/context/AuthContext";
 import { useTenant } from "@/context/TenantContext";
@@ -30,9 +31,11 @@ export default function CricHeroesStyleTeamsPage() {
   const router = useRouter();
   const { role } = useAuth();
   const { tenant } = useTenant();
+  const currentTenantId = tenant?.id;
   const [teams, setTeams] = useState<Team[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   
   const [newTeam, setNewTeam] = useState({
     name: "",
@@ -41,88 +44,60 @@ export default function CricHeroesStyleTeamsPage() {
     primaryColor: "#f97316"
   });
 
-  const fallbackTeams: Team[] = [
-    {
-      id: "1",
-      name: "Bengaluru Bulls",
-      shortName: "BEN",
-      city: "Bengaluru",
-      primaryColor: "#f97316",
-      secondaryColor: "#b45309",
-      players: [],
-    },
-    {
-      id: "2",
-      name: "Dabang Delhi",
-      shortName: "DEL",
-      city: "Delhi",
-      primaryColor: "#2563eb",
-      secondaryColor: "#1e3a8a",
-      players: [],
+  const fetchTeams = async () => {
+    setIsLoading(true);
+    let query = supabase.from('teams').select('*');
+    
+    if (currentTenantId && currentTenantId !== 'global') {
+      query = query.eq('tenant_id', currentTenantId);
     }
-  ];
+
+    const { data, error } = await query;
+    if (data) {
+      setTeams(data.map(t => ({
+        id: t.id,
+        name: t.name,
+        shortName: t.short_name,
+        primaryColor: t.primary_color,
+        secondaryColor: t.secondary_color,
+        city: t.city,
+        logoUrl: t.logo_url,
+        players: [] // In a real app we'd fetch player counts via a view or join
+      })));
+    }
+    setIsLoading(false);
+  };
 
   useEffect(() => {
-    const activeTenant = tenant || JSON.parse(localStorage.getItem("kabaddihub_current_tenant") || "null") || { id: "global" };
-    const tenantId = activeTenant.id;
-    const key = `kabaddihub_${tenantId}_teams`;
-    const saved = localStorage.getItem(key);
-    
-    if (saved) {
-      setTeams(JSON.parse(saved));
-    } else if (tenantId === "global") {
-      const allTenantsRaw = localStorage.getItem("kabaddihub_tenants");
-      if (allTenantsRaw) {
-        const tenants: any[] = JSON.parse(allTenantsRaw);
-        let aggregated: Team[] = [];
-        tenants.forEach(t => {
-          const tTeams = localStorage.getItem(`kabaddihub_${t.id}_teams`);
-          if (tTeams) aggregated = [...aggregated, ...JSON.parse(tTeams)];
-        });
-        setTeams(aggregated.length > 0 ? aggregated : fallbackTeams);
-      } else {
-        setTeams(fallbackTeams);
-      }
-    } else {
-      setTeams(fallbackTeams);
-    }
-  }, [tenant]);
+    fetchTeams();
+  }, [currentTenantId]);
 
-  const handleCreateTeam = (e: React.FormEvent) => {
+  const handleCreateTeam = async (e: React.FormEvent) => {
     e.preventDefault();
-    const activeTenant = tenant || JSON.parse(localStorage.getItem("kabaddihub_current_tenant") || "null");
-    if (!activeTenant) return;
+    if (!currentTenantId) return;
     
-    const team: Team = {
-      id: `team_${Date.now()}`,
-      ...newTeam,
-      secondaryColor: "#0f172a",
-      players: []
-    };
-    const updated = [...teams, team];
-    setTeams(updated);
-    localStorage.setItem(`kabaddihub_${activeTenant.id}_teams`, JSON.stringify(updated));
-    setIsModalOpen(false);
-    setNewTeam({ name: "", shortName: "", city: "", primaryColor: "#f97316" });
+    const { data, error } = await supabase.from('teams').insert([{
+      name: newTeam.name,
+      short_name: newTeam.shortName,
+      city: newTeam.city,
+      primary_color: newTeam.primaryColor,
+      tenant_id: currentTenantId
+    }]).select();
+
+    if (data) {
+      fetchTeams();
+      setIsModalOpen(false);
+      setNewTeam({ name: "", shortName: "", city: "", primaryColor: "#f97316" });
+    }
   };
 
-  const deleteTeam = (id: string) => {
+  const deleteTeam = async (id: string) => {
     if (!confirm("Are you sure you want to remove this squad?")) return;
-    const activeTenant = tenant || JSON.parse(localStorage.getItem("kabaddihub_current_tenant") || "null");
-    if (!activeTenant) return;
-    const updated = teams.filter(t => t.id !== id);
-    setTeams(updated);
-    localStorage.setItem(`kabaddihub_${activeTenant.id}_teams`, JSON.stringify(updated));
-  };
-
-  const getRoleCounts = (teamPlayers: any[]) => {
-    let r = 0, d = 0, ar = 0;
-    teamPlayers.forEach(p => {
-      if (p.role === "RAIDER") r++;
-      else if (p.role === "DEFENDER") d++;
-      else if (p.role === "ALL_ROUNDER") ar++;
-    });
-    return { r, d, ar };
+    
+    const { error } = await supabase.from('teams').delete().eq('id', id);
+    if (!error) {
+      setTeams(teams.filter(t => t.id !== id));
+    }
   };
 
   const filteredTeams = teams.filter(t => 
@@ -149,18 +124,13 @@ export default function CricHeroesStyleTeamsPage() {
                   <div className="relative hidden md:block">
                      <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                      <input 
-                      type="text" 
-                      placeholder="Search Squads..."
-                      className="ch-input !pl-12 w-64 py-3"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
+                       type="text" 
+                       placeholder="Search Squads..."
+                       className="ch-input !pl-12 w-64 py-3"
+                       value={searchQuery}
+                       onChange={(e) => setSearchQuery(e.target.value)}
                      />
                   </div>
-                  {role !== "PUBLIC" && (
-                    <button onClick={() => setIsModalOpen(true)} className="ch-btn-primary py-3">
-                       <Plus className="w-5 h-5" /> Register
-                    </button>
-                  )}
                </div>
             </div>
          </nav>
@@ -180,82 +150,68 @@ export default function CricHeroesStyleTeamsPage() {
           </div>
 
           <div className="bg-white rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-separate border-spacing-0">
-                <thead>
-                  <tr className="bg-slate-50/50">
-                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-slate-400 border-b border-slate-100">Squad Identity</th>
-                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-slate-400 border-b border-slate-100">Squad Size</th>
-                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-slate-400 border-b border-slate-100">R / D / AR Split</th>
-                    <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-slate-400 border-b border-slate-100 text-right">Operation</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-50">
-                  {filteredTeams.map((team) => {
-                    const stats = getRoleCounts(team.players || []);
-                    return (
-                      <tr key={team.id} className="group hover:bg-slate-50/30 transition-all">
-                        <td className="px-8 py-7">
-                          <div className="flex items-center gap-4">
-                            <div 
-                              className="w-12 h-12 rounded-2xl flex items-center justify-center text-lg font-black italic text-white shadow-lg shrink-0 transform group-hover:rotate-6 transition-transform"
-                              style={{ backgroundColor: team.primaryColor }}
-                            >
-                              {team.shortName}
-                            </div>
-                            <div>
-                              <div className="text-sm font-black uppercase tracking-tight text-slate-900">{team.name}</div>
-                              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1">
-                                <MapPin className="w-3 h-3" /> {team.city}
+            {isLoading ? (
+              <div className="py-20 flex justify-center">
+                <div className="w-12 h-12 border-4 border-orange-600 border-t-transparent rounded-full animate-spin"></div>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-separate border-spacing-0">
+                  <thead>
+                    <tr className="bg-slate-50/50">
+                      <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-slate-400 border-b border-slate-100">Squad Identity</th>
+                      <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-slate-400 border-b border-slate-100">Squad Location</th>
+                      <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-slate-400 border-b border-slate-100 text-right">Operation</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-50">
+                    {filteredTeams.map((team) => {
+                      return (
+                        <tr key={team.id} className="group hover:bg-slate-50/30 transition-all">
+                          <td className="px-8 py-7">
+                            <div className="flex items-center gap-4">
+                              <div 
+                                className="w-12 h-12 rounded-2xl flex items-center justify-center text-lg font-black italic text-white shadow-lg shrink-0 transform group-hover:rotate-6 transition-transform"
+                                style={{ backgroundColor: team.primaryColor }}
+                              >
+                                {team.shortName}
+                              </div>
+                              <div>
+                                <div className="text-sm font-black uppercase tracking-tight text-slate-900">{team.name}</div>
+                                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1">
+                                  <Shield className="w-3 h-3" /> {team.shortName}
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        </td>
-                        <td className="px-8 py-7">
-                          <div className="inline-flex items-center gap-2 px-4 py-2 bg-slate-50 rounded-xl">
-                            <Users className="w-3.5 h-3.5 text-slate-400" />
-                            <span className="text-sm font-black italic text-slate-900 tabular-nums">{team.players?.length || 0}</span>
-                          </div>
-                        </td>
-                        <td className="px-8 py-7">
-                           <div className="flex items-center gap-3">
-                              <div className="flex items-center gap-1.5">
-                                <span className="text-xs font-black text-orange-600 italic leading-none">{stats.r}</span>
-                                <span className="text-[8px] font-black text-slate-300 uppercase">Raiders</span>
-                              </div>
-                              <div className="w-px h-3 bg-slate-200" />
-                              <div className="flex items-center gap-1.5">
-                                <span className="text-xs font-black text-blue-600 italic leading-none">{stats.d}</span>
-                                <span className="text-[8px] font-black text-slate-300 uppercase">Defenders</span>
-                              </div>
-                              <div className="w-px h-3 bg-slate-200" />
-                              <div className="flex items-center gap-1.5">
-                                <span className="text-xs font-black text-purple-600 italic leading-none">{stats.ar}</span>
-                                <span className="text-[8px] font-black text-slate-300 uppercase">All-Round</span>
-                              </div>
-                           </div>
-                        </td>
-                        <td className="px-8 py-7 text-right">
-                          <div className="flex items-center justify-end gap-2">
-                             <Link href={`/teams/${team.id}`} className="p-3 bg-white border border-slate-100 rounded-xl text-slate-400 hover:text-orange-600 hover:border-orange-100 hover:shadow-md transition-all">
-                                <ChevronRight className="w-4 h-4" />
-                             </Link>
-                             {role !== "PUBLIC" && (
-                               <button 
-                                 onClick={() => deleteTeam(team.id)}
-                                 className="p-3 bg-white border border-slate-100 rounded-xl text-slate-400 hover:text-red-600 hover:border-red-100 transition-all"
-                               >
-                                  <Trash2 className="w-4 h-4" />
-                               </button>
-                             )}
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+                          </td>
+                          <td className="px-8 py-7">
+                            <div className="inline-flex items-center gap-2 px-4 py-2 bg-slate-50 rounded-xl">
+                              <MapPin className="w-3.5 h-3.5 text-slate-400" />
+                              <span className="text-sm font-black italic text-slate-900 tabular-nums">{team.city}</span>
+                            </div>
+                          </td>
+                          <td className="px-8 py-7 text-right">
+                            <div className="flex items-center justify-end gap-2">
+                               <Link href={`/teams/${team.id}`} className="p-3 bg-white border border-slate-100 rounded-xl text-slate-400 hover:text-orange-600 hover:border-orange-100 hover:shadow-md transition-all">
+                                  <ChevronRight className="w-4 h-4" />
+                               </Link>
+                               {(role === 'SUPER_ADMIN' || (role === 'ORGANISER' && currentTenantId !== 'global')) && (
+                                 <button 
+                                   onClick={() => deleteTeam(team.id)}
+                                   className="p-3 bg-white border border-slate-100 rounded-xl text-slate-400 hover:text-red-600 hover:border-red-100 transition-all"
+                                 >
+                                    <Trash2 className="w-4 h-4" />
+                                 </button>
+                               )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
        </main>
 
@@ -269,10 +225,10 @@ export default function CricHeroesStyleTeamsPage() {
                       <h3 className="text-xl font-black italic uppercase tracking-tighter text-slate-900 leading-none mb-1">New Unit Enrollment</h3>
                    </div>
                    <form onSubmit={handleCreateTeam} className="p-10 space-y-6">
-                      <input className="ch-input py-5 text-sm uppercase font-black" placeholder="SQUAD NAME" value={newTeam.name} onChange={(e) => setNewTeam({...newTeam, name: e.target.value})} />
+                      <input required className="ch-input py-5 text-sm uppercase font-black" placeholder="SQUAD NAME" value={newTeam.name} onChange={(e) => setNewTeam({...newTeam, name: e.target.value})} />
                       <div className="grid grid-cols-2 gap-4">
-                        <input className="ch-input py-5 text-sm uppercase font-black" placeholder="SHORT CODE" maxLength={3} value={newTeam.shortName} onChange={(e) => setNewTeam({...newTeam, shortName: e.target.value})} />
-                        <input className="ch-input py-5 text-sm font-black uppercase" placeholder="CITY" value={newTeam.city} onChange={(e) => setNewTeam({...newTeam, city: e.target.value})} />
+                        <input required className="ch-input py-5 text-sm uppercase font-black" placeholder="SHORT CODE" maxLength={3} value={newTeam.shortName} onChange={(e) => setNewTeam({...newTeam, shortName: e.target.value})} />
+                        <input required className="ch-input py-5 text-sm font-black uppercase" placeholder="CITY" value={newTeam.city} onChange={(e) => setNewTeam({...newTeam, city: e.target.value})} />
                       </div>
                       <button type="submit" className="w-full ch-btn-primary py-6 text-sm">Deploy Squad <Shield className="w-5 h-5" /></button>
                    </form>

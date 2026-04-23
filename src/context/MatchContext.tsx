@@ -93,47 +93,45 @@ export function MatchProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   // Handle Match ID switching
-  const setMatchId = useCallback((id: string) => {
+  const setMatchId = useCallback(async (id: string) => {
     setActiveMatchId(id);
     
-    const key = getStorageKey(id);
-    const saved = localStorage.getItem(key);
-    
-    if (saved) {
-      setState(JSON.parse(saved));
-    } else {
-      // Try resolving team names from the tournament list if it's the first time
-      const targetTenantId = tenant?.id || "global";
-      const matchKey = `kabaddihub_${targetTenantId}_matches`;
-      const teamKey = `kabaddihub_${targetTenantId}_teams`;
-      const savedMatches = localStorage.getItem(matchKey);
-      const savedTeams = localStorage.getItem(teamKey);
+    // 1. Try to fetch existing state from Cloud
+    const { data: cloudMatch, error: cloudError } = await supabase
+      .from('live_matches')
+      .select('*, home:home_team_id(*), away:away_team_id(*)')
+      .eq('id', id)
+      .single();
 
-      if (savedMatches && savedTeams) {
-        const matches = JSON.parse(savedMatches);
-        const teams = JSON.parse(savedTeams);
-        const match = matches.find((m: any) => m.id === id);
-        
-        if (match) {
-          const homeT = teams.find((t: any) => t.id === match.homeTeamId);
-          const awayT = teams.find((t: any) => t.id === match.awayTeamId);
-          
-          const newMatchState: MatchState = {
-            ...initialState,
-            home: { ...initialState.home, name: homeT?.name || "HOME", shortName: homeT?.shortName || "HME" },
-            away: { ...initialState.away, name: awayT?.name || "AWAY", shortName: awayT?.shortName || "AWY" }
-          };
-          setState(newMatchState);
-          localStorage.setItem(key, JSON.stringify(newMatchState));
-          supabase.from('live_matches').upsert({ id, state: newMatchState, updated_at: new Date().toISOString() }).then();
-          return;
-        }
-      }
-      setState(initialState);
-      localStorage.setItem(key, JSON.stringify(initialState));
-      supabase.from('live_matches').upsert({ id, state: initialState, updated_at: new Date().toISOString() }).then();
+    if (cloudMatch?.state && Object.keys(cloudMatch.state).length > 0) {
+      setState(cloudMatch.state as MatchState);
+      return;
     }
-  }, [tenant, getStorageKey]);
+
+    // 2. If no state exists, initialize from Team identities
+    if (cloudMatch) {
+      const homeT = cloudMatch.home;
+      const awayT = cloudMatch.away;
+      
+      const newMatchState: MatchState = {
+        ...initialState,
+        home: { ...initialState.home, id: homeT.id, name: homeT?.name || "HOME", shortName: homeT?.short_name || "HME" },
+        away: { ...initialState.away, id: awayT.id, name: awayT?.name || "AWAY", shortName: awayT?.short_name || "AWY" }
+      };
+      
+      setState(newMatchState);
+      
+      // Persist the fresh initialization
+      await supabase.from('live_matches').upsert({ 
+        id, 
+        state: newMatchState, 
+        updated_at: new Date().toISOString() 
+      });
+      return;
+    }
+
+    setState(initialState);
+  }, []);
 
   // Sync with Supabase Realtime (Global Cloud Sync)
   useEffect(() => {
