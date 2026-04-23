@@ -41,14 +41,20 @@ export default function DashboardLayout({
   const [isMatchSelectorOpen, setIsMatchSelectorOpen] = useState(false);
 
   const getNavItems = () => {
-    if (userRole === "SUPER_ADMIN" && variant === "admin") return SUPER_ADMIN_NAV;
+    // Priority 1: If we are on a super-admin specific path, always show SuperAdmin nav
+    if (pathname.startsWith("/super-admin")) return SUPER_ADMIN_NAV;
+
+    // Priority 2: If we are impersonating a tenant (Franchise mode), always show Organiser nav
+    if (tenant) return ORGANISER_NAV;
+
+    // Priority 3: Standard role-based logic
+    if (userRole === "SUPER_ADMIN") return variant === "admin" ? SUPER_ADMIN_NAV : ORGANISER_NAV;
     if (userRole === "ORGANISER") return ORGANISER_NAV;
     if (userRole === "USER") {
       return currentUser?.position ? ATHLETE_NAV : FAN_NAV;
     }
-    // Fallback to organiser nav if variant is organiser
-    if (variant === "organiser") return ORGANISER_NAV;
-    return FAN_NAV;
+    
+    return variant === "organiser" ? ORGANISER_NAV : FAN_NAV;
   };
 
   const navItems = getNavItems();
