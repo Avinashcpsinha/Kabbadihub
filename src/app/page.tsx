@@ -139,9 +139,6 @@ export default function PremiumLandingPage() {
              </div>
           </div>
              <div className="hidden lg:flex items-center gap-2 mr-2">
-                <span className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">
-                  {isAuthenticated ? "Session Active:" : "Portal Status:"}
-                </span>
                 <span className="text-[10px] font-black uppercase tracking-widest text-slate-900 bg-slate-100 px-3 py-1 rounded-full border border-slate-200">
                   {isAuthenticated ? `Hi, ${currentUser?.name.split(" ")[0]}` : "Welcome, Guest"}
                 </span>
