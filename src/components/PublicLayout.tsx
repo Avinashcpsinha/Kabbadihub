@@ -116,14 +116,14 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
                             </Link>
                           </>
                         )}
-                        {(role === "ORGANISER" || role === "SUPER_ADMIN") && (
-                          <Link href="/admin" onClick={() => setUserMenuOpen(false)} className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-orange-600 hover:bg-orange-50 transition-all">
-                            <BarChart3 className="w-4 h-4" /> Management Console
-                          </Link>
-                        )}
                         {role === "SUPER_ADMIN" && (
                           <Link href="/super-admin" onClick={() => setUserMenuOpen(false)} className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-red-600 hover:bg-red-50 transition-all">
-                            <Shield className="w-4 h-4" /> Platform Control
+                            <Shield className="w-4 h-4" /> Director Console
+                          </Link>
+                        )}
+                        {role === "ORGANISER" && (
+                          <Link href="/admin" onClick={() => setUserMenuOpen(false)} className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-orange-600 hover:bg-orange-50 transition-all">
+                            <BarChart3 className="w-4 h-4" /> Management Console
                           </Link>
                         )}
                         <button onClick={() => { setUserMenuOpen(false); logout(); }} className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-red-600 hover:bg-red-50 transition-all">
