@@ -4,7 +4,8 @@ import {
   Zap, Gavel, MapPin, Megaphone, BarChart3, 
   Settings, Building2, PieChart, FileText, 
   Activity, Star, Heart, TrendingUp, Search,
-  Calendar, ShieldCheck, User, Mail, HelpCircle
+  Calendar, ShieldCheck, User, Mail, HelpCircle,
+  ShoppingBag, Bell, ShieldAlert
 } from "lucide-react";
 
 export interface NavItem {
@@ -19,9 +20,12 @@ export const SUPER_ADMIN_NAV: NavItem[] = [
   { label: "Tenant Management", href: "/super-admin", icon: "Building2" },
   { label: "User Management", href: "/super-admin/players", icon: "Users" },
   { label: "Organiser Approvals", href: "/super-admin/audit", icon: "ShieldCheck" },
+  { label: "Subscriptions & Billing", href: "/super-admin/analytics", icon: "ShoppingBag" },
+  { label: "Content Moderation", href: "/super-admin/audit", icon: "ShieldAlert" },
+  { label: "System Config", href: "/super-admin/seed", icon: "Activity" },
   { label: "Audit Logs", href: "/super-admin/audit", icon: "FileText" },
   { label: "Global Analytics", href: "/super-admin/analytics", icon: "PieChart" },
-  { label: "System Config", href: "/super-admin/seed", icon: "Activity" },
+  { label: "System Notifications", href: "/super-admin/seed", icon: "Megaphone" },
 ];
 
 export const ORGANISER_NAV: NavItem[] = [
@@ -32,6 +36,7 @@ export const ORGANISER_NAV: NavItem[] = [
   { label: "Live Match Control", href: "/scoring", icon: "Zap" },
   { label: "Player Management", href: "/players", icon: "Target" },
   { label: "Reports & Analytics", href: "/admin/analytics", icon: "BarChart3" },
+  { label: "Payments & Fees", href: "/admin/analytics", icon: "ShoppingBag" },
   { label: "Announcements", href: "/admin/announcements", icon: "Megaphone" },
   { label: "Organiser Settings", href: "/admin/settings", icon: "Settings" },
 ];
@@ -45,6 +50,7 @@ export const ATHLETE_NAV: NavItem[] = [
   { label: "Standings", href: "/players?view=spectator", icon: "TrendingUp" },
   { label: "My Profile", href: "/user/profile", icon: "User" },
   { label: "My Registrations", href: "/user/dashboard", icon: "ShieldCheck" },
+  { label: "Notifications", href: "/user/dashboard", icon: "Bell" },
   { label: "Settings", href: "/user/profile", icon: "Settings" },
 ];
 
@@ -68,5 +74,5 @@ export const ICON_MAP: Record<string, any> = {
   Gavel, MapPin, Megaphone, BarChart3, Settings, 
   Building2, PieChart, FileText, Activity, Star, 
   Heart, TrendingUp, Search, Calendar, ShieldCheck,
-  User, HelpCircle, Mail
+  User, HelpCircle, Mail, ShoppingBag, Bell, ShieldAlert
 };
