@@ -19,6 +19,7 @@ import { useTenant } from "@/context/TenantContext";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
+import UniversalHeader from "@/components/navigation/UniversalHeader";
 
 export default function OrganisationRegisterPage() {
   const { createTenant, setTenant } = useTenant();
@@ -59,24 +60,7 @@ export default function OrganisationRegisterPage() {
 
   return (
     <div className="min-h-screen bg-[#f8fafc] text-slate-900 font-sans flex flex-col">
-       <header className="bg-white border-b border-slate-200 px-6 py-4 sticky top-0 z-50">
-          <div className="max-w-7xl mx-auto flex items-center justify-between">
-             <Link href="/" className="flex items-center gap-2 group">
-                <div className="w-8 h-8 bg-orange-600 rounded-lg flex items-center justify-center text-white shadow-lg shadow-orange-600/20 group-hover:rotate-12 transition-transform">
-                   <Zap className="w-5 h-5 fill-current" />
-                </div>
-                <span className="text-lg font-black italic uppercase tracking-tighter text-slate-900">KabaddiHub</span>
-             </Link>
-             <div className="flex items-center gap-6">
-                <div className="hidden sm:flex items-center gap-2">
-                   {[1, 2].map((i) => (
-                     <div key={i} className={`w-8 h-1 rounded-full transition-colors ${step >= i ? "bg-orange-600" : "bg-slate-200"}`} />
-                   ))}
-                </div>
-                <Link href="/login" className="text-[10px] font-black uppercase tracking-widest text-slate-500 hover:text-orange-600 transition-colors">Sign In</Link>
-             </div>
-          </div>
-       </header>
+       <UniversalHeader />
 
        <main className="flex-1 flex items-center justify-center p-6 bg-slate-50/50">
           <div className="max-w-xl w-full">

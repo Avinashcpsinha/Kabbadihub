@@ -12,6 +12,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Suspense } from "react";
+import UniversalHeader from "@/components/navigation/UniversalHeader";
 
 function RegisterContent() {
   const { registerUser } = useAuth();
@@ -79,21 +80,7 @@ function RegisterContent() {
 
   return (
     <div className="min-h-screen bg-[#f8f9fa] text-slate-900 font-sans flex flex-col">
-      <header className="bg-white border-b border-slate-200 px-6 py-4 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 group">
-            <div className="w-9 h-9 bg-orange-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-orange-600/20 group-hover:rotate-12 transition-transform">
-              <Zap className="w-5 h-5 fill-current" />
-            </div>
-            <span className="text-xl font-black italic uppercase tracking-tighter text-slate-900">KabaddiHub</span>
-          </Link>
-          <div className="flex items-center gap-6">
-             <Link href="/login" className="text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-orange-600 flex items-center gap-1 transition-colors">
-                Already have an account? <span className="text-orange-600 ml-1">Sign In</span>
-             </Link>
-          </div>
-        </div>
-      </header>
+      <UniversalHeader />
 
       <main className="flex-1 flex items-center justify-center p-6 md:p-12">
         <div className="max-w-2xl w-full">
