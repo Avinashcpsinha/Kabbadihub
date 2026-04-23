@@ -82,7 +82,8 @@ export default function DashboardLayout({
         {/* Sidebar */}
         <aside
           className={cn(
-            "fixed left-0 bottom-0 top-[108px] bg-white border-r border-slate-200 z-[70] flex flex-col transition-all duration-300",
+            "fixed left-0 bottom-0 bg-white border-r border-slate-200 z-[70] flex flex-col transition-all duration-300",
+            isSuperAdmin && tenant ? "top-[152px]" : "top-[108px]",
             isCollapsed ? "w-[80px]" : "w-[280px]",
             isMobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
           )}

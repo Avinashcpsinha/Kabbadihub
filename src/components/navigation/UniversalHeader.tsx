@@ -35,7 +35,10 @@ export default function UniversalHeader({
   ];
 
   return (
-    <div className="sticky top-0 z-[100] shadow-sm">
+    <div className={cn(
+      "sticky z-[100] shadow-sm transition-all duration-300",
+      isSuperAdmin && tenant ? "top-[44px]" : "top-0"
+    )}>
       {/* Tier 1: Dark Informational Bar */}
       <div className="bg-slate-950 text-white/60 py-2.5 px-6 border-b border-white/5 flex items-center justify-between">
         <div className="flex items-center gap-6">
