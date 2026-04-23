@@ -170,19 +170,6 @@ export default function DashboardLayout({
 
         {/* Sidebar Footer */}
         <div className="p-4 border-t border-slate-100 space-y-2">
-          {variant === "organiser" && (isSuperAdmin || userRole === "SUPER_ADMIN") && (
-            <button
-              onClick={exitImpersonation}
-              className={cn(
-                "flex items-center gap-3 px-4 py-3 rounded-xl text-red-600 bg-red-50 hover:bg-red-100 transition-all w-full text-left",
-                isCollapsed && "justify-center px-0"
-              )}
-              title={isCollapsed ? "System Control" : undefined}
-            >
-              <ShieldAlert className="w-5 h-5 shrink-0" />
-              {!isCollapsed && <span className="text-[10px] font-black uppercase tracking-widest">System Control</span>}
-            </button>
-          )}
           <Link
             href="/"
             className={cn(
@@ -231,6 +218,15 @@ export default function DashboardLayout({
            </div>
 
            <div className="flex items-center gap-4">
+              {variant === "organiser" && (isSuperAdmin || userRole === "SUPER_ADMIN") && (
+                <button
+                  onClick={exitImpersonation}
+                  className="px-6 py-2 bg-red-600 text-white rounded-lg text-[10px] font-black uppercase tracking-[0.2em] shadow-lg shadow-red-600/20 hover:bg-red-700 transition-all flex items-center gap-2"
+                >
+                  <ShieldAlert className="w-4 h-4" />
+                  Un-impersonate
+                </button>
+              )}
               <div className={cn(
                 "px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border",
                 userRole === "SUPER_ADMIN" ? "bg-red-50 text-red-600 border-red-100" : "bg-orange-50 text-orange-600 border-orange-100"
