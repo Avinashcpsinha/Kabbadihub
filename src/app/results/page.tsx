@@ -4,13 +4,15 @@ import React, { useState, useEffect } from "react";
 import PublicLayout from "@/components/PublicLayout";
 import DashboardLayout from "@/components/DashboardLayout";
 import { useAuth } from "@/context/AuthContext";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Trophy, Calendar, ChevronRight, Star, Award, Filter } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/lib/supabase";
+import { Suspense } from "react";
 
-export default function ResultsPage() {
+function ResultsContent() {
   const searchParams = useSearchParams();
   const isSpectator = searchParams.get("view") === "spectator";
   const { role } = useAuth();
@@ -165,4 +167,12 @@ export default function ResultsPage() {
 
   // Default to DashboardLayout for logged-in users navigating through Admin/User consoles
   return <DashboardLayout variant={role === "USER" ? "user" : "organiser"}>{Content}</DashboardLayout>;
+}
+
+export default function ResultsPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-slate-50 flex items-center justify-center"><div className="w-12 h-12 border-4 border-orange-600 border-t-transparent rounded-full animate-spin"></div></div>}>
+      <ResultsContent />
+    </Suspense>
+  );
 }

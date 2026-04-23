@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import PublicLayout from "@/components/PublicLayout";
 import { 
@@ -28,9 +28,11 @@ import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/context/AuthContext";
 import { useTenant } from "@/context/TenantContext";
 
-export default function CricHeroesStyleTournamentPage() {
+function TournamentContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { role } = useAuth();
+  const isSpectator = searchParams.get("view") === "spectator";
   const { tenant } = useTenant();
   const currentTenantId = tenant?.id;
   const [teams, setTeams] = useState<Team[]>([]);
@@ -69,11 +71,6 @@ export default function CricHeroesStyleTournamentPage() {
 
     // 2. Fetch Matches
     let matchQuery = supabase.from('live_matches').select('*').order('scheduled_at', { ascending: true });
-    
-    // For specific tenants, we only show their matches. 
-    // Ideally matches should have a tenant_id or tournament_id, 
-    // but we can filter by team ownership if needed.
-    // For now, let's assume matches table stores all matches and we filter by current tenant if not global.
     
     const { data: matchData } = await matchQuery;
     
@@ -117,27 +114,27 @@ export default function CricHeroesStyleTournamentPage() {
 
   const Content = (
     <div className="min-h-screen bg-transparent text-slate-900 font-sans pb-40">
-       {role === "PUBLIC" && (
-         <nav className="bg-white border-b border-slate-200 px-6 py-4 sticky top-10 z-50">
-            <div className="max-w-7xl mx-auto flex items-center justify-between">
-               <div className="flex items-center gap-6">
-                  <button onClick={() => router.back()} className="p-3 bg-slate-100 rounded-xl text-slate-500 hover:text-orange-600 transition-all border-none cursor-pointer flex items-center justify-center">
-                     <ArrowLeft className="w-5 h-5" />
-                  </button>
-                  <div>
-                     <span className="text-sm font-black italic uppercase tracking-tighter text-slate-900 leading-none block">Tournament Hub</span>
-                     <span className="text-[8px] font-black uppercase tracking-widest text-slate-400">Fixtures & Standings</span>
-                  </div>
-               </div>
-               
-               <div className="flex items-center gap-4">
-                  <div className="hidden md:flex bg-slate-100 p-1.5 rounded-2xl border border-slate-100">
-                     <button onClick={() => setView("fixtures")} className={cn("px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all", view === "fixtures" ? "bg-white text-orange-600 shadow-xl shadow-slate-200" : "text-slate-400 hover:text-slate-600")}>Fixtures</button>
-                     <button onClick={() => setView("standings")} className={cn("px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all", view === "standings" ? "bg-white text-orange-600 shadow-xl shadow-slate-200" : "text-slate-400 hover:text-slate-600")}>Standings</button>
-                  </div>
-               </div>
-            </div>
-         </nav>
+       {(role === "PUBLIC" || isSpectator) && (
+          <nav className="bg-white border-b border-slate-200 px-6 py-4 sticky top-10 z-50">
+             <div className="max-w-7xl mx-auto flex items-center justify-between">
+                <div className="flex items-center gap-6">
+                   <button onClick={() => router.back()} className="p-3 bg-slate-100 rounded-xl text-slate-500 hover:text-orange-600 transition-all border-none cursor-pointer flex items-center justify-center">
+                      <ArrowLeft className="w-5 h-5" />
+                   </button>
+                   <div>
+                      <span className="text-sm font-black italic uppercase tracking-tighter text-slate-900 leading-none block">Tournament Hub</span>
+                      <span className="text-[8px] font-black uppercase tracking-widest text-slate-400">Fixtures & Standings</span>
+                   </div>
+                </div>
+                
+                <div className="flex items-center gap-4">
+                   <div className="hidden md:flex bg-slate-100 p-1.5 rounded-2xl border border-slate-100">
+                      <button onClick={() => setView("fixtures")} className={cn("px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all", view === "fixtures" ? "bg-white text-orange-600 shadow-xl shadow-slate-200" : "text-slate-400 hover:text-slate-600")}>Fixtures</button>
+                      <button onClick={() => setView("standings")} className={cn("px-8 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all", view === "standings" ? "bg-white text-orange-600 shadow-xl shadow-slate-200" : "text-slate-400 hover:text-slate-600")}>Standings</button>
+                   </div>
+                </div>
+             </div>
+          </nav>
        )}
 
        <div className="max-w-7xl mx-auto px-8 pt-16">
@@ -191,7 +188,7 @@ export default function CricHeroesStyleTournamentPage() {
                                  </div>
                               </div>
                               <div className="p-8 border-t md:border-t-0 md:border-l border-slate-50">
-                                 <Link href={role !== "PUBLIC" ? `/scoring?id=${match.id}` : `/overlay?id=${match.id}`} className="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center text-slate-300 hover:bg-orange-600 hover:text-white transition-all transform hover:scale-105 active:scale-95">
+                                 <Link href={role !== "PUBLIC" ? `/scoring?id=${match.id}` : `/overlay?id=${match.id}`} className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center text-slate-400 hover:bg-orange-600 hover:text-white transition-all transform hover:scale-105 active:scale-95">
                                     <ChevronRight className="w-6 h-6" />
                                  </Link>
                               </div>
@@ -287,18 +284,22 @@ export default function CricHeroesStyleTournamentPage() {
        </AnimatePresence>
     </div>
   );
-  const searchParams = useSearchParams();
-  const isSpectator = searchParams.get("view") === "spectator";
 
-  // Conditionally render layout
   if (isSpectator || role === "PUBLIC") {
     return <PublicLayout>{Content}</PublicLayout>;
   }
 
-  // Default to DashboardLayout for logged-in users navigating through Admin/User consoles
   return (
     <DashboardLayout variant="organiser">
        {Content}
     </DashboardLayout>
+  );
+}
+
+export default function TournamentPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-slate-50 flex items-center justify-center"><div className="w-12 h-12 border-4 border-orange-600 border-t-transparent rounded-full animate-spin"></div></div>}>
+      <TournamentContent />
+    </Suspense>
   );
 }

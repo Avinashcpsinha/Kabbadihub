@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import PublicLayout from "@/components/PublicLayout";
 import DashboardLayout from "@/components/DashboardLayout";
 import { useAuth } from "@/context/AuthContext";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
@@ -31,8 +32,12 @@ type AggregatedMatch = {
   tenantId: string;
 };
 
-export default function MatchesIndexPage() {
+import { Suspense } from "react";
+
+function MatchesIndexContent() {
   const { role } = useAuth();
+  const searchParams = useSearchParams();
+  const isSpectator = searchParams.get("view") === "spectator";
   const [matches, setMatches] = useState<AggregatedMatch[]>([]);
   const [activeTab, setActiveTab] = useState<"ALL" | "UPCOMING" | "LIVE" | "COMPLETED">("ALL");
   const [searchQuery, setSearchQuery] = useState("");
@@ -238,15 +243,19 @@ export default function MatchesIndexPage() {
     </div>
   );
 
-  const searchParams = useSearchParams();
-  const isSpectator = searchParams.get("view") === "spectator";
-  const { role: userRole } = useAuth();
-  
   // Conditionally render layout
-  if (isSpectator || userRole === "PUBLIC") {
+  if (isSpectator || role === "PUBLIC") {
     return <PublicLayout>{Content}</PublicLayout>;
   }
 
   // Default to DashboardLayout for logged-in users navigating through Admin/User consoles
-  return <DashboardLayout variant={userRole === "USER" ? "user" : "organiser"}>{Content}</DashboardLayout>;
+  return <DashboardLayout variant={role === "USER" ? "user" : "organiser"}>{Content}</DashboardLayout>;
+}
+
+export default function MatchesIndexPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-slate-50 flex items-center justify-center"><div className="w-12 h-12 border-4 border-orange-600 border-t-transparent rounded-full animate-spin"></div></div>}>
+      <MatchesIndexContent />
+    </Suspense>
+  );
 }

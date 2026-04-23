@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, Suspense } from "react";
 import PublicLayout from "@/components/PublicLayout";
 import DashboardLayout from "@/components/DashboardLayout";
 import { 
@@ -13,7 +13,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
 
-export default function ChallengesPage() {
+function ChallengesContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const isSpectator = searchParams.get("view") === "spectator";
@@ -55,11 +55,9 @@ export default function ChallengesPage() {
 
   const Content = (
     <div className="max-w-7xl mx-auto px-6 md:px-12 py-12 pb-20 space-y-12 relative bg-transparent">
-       {/* Background Decor */}
        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-orange-600/5 blur-[120px] rounded-full -z-10" />
 
-       {/* Header Section - Only show if Public or needed */}
-       {role === "PUBLIC" && (
+       {(role === "PUBLIC" || isSpectator) && (
          <header className="flex flex-col md:flex-row md:items-center justify-between gap-6">
            <div className="flex items-center gap-6">
              <button 
@@ -78,14 +76,13 @@ export default function ChallengesPage() {
            </div>
            
            <div className="flex items-center gap-4">
-              <button className="ch-btn-primary px-8 py-4 shadow-xl shadow-orange-600/20">
+              <button className="ch-btn-primary px-8 py-4 shadow-xl shadow-orange-600/20 flex items-center gap-2">
                  <Plus className="w-5 h-5" /> Post a Challenge
               </button>
            </div>
          </header>
        )}
 
-        {/* Global Stats */}
         <div className="flex flex-wrap gap-4">
            {[
              { label: "Players Online", val: "1,204", icon: Users },
@@ -101,10 +98,7 @@ export default function ChallengesPage() {
            ))}
         </div>
 
-        {/* Challenge Discovery Feed */}
         <main className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-           
-           {/* Left: Filter & Discover */}
            <div className="lg:col-span-8 space-y-6">
               <div className="flex bg-white p-1.5 rounded-2xl border border-slate-100 w-fit shadow-sm mb-4">
                 {["discover", "nearby", "my_requests"].map(tab => (
@@ -174,7 +168,7 @@ export default function ChallengesPage() {
                           <button className="px-6 py-3 bg-slate-50 rounded-xl text-[10px] font-black uppercase tracking-widest text-slate-600 hover:bg-slate-100 transition-all border border-slate-100 flex items-center gap-2">
                              <MessageSquare className="w-4 h-4" /> Message
                           </button>
-                          <button className="px-8 py-3 ch-btn-primary shadow-lg shadow-orange-600/20 group/btn">
+                          <button className="px-8 py-3 ch-btn-primary shadow-lg shadow-orange-600/20 group/btn flex items-center gap-2">
                              Accept Challenge <ChevronRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
                           </button>
                        </div>
@@ -184,7 +178,6 @@ export default function ChallengesPage() {
               </div>
            </div>
 
-           {/* Right: User Profile & Actions */}
            <div className="lg:col-span-4 space-y-8">
               <div className="bg-white rounded-[2.5rem] p-10 border border-slate-100 shadow-sm relative overflow-hidden group">
                  <div className="absolute -top-10 -right-10 w-40 h-40 bg-orange-600/5 blur-[40px] rounded-full" />
@@ -248,15 +241,21 @@ export default function ChallengesPage() {
     </div>
   );
 
-  // Conditionally render layout
   if (isSpectator || role === "PUBLIC") {
     return <PublicLayout>{Content}</PublicLayout>;
   }
 
-  // Default to DashboardLayout for logged-in users navigating through Admin/User consoles
   return (
     <DashboardLayout variant="user">
        {Content}
     </DashboardLayout>
+  );
+}
+
+export default function ChallengesPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-slate-50 flex items-center justify-center"><div className="w-12 h-12 border-4 border-orange-600 border-t-transparent rounded-full animate-spin"></div></div>}>
+      <ChallengesContent />
+    </Suspense>
   );
 }

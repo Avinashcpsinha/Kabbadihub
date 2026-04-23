@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import PublicLayout from "@/components/PublicLayout";
 import { 
@@ -15,7 +15,8 @@ import {
   X,
   Trophy,
   LayoutGrid,
-  Rows
+  Rows,
+  ArrowLeft
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
@@ -27,9 +28,11 @@ import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/context/AuthContext";
 import { useTenant } from "@/context/TenantContext";
 
-export default function CricHeroesStyleTeamsPage() {
+function TeamsContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { role } = useAuth();
+  const isSpectator = searchParams.get("view") === "spectator";
   const { tenant } = useTenant();
   const currentTenantId = tenant?.id;
   const [teams, setTeams] = useState<Team[]>([]);
@@ -62,7 +65,7 @@ export default function CricHeroesStyleTeamsPage() {
         secondaryColor: t.secondary_color,
         city: t.city,
         logoUrl: t.logo_url,
-        players: [] // In a real app we'd fetch player counts via a view or join
+        players: [] 
       })));
     }
     setIsLoading(false);
@@ -107,33 +110,33 @@ export default function CricHeroesStyleTeamsPage() {
 
   const Content = (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans pb-40">
-       {role === "PUBLIC" && (
-         <nav className="bg-white border-b border-slate-200 px-6 py-4 sticky top-10 z-[50]">
-            <div className="max-w-7xl mx-auto flex items-center justify-between">
-               <div className="flex items-center gap-6">
-                  <button onClick={() => router.back()} className="p-3 bg-slate-100 rounded-xl text-slate-500 hover:text-orange-600 border-none cursor-pointer">
-                     <ArrowLeft className="w-5 h-5" />
-                  </button>
-                  <div>
-                     <span className="text-sm font-black italic uppercase tracking-tighter text-slate-900 leading-none block">Franchise Registry</span>
-                     <span className="text-[8px] font-black uppercase tracking-widest text-slate-400">Tactical Unit Overview</span>
-                  </div>
-               </div>
-               
-               <div className="flex items-center gap-4">
-                  <div className="relative hidden md:block">
-                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                     <input 
-                       type="text" 
-                       placeholder="Search Squads..."
-                       className="ch-input !pl-12 w-64 py-3"
-                       value={searchQuery}
-                       onChange={(e) => setSearchQuery(e.target.value)}
-                     />
-                  </div>
-               </div>
-            </div>
-         </nav>
+       {(role === "PUBLIC" || isSpectator) && (
+          <nav className="bg-white border-b border-slate-200 px-6 py-4 sticky top-10 z-[50]">
+             <div className="max-w-7xl mx-auto flex items-center justify-between">
+                <div className="flex items-center gap-6">
+                   <button onClick={() => router.back()} className="p-3 bg-slate-100 rounded-xl text-slate-500 hover:text-orange-600 border-none cursor-pointer flex items-center justify-center">
+                      <ArrowLeft className="w-5 h-5" />
+                   </button>
+                   <div>
+                      <span className="text-sm font-black italic uppercase tracking-tighter text-slate-900 leading-none block">Franchise Registry</span>
+                      <span className="text-[8px] font-black uppercase tracking-widest text-slate-400">Tactical Unit Overview</span>
+                   </div>
+                </div>
+                
+                <div className="flex items-center gap-4">
+                   <div className="relative hidden md:block">
+                      <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                      <input 
+                        type="text" 
+                        placeholder="Search Squads..."
+                        className="ch-input !pl-12 w-64 py-3"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                      />
+                   </div>
+                </div>
+             </div>
+          </nav>
        )}
 
        <main className="max-w-7xl mx-auto p-6 md:p-12">
@@ -239,18 +242,17 @@ export default function CricHeroesStyleTeamsPage() {
     </div>
   );
 
-  const searchParams = useSearchParams();
-  const isSpectator = searchParams.get("view") === "spectator";
-
-  // Conditionally render layout
   if (isSpectator || role === "PUBLIC") {
     return <PublicLayout>{Content}</PublicLayout>;
   }
 
-  // Default to DashboardLayout for logged-in users navigating through Admin/User consoles
   return <DashboardLayout variant={role === "USER" ? "user" : "organiser"}>{Content}</DashboardLayout>;
 }
 
-function ArrowLeft({ className }: { className?: string }) {
-  return <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>;
+export default function TeamsPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-slate-50 flex items-center justify-center"><div className="w-12 h-12 border-4 border-orange-600 border-t-transparent rounded-full animate-spin"></div></div>}>
+      <TeamsContent />
+    </Suspense>
+  );
 }
