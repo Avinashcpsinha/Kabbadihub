@@ -17,6 +17,7 @@ import {
   ORGANISER_NAV, 
   ATHLETE_NAV, 
   FAN_NAV, 
+  SHARED_NAV,
   ICON_MAP 
 } from "@/config/navigation";
 import MatchSelectorModal from "./scoring/MatchSelectorModal";
@@ -259,6 +260,26 @@ export default function DashboardLayout({
             );
           })}
         </nav>
+
+        {/* Shared Support Navigation */}
+        <div className="p-4 border-t border-slate-50 space-y-1">
+          <div className="px-4 py-2 text-[8px] font-black uppercase tracking-[0.2em] text-slate-300">Support & Info</div>
+          {SHARED_NAV.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={cn(
+                "flex items-center gap-3 px-4 py-2.5 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-50 transition-all",
+                isCollapsed && "justify-center px-0"
+              )}
+            >
+              <span className="shrink-0">
+                {React.createElement(ICON_MAP[item.icon] || Star, { className: "w-4 h-4" })}
+              </span>
+              {!isCollapsed && <span className="text-[10px] font-black uppercase tracking-widest">{item.label}</span>}
+            </Link>
+          ))}
+        </div>
 
         {/* Sidebar Footer */}
         <div className="p-4 border-t border-slate-100 space-y-2">

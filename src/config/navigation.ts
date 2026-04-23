@@ -14,48 +14,58 @@ export interface NavItem {
 }
 
 export const SUPER_ADMIN_NAV: NavItem[] = [
-  { label: "Tenant Registry", href: "/super-admin", icon: "Building2" },
-  { label: "Global Roster", href: "/super-admin/players", icon: "Users" },
-  { label: "Platform Analytics", href: "/super-admin/analytics", icon: "PieChart" },
+  { label: "Admin Dashboard", href: "/super-admin/analytics", icon: "LayoutDashboard" },
+  { label: "Tenant Management", href: "/super-admin", icon: "Building2" },
+  { label: "User Management", href: "/super-admin/players", icon: "Users" },
+  { label: "Organiser Approvals", href: "/super-admin/audit", icon: "ShieldCheck" },
   { label: "Audit Logs", href: "/super-admin/audit", icon: "FileText" },
-  { label: "Seed Data", href: "/super-admin/seed", icon: "Activity" },
+  { label: "Global Analytics", href: "/super-admin/analytics", icon: "PieChart" },
+  { label: "System Config", href: "/super-admin/seed", icon: "Activity" },
 ];
 
 export const ORGANISER_NAV: NavItem[] = [
-  { label: "Dashboard", href: "/admin", icon: "LayoutDashboard" },
-  { label: "Teams", href: "/teams", icon: "Users" },
-  { label: "Players", href: "/players", icon: "Target" },
-  { label: "Matches", href: "/tournaments", icon: "Trophy" },
-  { label: "Live Scoring", href: "/scoring", icon: "Zap" },
-  { label: "Auction", href: "/auction", icon: "Gavel" },
-  { label: "Venues", href: "/clubs", icon: "MapPin" },
+  { label: "Organiser Dashboard", href: "/admin", icon: "LayoutDashboard" },
+  { label: "Manage Tournaments", href: "/tournaments", icon: "Trophy" },
+  { label: "Team Registrations", href: "/admin", icon: "Users" },
+  { label: "Match Scheduling", href: "/tournaments", icon: "Calendar" },
+  { label: "Live Match Control", href: "/scoring", icon: "Zap" },
+  { label: "Player Management", href: "/players", icon: "Target" },
+  { label: "Reports & Analytics", href: "/admin/analytics", icon: "BarChart3" },
   { label: "Announcements", href: "/admin/announcements", icon: "Megaphone" },
-  { label: "Analytics", href: "/admin/analytics", icon: "BarChart3" },
-  { label: "Settings", href: "/admin/settings", icon: "Settings" },
+  { label: "Organiser Settings", href: "/admin/settings", icon: "Settings" },
 ];
 
 export const ATHLETE_NAV: NavItem[] = [
-  { label: "Pro Dashboard", href: "/user/dashboard", icon: "LayoutDashboard" },
-  { label: "My Profile", href: "/user/profile", icon: "Target" },
-  { label: "Leaderboard", href: "/players", icon: "TrendingUp" },
-  { label: "Matches", href: "/matches", icon: "Trophy" },
-  { label: "Trials & Clubs", href: "/teams", icon: "Users" },
-  { label: "Challenges", href: "/challenges", icon: "Zap" },
-  { label: "Recent Results", href: "/results", icon: "Star" },
+  { label: "My Hub", href: "/user/dashboard", icon: "LayoutDashboard" },
+  { label: "Live Scores", href: "/matches?view=spectator", icon: "Zap" },
+  { label: "Tournaments", href: "/tournaments?view=spectator", icon: "Trophy" },
+  { label: "Teams & Players", href: "/teams?view=spectator", icon: "Users" },
+  { label: "Fixtures & Results", href: "/results?view=spectator", icon: "Calendar" },
+  { label: "Standings", href: "/players?view=spectator", icon: "TrendingUp" },
+  { label: "My Profile", href: "/user/profile", icon: "User" },
+  { label: "My Registrations", href: "/user/dashboard", icon: "ShieldCheck" },
+  { label: "Settings", href: "/user/profile", icon: "Settings" },
 ];
 
 export const FAN_NAV: NavItem[] = [
-  { label: "My Dashboard", href: "/user/dashboard", icon: "LayoutDashboard" },
-  { label: "Browse Matches", href: "/matches", icon: "Activity" },
-  { label: "Followed Teams", href: "/teams", icon: "Heart" },
-  { label: "Tournaments", href: "/tournaments", icon: "Trophy" },
-  { label: "Leaderboard", href: "/players", icon: "TrendingUp" },
-  { label: "Recent Results", href: "/results", icon: "Star" },
+  { label: "Discover", href: "/user/dashboard", icon: "Search" },
+  { label: "Live Scores", href: "/matches?view=spectator", icon: "Zap" },
+  { label: "Tournaments", href: "/tournaments?view=spectator", icon: "Trophy" },
+  { label: "Teams", href: "/teams?view=spectator", icon: "Users" },
+  { label: "Leaderboard", href: "/players?view=spectator", icon: "TrendingUp" },
+  { label: "Results", href: "/results?view=spectator", icon: "Star" },
+];
+
+export const SHARED_NAV: NavItem[] = [
+  { label: "News & Media", href: "/", icon: "Activity" },
+  { label: "Help / FAQ", href: "/developers", icon: "HelpCircle" },
+  { label: "About / Contact", href: "/developers", icon: "Mail" },
 ];
 
 export const ICON_MAP: Record<string, any> = {
   LayoutDashboard, Users, Trophy, Target, Zap, 
   Gavel, MapPin, Megaphone, BarChart3, Settings, 
   Building2, PieChart, FileText, Activity, Star, 
-  Heart, TrendingUp, Search
+  Heart, TrendingUp, Search, Calendar, ShieldCheck,
+  User, HelpCircle: Star, Mail
 };
