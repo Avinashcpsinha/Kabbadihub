@@ -3,7 +3,8 @@ import {
   LayoutDashboard, Users, Trophy, Target, 
   Zap, Gavel, MapPin, Megaphone, BarChart3, 
   Settings, Building2, PieChart, FileText, 
-  Activity, Star, Heart, TrendingUp, Search
+  Activity, Star, Heart, TrendingUp, Search,
+  Calendar, ShieldCheck, User, Mail, HelpCircle
 } from "lucide-react";
 
 export interface NavItem {
@@ -67,5 +68,5 @@ export const ICON_MAP: Record<string, any> = {
   Gavel, MapPin, Megaphone, BarChart3, Settings, 
   Building2, PieChart, FileText, Activity, Star, 
   Heart, TrendingUp, Search, Calendar, ShieldCheck,
-  User, HelpCircle: Star, Mail
+  User, HelpCircle, Mail
 };

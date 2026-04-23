@@ -10,7 +10,8 @@ import {
   Zap, LayoutDashboard, Users, Trophy, Target, ShoppingBag,
   PieChart, Settings, LogOut, ChevronLeft, ChevronRight,
   ShieldAlert, Building2, Activity, FileText, Menu, X,
-  Gavel, MapPin, Megaphone, BarChart3, Shield, Eye, Camera, Mail
+  Gavel, MapPin, Megaphone, BarChart3, Shield, Eye, Camera, Mail,
+  Star, ShieldCheck
 } from "lucide-react";
 import { 
   SUPER_ADMIN_NAV, 
