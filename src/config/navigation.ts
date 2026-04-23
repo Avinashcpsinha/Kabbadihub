@@ -17,15 +17,9 @@ export interface NavItem {
 
 export const SUPER_ADMIN_NAV: NavItem[] = [
   { label: "Admin Dashboard", href: "/super-admin/analytics", icon: "LayoutDashboard" },
-  { label: "Tenant Management", href: "/super-admin", icon: "Building2" },
-  { label: "User Management", href: "/super-admin/players", icon: "Users" },
-  { label: "Organiser Approvals", href: "/super-admin/audit", icon: "ShieldCheck" },
-  { label: "Subscriptions & Billing", href: "/super-admin/analytics", icon: "ShoppingBag" },
-  { label: "Content Moderation", href: "/super-admin/audit", icon: "ShieldAlert" },
-  { label: "System Config", href: "/super-admin/seed", icon: "Activity" },
-  { label: "Audit Logs", href: "/super-admin/audit", icon: "FileText" },
-  { label: "Global Analytics", href: "/super-admin/analytics", icon: "PieChart" },
-  { label: "System Notifications", href: "/super-admin/seed", icon: "Megaphone" },
+  { label: "Franchise Management", href: "/super-admin", icon: "Building2" },
+  { label: "Player Management", href: "/super-admin/players", icon: "Users" },
+  { label: "Approvals", href: "/super-admin/audit", icon: "ShieldCheck", badge: "New" },
 ];
 
 export const ORGANISER_NAV: NavItem[] = [
