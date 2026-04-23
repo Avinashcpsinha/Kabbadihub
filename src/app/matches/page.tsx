@@ -249,7 +249,7 @@ function MatchesIndexContent() {
   }
 
   // Default to DashboardLayout for logged-in users navigating through Admin/User consoles
-  return <DashboardLayout variant={role === "USER" ? "user" : "organiser"}>{Content}</DashboardLayout>;
+  return <DashboardLayout variant={role === "USER" ? "user" : role === "SUPER_ADMIN" ? "admin" : "organiser"}>{Content}</DashboardLayout>;
 }
 
 export default function MatchesIndexPage() {

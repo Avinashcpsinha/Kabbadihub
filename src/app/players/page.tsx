@@ -208,7 +208,7 @@ function LeaderboardContent() {
   }
 
   return (
-    <DashboardLayout variant="organiser">
+    <DashboardLayout variant={role === "USER" ? "user" : role === "SUPER_ADMIN" ? "admin" : "organiser"}>
        {Content}
     </DashboardLayout>
   );

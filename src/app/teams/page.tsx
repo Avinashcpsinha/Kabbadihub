@@ -246,7 +246,7 @@ function TeamsContent() {
     return <PublicLayout>{Content}</PublicLayout>;
   }
 
-  return <DashboardLayout variant={role === "USER" ? "user" : "organiser"}>{Content}</DashboardLayout>;
+  return <DashboardLayout variant={role === "USER" ? "user" : role === "SUPER_ADMIN" ? "admin" : "organiser"}>{Content}</DashboardLayout>;
 }
 
 export default function TeamsPage() {

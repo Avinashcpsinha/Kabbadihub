@@ -246,7 +246,7 @@ function ChallengesContent() {
   }
 
   return (
-    <DashboardLayout variant="user">
+    <DashboardLayout variant={role === "USER" ? "user" : role === "SUPER_ADMIN" ? "admin" : "organiser"}>
        {Content}
     </DashboardLayout>
   );
