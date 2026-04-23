@@ -4,13 +4,15 @@ import React, { useState, useEffect } from "react";
 import PublicLayout from "@/components/PublicLayout";
 import DashboardLayout from "@/components/DashboardLayout";
 import { useAuth } from "@/context/AuthContext";
-import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Trophy, Calendar, ChevronRight, Star, Award, Filter } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/lib/supabase";
 
 export default function ResultsPage() {
+  const searchParams = useSearchParams();
+  const isSpectator = searchParams.get("view") === "spectator";
   const { role } = useAuth();
   const [results, setResults] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -156,6 +158,11 @@ export default function ResultsPage() {
       </div>
   );
 
-  // Always return PublicLayout for this view for the 'Guest Experience'
-  return <PublicLayout>{Content}</PublicLayout>;
+  // Conditionally render layout
+  if (isSpectator || role === "PUBLIC") {
+    return <PublicLayout>{Content}</PublicLayout>;
+  }
+
+  // Default to DashboardLayout for logged-in users navigating through Admin/User consoles
+  return <DashboardLayout variant={role === "USER" ? "user" : "organiser"}>{Content}</DashboardLayout>;
 }

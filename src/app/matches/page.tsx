@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import PublicLayout from "@/components/PublicLayout";
 import DashboardLayout from "@/components/DashboardLayout";
 import { useAuth } from "@/context/AuthContext";
-import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
   Calendar, Clock, ChevronRight, Zap, Activity,
@@ -238,7 +238,15 @@ export default function MatchesIndexPage() {
     </div>
   );
 
-  // Always return PublicLayout for this view to provide the 'Guest Experience'
-  // even for logged-in SuperAdmins as requested.
-  return <PublicLayout>{Content}</PublicLayout>;
+  const searchParams = useSearchParams();
+  const isSpectator = searchParams.get("view") === "spectator";
+  const { role: userRole } = useAuth();
+  
+  // Conditionally render layout
+  if (isSpectator || userRole === "PUBLIC") {
+    return <PublicLayout>{Content}</PublicLayout>;
+  }
+
+  // Default to DashboardLayout for logged-in users navigating through Admin/User consoles
+  return <DashboardLayout variant={userRole === "USER" ? "user" : "organiser"}>{Content}</DashboardLayout>;
 }

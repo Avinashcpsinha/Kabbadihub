@@ -9,12 +9,14 @@ import {
   Award, ArrowLeft, Plus
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
 
 export default function ChallengesPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const isSpectator = searchParams.get("view") === "spectator";
   const { role, currentUser } = useAuth();
   const [activeTab, setActiveTab] = useState("discover");
 
@@ -246,6 +248,15 @@ export default function ChallengesPage() {
     </div>
   );
 
-  // Always return PublicLayout for this view for the 'Guest Experience'
-  return <PublicLayout>{Content}</PublicLayout>;
+  // Conditionally render layout
+  if (isSpectator || role === "PUBLIC") {
+    return <PublicLayout>{Content}</PublicLayout>;
+  }
+
+  // Default to DashboardLayout for logged-in users navigating through Admin/User consoles
+  return (
+    <DashboardLayout variant="user">
+       {Content}
+    </DashboardLayout>
+  );
 }

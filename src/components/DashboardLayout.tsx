@@ -113,12 +113,12 @@ export default function DashboardLayout({
 
                 <div className="hidden xl:flex items-center gap-8">
                   {[
-                    { label: "Matches", href: "/matches" },
-                    { label: "Tournaments", href: "/tournaments" },
-                    { label: "Players", href: "/players" },
-                    { label: "Teams", href: "/teams" },
-                    { label: "Results", href: "/results" },
-                    { label: "Challenges", href: "/challenges" },
+                    { label: "Matches", href: "/matches?view=spectator" },
+                    { label: "Tournaments", href: "/tournaments?view=spectator" },
+                    { label: "Players", href: "/players?view=spectator" },
+                    { label: "Teams", href: "/teams?view=spectator" },
+                    { label: "Results", href: "/results?view=spectator" },
+                    { label: "Challenges", href: "/challenges?view=spectator" },
                   ].map(l => (
                     <Link 
                       key={l.label} 

@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Player, Team } from "@/types";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/context/AuthContext";
@@ -26,6 +26,8 @@ import { supabase } from "@/lib/supabase";
 
 export default function LeaderboardPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const isSpectator = searchParams.get("view") === "spectator";
   const { role } = useAuth();
   const { tenant } = useTenant();
   const currentTenantId = tenant?.id;
@@ -201,6 +203,15 @@ export default function LeaderboardPage() {
     </div>
   );
 
-  // Always return PublicLayout for this view for the 'Guest Experience'
-  return <PublicLayout>{Content}</PublicLayout>;
+  // Conditionally render layout
+  if (isSpectator || role === "PUBLIC") {
+    return <PublicLayout>{Content}</PublicLayout>;
+  }
+
+  // Default to DashboardLayout for logged-in users navigating through Admin/User consoles
+  return (
+    <DashboardLayout variant="organiser">
+       {Content}
+    </DashboardLayout>
+  );
 }

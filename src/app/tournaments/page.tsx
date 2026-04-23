@@ -20,7 +20,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Team, MatchSession } from "@/types";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/lib/supabase";
@@ -287,6 +287,18 @@ export default function CricHeroesStyleTournamentPage() {
        </AnimatePresence>
     </div>
   );
-  // Always return PublicLayout for this view for the 'Guest Experience'
-  return <PublicLayout>{Content}</PublicLayout>;
+  const searchParams = useSearchParams();
+  const isSpectator = searchParams.get("view") === "spectator";
+
+  // Conditionally render layout
+  if (isSpectator || role === "PUBLIC") {
+    return <PublicLayout>{Content}</PublicLayout>;
+  }
+
+  // Default to DashboardLayout for logged-in users navigating through Admin/User consoles
+  return (
+    <DashboardLayout variant="organiser">
+       {Content}
+    </DashboardLayout>
+  );
 }
