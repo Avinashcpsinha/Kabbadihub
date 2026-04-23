@@ -24,6 +24,8 @@ function RegisterContent() {
     name: "",
     email: "",
     password: "",
+    phone: "",
+    jersey: "",
     position: "",
     city: "",
     height: "",
@@ -190,6 +192,31 @@ function RegisterContent() {
                   <button type="button" onClick={() => setIsVisible(!isVisible)} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600">
                     {isVisible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1">Mobile Number *</label>
+                  <input
+                    required={accountType === "ATHLETE"}
+                    type="tel"
+                    placeholder="+91 98765 43210"
+                    className="ch-input"
+                    value={formData.phone}
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-1">Jersey Number</label>
+                  <input
+                    type="text"
+                    maxLength={3}
+                    placeholder="e.g. 17"
+                    className="ch-input"
+                    value={formData.jersey}
+                    onChange={(e) => setFormData({ ...formData, jersey: e.target.value })}
+                  />
                 </div>
               </div>
 

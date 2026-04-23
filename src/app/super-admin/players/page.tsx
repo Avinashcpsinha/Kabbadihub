@@ -3,11 +3,11 @@
 import React, { useState, useEffect } from "react";
 import RoleGate from "@/components/RoleGate";
 import DashboardLayout from "@/components/DashboardLayout";
+import AthleteRegistrationModal, { AthleteFormData } from "@/components/AthleteRegistrationModal";
 import { 
-  Users, Search, Plus, Trash2, Edit3, 
+  Search, Plus, Trash2, Edit3, 
   ShieldCheck, ShieldAlert, Phone, Mail, 
-  Trophy, Activity, ChevronRight, X,
-  Save, Camera, MapPin, IdCard,
+  Activity, IdCard, X, Save, Camera, MapPin,
   CheckCircle2, XCircle, AlertCircle
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -18,6 +18,7 @@ export default function GlobalPlayersPoolPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [editingPlayer, setEditingPlayer] = useState<any | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isRegisterOpen, setIsRegisterOpen] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem("kabaddihub_global_players");
@@ -61,6 +62,15 @@ export default function GlobalPlayersPoolPage() {
     savePlayers(updated);
   };
 
+  const handleRegister = (data: AthleteFormData) => {
+    const newPlayer = {
+      ...data,
+      stats: { raidPoints: 0, tacklePoints: 0 }
+    };
+    savePlayers([...players, newPlayer]);
+    setIsRegisterOpen(false);
+  };
+
   const filteredPlayers = players.filter(p => 
     p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     p.email?.toLowerCase().includes(searchQuery.toLowerCase())
@@ -75,7 +85,7 @@ export default function GlobalPlayersPoolPage() {
               <h1 className="text-4xl font-black italic uppercase tracking-tighter text-slate-900 leading-none mb-2">Central Athlete Pool</h1>
               <p className="text-sm font-medium text-slate-500">Managing global rosters, compliance and verified profiles.</p>
             </div>
-            <button className="px-8 py-4 bg-orange-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-orange-600/20 hover:bg-orange-500 transition-all flex items-center gap-3">
+            <button onClick={() => setIsRegisterOpen(true)} className="px-8 py-4 bg-orange-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-orange-600/20 hover:bg-orange-500 transition-all flex items-center gap-3">
               <Plus className="w-4 h-4" /> Register New Athlete
             </button>
           </div>
@@ -270,6 +280,15 @@ export default function GlobalPlayersPoolPage() {
             </div>
           )}
         </AnimatePresence>
+
+        {/* Shared Registration Modal */}
+        <AthleteRegistrationModal
+          isOpen={isRegisterOpen}
+          onClose={() => setIsRegisterOpen(false)}
+          onSave={handleRegister}
+          title="Enroll New Athlete"
+          subtitle="Register a professional athlete into the Central Global Pool."
+        />
       </DashboardLayout>
     </RoleGate>
   );
