@@ -59,7 +59,7 @@ export default function PremiumLandingPage() {
   const [isWatchModalOpen, setIsWatchModalOpen] = React.useState(false);
   const [activeMatches, setActiveMatches] = React.useState<any[]>([]);
   const router = useRouter();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, currentUser, role } = useAuth();
 
   // Function to scan for active matches globally via Supabase
   const scanMatches = React.useCallback(async () => {
@@ -138,6 +138,14 @@ export default function PremiumLandingPage() {
                 ))}
              </div>
           </div>
+             <div className="hidden lg:flex items-center gap-2 mr-2">
+                <span className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">
+                  {isAuthenticated ? "Session Active:" : "Portal Status:"}
+                </span>
+                <span className="text-[10px] font-black uppercase tracking-widest text-slate-900 bg-slate-100 px-3 py-1 rounded-full border border-slate-200">
+                  {isAuthenticated ? `Hi, ${currentUser?.name.split(" ")[0]}` : "Welcome, Guest"}
+                </span>
+             </div>
              <div className="hidden md:flex items-center gap-2 bg-slate-100 p-1.5 rounded-xl border border-slate-200">
                 <Search className="w-4 h-4 text-slate-400 ml-2" />
                 <input placeholder="Search Pro Players..." className="bg-transparent text-[10px] font-bold uppercase tracking-widest outline-none w-40 text-slate-900 placeholder:text-slate-300" />
