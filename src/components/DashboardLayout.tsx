@@ -217,9 +217,34 @@ export default function DashboardLayout({
 
       {/* Main Content */}
       <main className={cn(
-        "flex-1 transition-all duration-300 min-h-screen",
+        "flex-1 transition-all duration-300 min-h-screen flex flex-col",
         isCollapsed ? "lg:ml-[80px]" : "lg:ml-[280px]"
       )}>
+        {/* Desktop Top Header (Identity Bar) */}
+        <div className="hidden lg:flex sticky top-10 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200 px-10 py-5 items-center justify-between">
+           <div className="flex items-center gap-4">
+              <div className="text-slate-400 text-xs font-bold uppercase tracking-widest italic">Protocol Security Active</div>
+              <div className="h-4 w-px bg-slate-200" />
+              <div className="text-[10px] font-black uppercase tracking-widest text-slate-900">
+                Welcome back, <span className="text-orange-600">{currentUser?.name || "System Director"}</span>
+              </div>
+           </div>
+
+           <div className="flex items-center gap-4">
+              <div className={cn(
+                "px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border",
+                userRole === "SUPER_ADMIN" ? "bg-red-50 text-red-600 border-red-100" : "bg-orange-50 text-orange-600 border-orange-100"
+              )}>
+                {userRole === "SUPER_ADMIN" ? "God Mode: Super Admin" : "Franchise Executive"}
+              </div>
+              <img 
+                src={currentUser?.photoUrl || `https://ui-avatars.com/api/?name=${currentUser?.name || 'S'}&background=0f172a&color=fff`} 
+                className="w-8 h-8 rounded-lg border border-slate-200 shadow-sm"
+                alt="Profile"
+              />
+           </div>
+        </div>
+
         {/* Mobile Topbar */}
         <div className="lg:hidden sticky top-10 z-50 bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between">
           <button onClick={() => setIsMobileOpen(true)} className="p-2 bg-slate-100 rounded-xl">
@@ -232,7 +257,9 @@ export default function DashboardLayout({
             <LogOut className="w-5 h-5" />
           </button>
         </div>
-        {children}
+        <div className="flex-1">
+          {children}
+        </div>
       </main>
 
       <MatchSelectorModal 
