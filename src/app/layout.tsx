@@ -6,7 +6,6 @@ import { AuthProvider } from "@/context/AuthContext";
 import { TenantProvider } from "@/context/TenantContext";
 import { AuctionProvider } from "@/context/AuctionContext";
 import ImpersonationBanner from "@/components/ImpersonationBanner";
-import Breadcrumbs from "@/components/Breadcrumbs";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -25,7 +24,6 @@ export default function RootLayout({
       <body className={`${inter.className} min-h-full flex flex-col`}>
         <TenantProvider>
           <ImpersonationBanner />
-          <Breadcrumbs />
           <AuthProvider>
             <AuctionProvider>
               <MatchProvider>
