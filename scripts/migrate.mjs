@@ -2,7 +2,16 @@
 // Run with: node scripts/migrate.mjs
 
 const SUPABASE_URL = "https://ayuwvopuwqaqzenzwmee.supabase.co";
-const SERVICE_ROLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF5dXd2b3B1d3FhcXplbnp3bWVlIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3Njg1MjQ2NCwiZXhwIjoyMDkyNDI4NDY0fQ.3y4F1aJyBxq_Oc3djdN9RF0itgUdNfM59QcLgRPoJ4o";
+
+// Now reading from environment variables for security. 
+// Use your new 'sb_secret_...' key here.
+const SERVICE_ROLE_KEY = process.env.SUPABASE_SECRET_KEY;
+
+if (!SERVICE_ROLE_KEY) {
+  console.error("❌ ERROR: SUPABASE_SECRET_KEY environment variable is not set.");
+  console.log("Run with: $env:SUPABASE_SECRET_KEY='your_new_secret_key'; node scripts/migrate.mjs");
+  process.exit(1);
+}
 
 // Use Supabase's pg connection via the REST API for raw SQL
 async function runSQL(sql) {
