@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { useAuth } from "./AuthContext";
 import { Player, Team } from "@/types";
 
 export interface Tenant {
@@ -91,6 +92,8 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(false);
   }, []);
 
+  const { currentUser, role } = useAuth();
+
   useEffect(() => {
     if (typeof window !== "undefined") {
       const savedSuper = localStorage.getItem("kabaddihub_is_super");
@@ -98,6 +101,17 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
     }
     fetchTenants();
   }, [fetchTenants]);
+
+  // Auto-select tenant based on logged-in user's tenantId
+  useEffect(() => {
+    if (currentUser?.tenantId && !tenant && allTenants.length > 0) {
+      const userTenant = allTenants.find(t => t.id === currentUser.tenantId);
+      if (userTenant) {
+        setTenant(userTenant);
+        localStorage.setItem("kabaddihub_current_tenant", JSON.stringify(userTenant));
+      }
+    }
+  }, [currentUser, tenant, allTenants]);
 
   const updateTenantState = useCallback((newTenant: Tenant | null) => {
     setTenant(newTenant);
