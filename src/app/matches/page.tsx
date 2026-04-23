@@ -9,7 +9,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
   Calendar, Clock, ChevronRight, Zap, Activity,
-  Filter, Search, Trophy, Eye, MapPin, Plus
+  Filter, Search, Trophy, Eye, MapPin, Plus, Building2
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/lib/supabase";
@@ -147,89 +147,113 @@ function MatchesIndexContent() {
           ))}
         </div>
 
-        <div className="space-y-6">
+        <div className="space-y-12">
           {isLoading ? (
             <div className="py-20 flex justify-center"><div className="w-12 h-12 border-4 border-orange-600 border-t-transparent rounded-full animate-spin"></div></div>
           ) : (
-            <AnimatePresence mode="popLayout">
-              {filtered.map((match) => (
-                <motion.div
-                  key={match.id}
-                  layout
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                >
-                  <Link
-                    href={match.status === "LIVE" || match.status === "COMPLETED" ? `/overlay?id=${match.id}` : `/matches/${match.id}`}
-                    className="block bg-white ch-card overflow-hidden group hover:border-orange-600/30 transition-all"
-                  >
-                    <div className="flex flex-col md:flex-row items-stretch">
-                      <div className="p-6 md:w-48 flex items-center gap-3 border-b md:border-b-0 md:border-r border-slate-100 bg-slate-50/50">
-                        <Trophy className="w-4 h-4 text-orange-600 shrink-0" />
-                        <div>
-                          <div className="text-[9px] font-black uppercase tracking-widest text-slate-400">{match.tenantName}</div>
-                          <div className="flex items-center gap-2 mt-1">
-                            <div className={cn(
-                              "px-2 py-0.5 rounded-full text-[7px] font-black uppercase tracking-widest",
-                              match.status === "LIVE" ? "bg-red-100 text-red-600 animate-pulse" :
-                              match.status === "COMPLETED" ? "bg-emerald-100 text-emerald-600" :
-                              "bg-slate-100 text-slate-500"
-                            )}>
-                              {match.status === "LIVE" && <span className="inline-block w-1 h-1 rounded-full bg-red-600 mr-1" />}
-                              {match.status}
+            Object.entries(
+              filtered.reduce((acc, match) => {
+                const group = match.tenantName;
+                if (!acc[group]) acc[group] = [];
+                acc[group].push(match);
+                return acc;
+              }, {} as Record<string, AggregatedMatch[]>)
+            ).map(([tenantName, tenantMatches]) => (
+              <div key={tenantName} className="space-y-6">
+                <div className="flex items-center gap-4 px-2">
+                   <div className="h-px flex-1 bg-slate-200" />
+                   <div className="flex items-center gap-2">
+                      <Building2 className="w-4 h-4 text-orange-600" />
+                      <span className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-400">{tenantName}</span>
+                   </div>
+                   <div className="h-px flex-1 bg-slate-200" />
+                </div>
+                
+                <div className="space-y-4">
+                  <AnimatePresence mode="popLayout">
+                    {tenantMatches.map((match) => (
+                      <motion.div
+                        key={match.id}
+                        layout
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                      >
+                        <Link
+                          href={match.status === "LIVE" || match.status === "COMPLETED" ? `/overlay?id=${match.id}` : `/matches/${match.id}`}
+                          className="block bg-white ch-card overflow-hidden group hover:border-orange-600/30 transition-all border-none shadow-sm hover:shadow-xl"
+                        >
+                          <div className="flex flex-col md:flex-row items-stretch">
+                            <div className="p-6 md:w-40 flex items-center justify-center border-b md:border-b-0 md:border-r border-slate-50 bg-slate-50/30">
+                              <div className={cn(
+                                "px-3 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest",
+                                match.status === "LIVE" ? "bg-red-600 text-white animate-pulse" :
+                                match.status === "COMPLETED" ? "bg-emerald-500 text-white" :
+                                "bg-slate-200 text-slate-500"
+                              )}>
+                                {match.status}
+                              </div>
+                            </div>
+
+                            <div className="flex-1 p-6 md:p-8 flex items-center justify-center gap-10">
+                              <div className="text-right flex items-center gap-4 flex-1 justify-end">
+                                <div className="hidden sm:block">
+                                  <div className="text-xl font-black italic uppercase text-slate-900 leading-none">{match.homeTeamName}</div>
+                                  <div className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-1">HOME</div>
+                                </div>
+                                <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-sm font-black text-white shadow-xl rotate-3 group-hover:rotate-0 transition-transform shrink-0" style={{ backgroundColor: match.homeColor }}>
+                                  {match.homeShort}
+                                </div>
+                              </div>
+
+                              <div className="text-center min-w-[120px] px-6 py-4 bg-slate-50 rounded-[2rem] border border-slate-100">
+                                {match.homeScore !== undefined ? (
+                                  <div className="text-4xl font-black tabular-nums text-slate-900 leading-none mb-2">
+                                    {match.homeScore} <span className="text-slate-300 mx-1">:</span> {match.awayScore}
+                                  </div>
+                                ) : (
+                                  <div className="text-2xl font-black italic text-orange-600 mb-2">VS</div>
+                                )}
+                                <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none">
+                                  {new Date(match.scheduledAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                                  {" • "}
+                                  {new Date(match.scheduledAt).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
+                                </div>
+                              </div>
+
+                              <div className="text-left flex items-center gap-4 flex-1">
+                                <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-sm font-black text-white shadow-xl -rotate-3 group-hover:rotate-0 transition-transform shrink-0" style={{ backgroundColor: match.awayColor }}>
+                                  {match.awayShort}
+                                </div>
+                                <div className="hidden sm:block">
+                                  <div className="text-xl font-black italic uppercase text-slate-900 leading-none">{match.awayTeamName}</div>
+                                  <div className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-1">AWAY</div>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="p-6 flex items-center justify-center border-t md:border-t-0 md:border-l border-slate-50 min-w-[100px]">
+                              {match.status === "LIVE" ? (
+                                <div className="flex flex-col items-center gap-2">
+                                  <div className="w-12 h-12 bg-red-600 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-red-600/20 group-hover:scale-110 transition-transform">
+                                    <Activity className="w-6 h-6 animate-pulse" />
+                                  </div>
+                                  <span className="text-[8px] font-black text-red-600 uppercase tracking-widest">Watch Live</span>
+                                </div>
+                              ) : (
+                                <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-300 group-hover:bg-orange-600 group-hover:text-white transition-all">
+                                  <ChevronRight className="w-6 h-6" />
+                                </div>
+                              )}
                             </div>
                           </div>
-                        </div>
-                      </div>
-
-                      <div className="flex-1 p-6 flex items-center justify-center gap-8">
-                        <div className="text-right flex items-center gap-4">
-                          <div className="hidden md:block">
-                            <div className="text-lg font-black italic uppercase text-slate-900 leading-none">{match.homeTeamName}</div>
-                            <div className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-1">HOME</div>
-                          </div>
-                          <div className="w-12 h-12 rounded-xl flex items-center justify-center text-sm font-black text-white shadow-md shrink-0" style={{ backgroundColor: match.homeColor }}>
-                            {match.homeShort}
-                          </div>
-                        </div>
-
-                        <div className="text-center min-w-[80px]">
-                          {match.homeScore !== undefined ? (
-                            <div className="text-3xl font-black tabular-nums text-slate-900">
-                              {match.homeScore} <span className="text-slate-300">:</span> {match.awayScore}
-                            </div>
-                          ) : (
-                            <div className="text-lg font-black italic text-orange-600">VS</div>
-                          )}
-                          <div className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-1">
-                            {new Date(match.scheduledAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
-                            {" · "}
-                            {new Date(match.scheduledAt).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" })}
-                          </div>
-                        </div>
-
-                        <div className="text-left flex items-center gap-4">
-                          <div className="w-12 h-12 rounded-xl flex items-center justify-center text-sm font-black text-white shadow-md shrink-0" style={{ backgroundColor: match.awayColor }}>
-                            {match.awayShort}
-                          </div>
-                          <div className="hidden md:block">
-                            <div className="text-lg font-black italic uppercase text-slate-900 leading-none">{match.awayTeamName}</div>
-                            <div className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-1">AWAY</div>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="p-6 flex items-center border-t md:border-t-0 md:border-l border-slate-100">
-                        <div className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-300 group-hover:bg-orange-600 group-hover:text-white transition-all">
-                          {match.status === "LIVE" ? <Eye className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
-                        </div>
-                      </div>
-                    </div>
-                  </Link>
-                </motion.div>
-              ))}
-            </AnimatePresence>
+                        </Link>
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
+                </div>
+              </div>
+            ))
           )}
 
           {!isLoading && filtered.length === 0 && (
