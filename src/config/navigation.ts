@@ -19,7 +19,7 @@ export const SUPER_ADMIN_NAV: NavItem[] = [
   { label: "Admin Dashboard", href: "/super-admin/analytics", icon: "LayoutDashboard" },
   { label: "Franchise Management", href: "/super-admin", icon: "Building2" },
   { label: "Player Management", href: "/super-admin/players", icon: "Users" },
-  { label: "Approvals", href: "/super-admin/audit", icon: "ShieldCheck", badge: "New" },
+  { label: "Approvals", href: "/super-admin/approvals", icon: "ShieldCheck", badge: "New" },
 ];
 
 export const ORGANISER_NAV: NavItem[] = [
