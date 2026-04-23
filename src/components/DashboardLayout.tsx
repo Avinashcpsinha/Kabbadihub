@@ -59,25 +59,96 @@ export default function DashboardLayout({
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex">
-      {/* Mobile Overlay */}
-      {isMobileOpen && (
-        <div
-          className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[60] lg:hidden"
-          onClick={() => setIsMobileOpen(false)}
-        />
-      )}
+    <div className="min-h-screen bg-slate-50 flex flex-col">
+      {/* Dual-Layer Dashboard Header */}
+      <div className="sticky top-0 z-[80] shadow-sm">
+        {/* Tier 1: Dark Security & Control Bar */}
+        <div className="bg-slate-950 text-white/60 py-2.5 px-6 border-b border-white/5 flex items-center justify-between">
+          <div className="flex items-center gap-6">
+            <div className="flex items-center gap-2 text-[9px] font-black uppercase tracking-[0.2em] italic">
+              <ShieldAlert className="w-3.5 h-3.5 text-red-500" /> System Integrity: Secured
+            </div>
+            <div className="h-4 w-px bg-white/10 hidden sm:block" />
+            <div className="hidden sm:flex items-center gap-2 text-[9px] font-black uppercase tracking-[0.2em] text-white/40">
+              <Activity className="w-3.5 h-3.5 text-orange-500" /> Management Stream Active
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-4">
+            {variant === "organiser" && (isSuperAdmin || userRole === "SUPER_ADMIN") && (
+              <button
+                onClick={exitImpersonation}
+                className="px-4 py-1.5 bg-red-600/20 text-red-500 border border-red-500/30 rounded-full text-[9px] font-black uppercase tracking-widest hover:bg-red-600 hover:text-white transition-all flex items-center gap-2"
+              >
+                <ShieldAlert className="w-3 h-3" /> Un-impersonate
+              </button>
+            )}
+            <div className="h-4 w-px bg-white/10" />
+            <button onClick={logout} className="text-[9px] font-black uppercase tracking-widest text-white/40 hover:text-red-500 transition-colors flex items-center gap-2">
+               <LogOut className="w-3 h-3" /> Sign Out
+            </button>
+          </div>
+        </div>
 
-      {/* Sidebar */}
-      <aside
-        className={cn(
-          "fixed top-10 left-0 h-[calc(100vh-2.5rem)] bg-white border-r border-slate-200 z-[70] flex flex-col transition-all duration-300",
-          isCollapsed ? "w-[80px]" : "w-[280px]",
-          isMobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+        {/* Tier 2: Crystal Management Bar */}
+        <div className="bg-white/95 backdrop-blur-xl border-b border-slate-200 px-6 sm:px-8 py-4 flex items-center justify-between">
+           <div className="flex items-center gap-4 sm:gap-6">
+              <button 
+                onClick={() => setIsMobileOpen(true)}
+                className="lg:hidden p-2 bg-slate-100 rounded-xl hover:bg-slate-200 transition-all border border-slate-200"
+              >
+                <Menu className="w-5 h-5 text-slate-600" />
+              </button>
+              <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                Current Operator: <span className="text-slate-900 truncate max-w-[120px] sm:max-w-none inline-block align-bottom">{variant === "admin" ? "System Director" : (tenant?.name || "Organisation Console")}</span>
+              </div>
+           </div>
+
+           <div className="flex items-center gap-4">
+              <div className="hidden sm:flex items-center gap-3 mr-4 border-r border-slate-200 pr-4">
+                <span className="text-[10px] font-black uppercase tracking-widest text-slate-900">
+                  Welcome back, <span className="text-orange-600">{currentUser?.name.split(" ")[0] || "Director"}</span>
+                </span>
+                <div className={cn(
+                  "px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest border",
+                  userRole === "SUPER_ADMIN" ? "bg-red-50 text-red-600 border-red-100" : "bg-orange-50 text-orange-600 border-orange-100"
+                )}>
+                  {userRole === "SUPER_ADMIN" ? "Super Admin" : "Franchise Exec"}
+                </div>
+              </div>
+              <img 
+                src={currentUser?.photoUrl || `https://ui-avatars.com/api/?name=${currentUser?.name || 'S'}&background=0f172a&color=fff`} 
+                className="w-8 h-8 rounded-lg border border-slate-200 shadow-sm"
+                alt="Profile"
+              />
+           </div>
+        </div>
+      </div>
+
+      <div className="flex flex-1">
+        {/* Mobile Overlay */}
+        {isMobileOpen && (
+          <div
+            className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-[90] lg:hidden"
+            onClick={() => setIsMobileOpen(false)}
+          />
         )}
-      >
+
+        {/* Sidebar */}
+        <aside
+          className={cn(
+            "fixed left-0 bottom-0 top-[108px] bg-white border-r border-slate-200 z-[70] flex flex-col transition-all duration-300",
+            isCollapsed ? "w-[80px]" : "w-[280px]",
+            isMobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+          )}
+        >
+          {/* Sidebar logic remains same */}
         {/* Sidebar Header */}
-        <div className={cn("p-6 border-b border-slate-100 flex items-center", isCollapsed ? "justify-center" : "justify-between")}>
+        <div className={cn("p-6 border-b border-slate-100 flex items-center lg:hidden", isCollapsed ? "justify-center" : "justify-between")}>
+             <span className="text-sm font-black italic uppercase tracking-tighter text-slate-900">KabaddiHub</span>
+             <button onClick={() => setIsMobileOpen(false)}><X className="w-5 h-5 text-slate-400" /></button>
+          </div>
+        <div className={cn("p-6 border-b border-slate-100 hidden lg:flex items-center", isCollapsed ? "justify-center" : "justify-between")}>
           {!isCollapsed && (
             <Link href={variant === "admin" ? "/super-admin" : variant === "user" ? "/user/dashboard" : "/admin"} className="flex items-center gap-3">
               <div className={cn(
@@ -204,56 +275,10 @@ export default function DashboardLayout({
 
       {/* Main Content */}
       <main className={cn(
-        "flex-1 transition-all duration-300 min-h-screen flex flex-col",
+        "flex-1 transition-all duration-300 min-h-screen flex flex-col pt-4",
         isCollapsed ? "lg:ml-[80px]" : "lg:ml-[280px]"
       )}>
-        {/* Desktop Top Header (Identity Bar) */}
-        <div className="hidden lg:flex sticky top-10 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200 px-10 py-5 items-center justify-between">
-           <div className="flex items-center gap-4">
-              <div className="text-slate-400 text-xs font-bold uppercase tracking-widest italic">Protocol Security Active</div>
-              <div className="h-4 w-px bg-slate-200" />
-              <div className="text-[10px] font-black uppercase tracking-widest text-slate-900">
-                Welcome back, <span className="text-orange-600">{currentUser?.name || "System Director"}</span>
-              </div>
-           </div>
-
-           <div className="flex items-center gap-4">
-              {variant === "organiser" && (isSuperAdmin || userRole === "SUPER_ADMIN") && (
-                <button
-                  onClick={exitImpersonation}
-                  className="px-6 py-2 bg-red-600 text-white rounded-lg text-[10px] font-black uppercase tracking-[0.2em] shadow-lg shadow-red-600/20 hover:bg-red-700 transition-all flex items-center gap-2"
-                >
-                  <ShieldAlert className="w-4 h-4" />
-                  Un-impersonate
-                </button>
-              )}
-              <div className={cn(
-                "px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest border",
-                userRole === "SUPER_ADMIN" ? "bg-red-50 text-red-600 border-red-100" : "bg-orange-50 text-orange-600 border-orange-100"
-              )}>
-                {userRole === "SUPER_ADMIN" ? "God Mode: Super Admin" : "Franchise Executive"}
-              </div>
-              <img 
-                src={currentUser?.photoUrl || `https://ui-avatars.com/api/?name=${currentUser?.name || 'S'}&background=0f172a&color=fff`} 
-                className="w-8 h-8 rounded-lg border border-slate-200 shadow-sm"
-                alt="Profile"
-              />
-           </div>
-        </div>
-
-        {/* Mobile Topbar */}
-        <div className="lg:hidden sticky top-10 z-50 bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between">
-          <button onClick={() => setIsMobileOpen(true)} className="p-2 bg-slate-100 rounded-xl">
-            <Menu className="w-5 h-5 text-slate-600" />
-          </button>
-          <div className="text-sm font-black italic uppercase tracking-tighter text-slate-900">
-            {variant === "admin" ? "System Director" : (tenant?.name || "KabaddiHub")}
-          </div>
-          <button onClick={logout} className="p-2 bg-red-50 rounded-xl text-red-500">
-            <LogOut className="w-5 h-5" />
-          </button>
-        </div>
-        <div className="flex-1">
+        <div className="flex-1 lg:px-10 px-6 pb-20">
           {children}
         </div>
       </main>
