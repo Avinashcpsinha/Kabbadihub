@@ -229,15 +229,28 @@ export default function GlobalPlayersPoolPage() {
                           <div className="flex items-center justify-end gap-2">
                              <button 
                                onClick={() => { setEditingPlayer({...p}); setIsModalOpen(true); }}
+                               title="Edit Dossier"
                                className="p-2.5 bg-white border border-slate-100 rounded-xl text-slate-400 hover:text-orange-600 hover:border-orange-100 transition-all"
                              >
                                 <Edit3 className="w-4 h-4" />
                              </button>
                              <button 
-                               onClick={() => toggleStatus(p.id, p.status)}
-                               className={cn("p-2.5 bg-white border border-slate-100 rounded-xl transition-all", p.status === "ENABLED" ? "text-emerald-500" : "text-slate-300")}
+                               onClick={async () => {
+                                 const nextKyc = p.kycStatus === "VERIFIED" ? "PENDING" : "VERIFIED";
+                                 await supabase.from('athletes').update({ kyc_status: nextKyc }).eq('id', p.id);
+                                 fetchPlayers();
+                               }}
+                               title={p.kycStatus === "VERIFIED" ? "Revoke Verification" : "Approve Compliance"}
+                               className={cn("p-2.5 bg-white border border-slate-100 rounded-xl transition-all", p.kycStatus === "VERIFIED" ? "text-blue-500 border-blue-100 bg-blue-50/30" : "text-slate-300 hover:text-blue-600")}
                              >
-                                {p.status === "ENABLED" ? <ShieldCheck className="w-4 h-4" /> : <ShieldAlert className="w-4 h-4" />}
+                                <ShieldCheck className="w-4 h-4" />
+                             </button>
+                             <button 
+                               onClick={() => toggleStatus(p.id, p.status)}
+                               title={p.status === "ENABLED" ? "Suspend Account" : "Activate Account"}
+                               className={cn("p-2.5 bg-white border border-slate-100 rounded-xl transition-all", p.status === "ENABLED" ? "text-emerald-500" : "text-red-500 border-red-50")}
+                             >
+                                {p.status === "ENABLED" ? <CheckCircle2 className="w-4 h-4" /> : <XCircle className="w-4 h-4" />}
                              </button>
                           </div>
                         </td>
