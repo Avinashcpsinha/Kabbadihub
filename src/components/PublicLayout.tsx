@@ -54,10 +54,6 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
           </div>
 
           <div className="flex items-center gap-4">
-            <div className="hidden md:flex items-center gap-2 bg-slate-100 p-1.5 rounded-xl border border-slate-200">
-              <Search className="w-4 h-4 text-slate-400 ml-2" />
-              <input placeholder="Search..." className="bg-transparent text-[10px] font-bold uppercase tracking-widest outline-none w-32 text-slate-900 placeholder:text-slate-300" />
-            </div>
 
             <div className="hidden lg:flex items-center gap-2 mr-2">
               <span className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">

@@ -146,10 +146,6 @@ export default function PremiumLandingPage() {
                   {isAuthenticated ? `Hi, ${currentUser?.name.split(" ")[0]}` : "Welcome, Guest"}
                 </span>
              </div>
-             <div className="hidden md:flex items-center gap-2 bg-slate-100 p-1.5 rounded-xl border border-slate-200">
-                <Search className="w-4 h-4 text-slate-400 ml-2" />
-                <input placeholder="Search Pro Players..." className="bg-transparent text-[10px] font-bold uppercase tracking-widest outline-none w-40 text-slate-900 placeholder:text-slate-300" />
-             </div>
              {isAuthenticated ? (
                <Link href="/user/dashboard" className="ch-btn-primary px-8 py-4 shadow-xl shadow-orange-600/10">My Dashboard</Link>
              ) : (
