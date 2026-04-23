@@ -12,12 +12,12 @@ import {
 } from "lucide-react";
 
 const navLinks = [
-  { label: "Matches", href: "/matches" },
-  { label: "Tournaments", href: "/tournaments" },
-  { label: "Players", href: "/players" },
-  { label: "Teams", href: "/teams" },
-  { label: "Results", href: "/results" },
-  { label: "Challenges", href: "/challenges" },
+  { label: "Matches", href: "/matches?view=spectator" },
+  { label: "Tournaments", href: "/tournaments?view=spectator" },
+  { label: "Players", href: "/players?view=spectator" },
+  { label: "Teams", href: "/teams?view=spectator" },
+  { label: "Results", href: "/results?view=spectator" },
+  { label: "Challenges", href: "/challenges?view=spectator" },
 ];
 
 export default function PublicLayout({ children }: { children: React.ReactNode }) {
@@ -163,10 +163,10 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
               <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Platform</h4>
               <ul className="space-y-3">
                 {[
-                  { label: "Matches", href: "/matches" },
-                  { label: "Tournaments", href: "/tournaments" },
-                  { label: "Teams", href: "/teams" },
-                  { label: "Players", href: "/players" },
+                  { label: "Matches", href: "/matches?view=spectator" },
+                  { label: "Tournaments", href: "/tournaments?view=spectator" },
+                  { label: "Teams", href: "/teams?view=spectator" },
+                  { label: "Players", href: "/players?view=spectator" },
                 ].map(l => (
                   <li key={l.href}><Link href={l.href} className="text-sm font-bold text-slate-600 hover:text-orange-600 transition-colors">{l.label}</Link></li>
                 ))}
@@ -176,8 +176,8 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
               <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Community</h4>
               <ul className="space-y-3">
                 {[
-                  { label: "Challenges", href: "/challenges" },
-                  { label: "Results", href: "/results" },
+                  { label: "Challenges", href: "/challenges?view=spectator" },
+                  { label: "Results", href: "/results?view=spectator" },
                   { label: "Clubs", href: "/clubs" },
                   { label: "Register", href: "/user/register" },
                 ].map(l => (
