@@ -246,10 +246,6 @@ export default function ChallengesPage() {
     </div>
   );
 
-  if (role === "PUBLIC") return <PublicLayout>{Content}</PublicLayout>;
-  return (
-    <DashboardLayout variant="user">
-       {Content}
-    </DashboardLayout>
-  );
+  // Always return PublicLayout for this view for the 'Guest Experience'
+  return <PublicLayout>{Content}</PublicLayout>;
 }

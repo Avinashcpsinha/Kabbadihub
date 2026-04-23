@@ -239,8 +239,8 @@ export default function CricHeroesStyleTeamsPage() {
     </div>
   );
 
-  if (role === "PUBLIC") return <PublicLayout>{Content}</PublicLayout>;
-  return <DashboardLayout variant={role === "USER" ? "user" : "organiser"}>{Content}</DashboardLayout>;
+  // Always return PublicLayout for this view for the 'Guest Experience'
+  return <PublicLayout>{Content}</PublicLayout>;
 }
 
 function ArrowLeft({ className }: { className?: string }) {

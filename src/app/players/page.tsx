@@ -201,10 +201,6 @@ export default function LeaderboardPage() {
     </div>
   );
 
-  if (role === "PUBLIC") return <PublicLayout>{Content}</PublicLayout>;
-  return (
-    <DashboardLayout variant="organiser">
-       {Content}
-    </DashboardLayout>
-  );
+  // Always return PublicLayout for this view for the 'Guest Experience'
+  return <PublicLayout>{Content}</PublicLayout>;
 }

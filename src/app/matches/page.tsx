@@ -238,10 +238,7 @@ export default function MatchesIndexPage() {
     </div>
   );
 
-  if (role === "PUBLIC") return <PublicLayout>{Content}</PublicLayout>;
-  return (
-    <DashboardLayout variant={role === "USER" ? "user" : "organiser"}>
-       {Content}
-    </DashboardLayout>
-  );
+  // Always return PublicLayout for this view to provide the 'Guest Experience'
+  // even for logged-in SuperAdmins as requested.
+  return <PublicLayout>{Content}</PublicLayout>;
 }
