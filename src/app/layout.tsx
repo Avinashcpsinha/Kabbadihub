@@ -22,16 +22,16 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full antialiased">
       <body className={`${inter.className} min-h-full flex flex-col`}>
-        <TenantProvider>
-          <ImpersonationBanner />
-          <AuthProvider>
+        <AuthProvider>
+          <TenantProvider>
+            <ImpersonationBanner />
             <AuctionProvider>
               <MatchProvider>
                 {children}
               </MatchProvider>
             </AuctionProvider>
-          </AuthProvider>
-        </TenantProvider>
+          </TenantProvider>
+        </AuthProvider>
       </body>
     </html>
   );
