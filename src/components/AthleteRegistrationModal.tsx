@@ -87,7 +87,8 @@ export default function AthleteRegistrationModal({
     setPhotoPreview("");
   };
 
-  const isStep1Valid = form.name.trim() && form.number.trim() && form.phone.trim();
+  const isStep1Valid = form.name.trim() && form.number.trim();
+  const isStep2Valid = form.phone.trim();
 
   return (
     <AnimatePresence>
@@ -302,7 +303,14 @@ export default function AthleteRegistrationModal({
 
                     <div className="flex gap-3">
                       <button type="button" onClick={() => setStep(1)} className="px-8 py-5 bg-slate-100 text-slate-600 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 transition-all">← Back</button>
-                      <button type="button" onClick={() => setStep(3)} className="flex-1 py-5 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-black transition-all">Continue to Compliance →</button>
+                      <button 
+                        type="button" 
+                        disabled={!isStep2Valid}
+                        onClick={() => setStep(3)} 
+                        className="flex-1 py-5 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest disabled:opacity-30 hover:bg-black transition-all"
+                      >
+                        Continue to Compliance →
+                      </button>
                     </div>
                   </div>
                 )}
