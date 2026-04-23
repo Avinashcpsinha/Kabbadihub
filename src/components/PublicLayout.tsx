@@ -27,51 +27,73 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans flex flex-col">
-      {/* Navbar */}
+      {/* Top Bar (Informational Layer) */}
+      <div className="bg-slate-950 text-white/60 py-2.5 px-6 border-b border-white/5">
+        <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-6">
+            <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest hover:text-white transition-colors cursor-pointer">
+              <Mail className="w-3 h-3 text-orange-500" /> support@kabaddihub.com
+            </div>
+            <div className="hidden sm:flex items-center gap-2 text-[10px] font-black uppercase tracking-widest hover:text-white transition-colors cursor-pointer">
+              <Activity className="w-3 h-3 text-orange-500" /> Global Live Mat Feed
+            </div>
+          </div>
+          <div className="flex items-center gap-6">
+            <div className="text-[10px] font-black uppercase tracking-widest text-white/40">
+              {isAuthenticated ? "Identity Verified" : "Welcome to the Hub"}
+            </div>
+            <div className="h-3 w-px bg-white/10" />
+            <div className="flex items-center gap-3">
+               <span className="text-[10px] font-black uppercase tracking-widest text-orange-400">
+                 {isAuthenticated ? `Hi, ${currentUser?.name.split(" ")[0]}` : "Guest Access"}
+               </span>
+               {!isAuthenticated && (
+                 <Link href="/login" className="text-[10px] font-black uppercase tracking-widest text-white hover:text-orange-500 transition-colors">
+                   Login / Register
+                 </Link>
+               )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Navbar (Navigation Layer) */}
       <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-slate-200 px-6 py-4">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-12">
-            <Link href="/" className="flex items-center gap-2 group">
-              <div className="w-10 h-10 bg-orange-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-orange-600/20 group-hover:rotate-12 transition-transform">
-                <Zap className="w-6 h-6 fill-current" />
-              </div>
-              <span className="text-2xl font-black italic tracking-tighter uppercase text-slate-900">KabaddiHub</span>
-            </Link>
-            <div className="hidden lg:flex items-center gap-8">
-              {navLinks.map(l => (
-                <Link
-                  key={l.href}
-                  href={l.href}
-                  className={cn(
-                    "text-[10px] font-black uppercase tracking-[0.2em] transition-colors",
-                    pathname.startsWith(l.href) ? "text-orange-600" : "text-slate-400 hover:text-orange-600"
-                  )}
-                >
-                  {l.label}
-                </Link>
-              ))}
+          <Link href="/" className="flex items-center gap-2 group">
+            <div className="w-10 h-10 bg-orange-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-orange-600/20 group-hover:rotate-12 transition-transform">
+              <Zap className="w-6 h-6 fill-current" />
             </div>
+            <span className="text-2xl font-black italic tracking-tighter uppercase text-slate-900">KabaddiHub</span>
+          </Link>
+
+          <div className="hidden lg:flex items-center gap-8">
+            {navLinks.map(l => (
+              <Link
+                key={l.href}
+                href={l.href}
+                className={cn(
+                  "text-[10px] font-black uppercase tracking-[0.2em] transition-colors",
+                  pathname.startsWith(l.href) ? "text-orange-600" : "text-slate-400 hover:text-orange-600"
+                )}
+              >
+                {l.label}
+              </Link>
+            ))}
           </div>
 
           <div className="flex items-center gap-4">
-
-            <div className="hidden lg:flex items-center gap-2 mr-2">
-              <span className="text-[10px] font-black uppercase tracking-widest text-slate-900 bg-slate-100 px-3 py-1 rounded-full border border-slate-200">
-                {isAuthenticated ? `Hi, ${currentUser?.name.split(" ")[0]}` : "Welcome, Guest"}
-              </span>
-            </div>
-
-            {isAuthenticated && currentUser ? (
+            {isAuthenticated ? (
               <div className="relative">
                 <button
                   onClick={() => setUserMenuOpen(!userMenuOpen)}
-                  className="flex items-center gap-3 px-4 py-2 bg-slate-100 rounded-xl hover:bg-slate-200 transition-all"
+                  className="flex items-center gap-3 px-4 py-2 bg-slate-100 rounded-xl hover:bg-slate-200 transition-all border border-slate-200 shadow-sm"
                 >
-                  <div className="w-8 h-8 bg-orange-600 rounded-lg flex items-center justify-center text-white text-xs font-black">
-                    {currentUser.avatarInitial}
+                  <div className="w-8 h-8 bg-slate-900 rounded-lg flex items-center justify-center text-white text-xs font-black">
+                    {currentUser?.avatarInitial}
                   </div>
-                  <span className="hidden sm:block text-[10px] font-black uppercase tracking-widest text-slate-600">
-                    {currentUser.name.split(" ")[0]}
+                  <span className="hidden sm:block text-[10px] font-black uppercase tracking-widest text-slate-900">
+                    My Account
                   </span>
                 </button>
 
@@ -80,14 +102,14 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
                     <div className="fixed inset-0 z-40" onClick={() => setUserMenuOpen(false)} />
                     <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden z-50">
                       <div className="p-4 border-b border-slate-100">
-                        <div className="text-sm font-black italic text-slate-900">{currentUser.name}</div>
-                        <div className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{currentUser.email}</div>
+                        <div className="text-sm font-black italic text-slate-900">{currentUser?.name}</div>
+                        <div className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{currentUser?.email}</div>
                       </div>
                       <div className="p-2">
                         {role === "USER" && (
                           <>
                             <Link href="/user/dashboard" onClick={() => setUserMenuOpen(false)} className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all">
-                              <Activity className="w-4 h-4 text-slate-400" /> {currentUser.position ? "Pro Dashboard" : "Fan Dashboard"}
+                              <Activity className="w-4 h-4 text-slate-400" /> {currentUser?.position ? "Pro Dashboard" : "Fan Dashboard"}
                             </Link>
                             <Link href="/user/profile" onClick={() => setUserMenuOpen(false)} className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all">
                               <User className="w-4 h-4 text-slate-400" /> My Profile
@@ -113,14 +135,9 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
                 )}
               </div>
             ) : (
-              <div className="flex items-center gap-3">
-                <Link href="/user/register" className="hidden sm:inline-flex text-[10px] font-black uppercase tracking-widest text-slate-400 hover:text-orange-600 transition-colors">
-                  Register
-                </Link>
-                <Link href="/login" className="ch-btn-primary px-6 py-3 shadow-lg shadow-orange-600/10">
-                  <LogIn className="w-4 h-4" /> Sign In
-                </Link>
-              </div>
+              <Link href="/user/register?type=athlete" className="ch-btn-primary px-6 py-3 shadow-lg shadow-orange-600/10">
+                <Shield className="w-4 h-4" /> Join as Athlete
+              </Link>
             )}
           </div>
         </div>
