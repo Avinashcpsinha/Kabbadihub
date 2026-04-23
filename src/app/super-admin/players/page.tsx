@@ -4,10 +4,11 @@ import React, { useState, useEffect } from "react";
 import RoleGate from "@/components/RoleGate";
 import DashboardLayout from "@/components/DashboardLayout";
 import AthleteRegistrationModal, { AthleteFormData } from "@/components/AthleteRegistrationModal";
+import { supabase } from "@/lib/supabase";
 import { 
-  Search, Plus, Trash2, Edit3, 
-  ShieldCheck, ShieldAlert, Phone, Mail, 
-  Activity, IdCard, X, Save, Camera, MapPin,
+  Search, Plus, Edit3, 
+  ShieldCheck, ShieldAlert, 
+  Activity, IdCard, X, Save, Camera, 
   CheckCircle2, XCircle, AlertCircle
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -15,60 +16,129 @@ import { motion, AnimatePresence } from "framer-motion";
 
 export default function GlobalPlayersPoolPage() {
   const [players, setPlayers] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [editingPlayer, setEditingPlayer] = useState<any | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
 
-  useEffect(() => {
-    const saved = localStorage.getItem("kabaddihub_global_players");
-    if (saved) {
-      setPlayers(JSON.parse(saved));
-    } else {
-      const initial = Array.from({ length: 50 }).map((_, i) => ({
-        id: `p${i + 1}`,
-        name: i === 0 ? "Pawan Sehrawat" : i === 1 ? "Naveen Kumar" : `Athlete ${i + 1}`,
-        number: `${Math.floor(Math.random() * 99)}`,
-        phone: `+91 ${Math.floor(7000000000 + Math.random() * 2000000000)}`,
-        email: `player${i + 1}@kabaddi.in`,
-        role: i % 3 === 0 ? "RAIDER" : i % 3 === 1 ? "DEFENDER" : "ALL_ROUNDER",
-        status: "ENABLED",
-        kycStatus: "PENDING",
-        weight: "78",
-        height: "178",
-        city: "Rohtak",
-        pan: "ABCDE1234F",
-        aadhar: "1234 5678 9012",
-        photo: `https://i.pravatar.cc/150?u=${i}`,
+  const fetchPlayers = async () => {
+    setIsLoading(true);
+    const { data: athletes, error } = await supabase
+      .from('athletes')
+      .select('*')
+      .order('name');
+
+    if (error) {
+      console.error("Error fetching athletes:", error);
+      setIsLoading(false);
+      return;
+    }
+
+    if (athletes) {
+      const mapped = athletes.map(a => ({
+        id: a.id,
+        name: a.name,
+        number: a.number,
+        phone: a.phone,
+        email: a.email,
+        role: a.role,
+        weight: a.weight,
+        height: a.height,
+        city: a.city,
+        pan: a.pan,
+        aadhar: a.aadhar,
+        photo: a.photo || `https://i.pravatar.cc/150?u=${a.id}`,
+        status: a.status,
+        kycStatus: a.kyc_status,
         stats: {
-          raidPoints: Math.floor(Math.random() * 1500),
-          tacklePoints: Math.floor(Math.random() * 500)
+          raidPoints: a.raid_points,
+          tacklePoints: a.tackle_points,
+          matches: a.matches_played,
+          superRaids: a.super_raids,
+          superTackles: a.super_tackles,
+          superTens: a.super_tens,
+          highFives: a.high_fives
         }
       }));
-      setPlayers(initial);
-      localStorage.setItem("kabaddihub_global_players", JSON.stringify(initial));
+      setPlayers(mapped);
     }
+    setIsLoading(false);
+  };
+
+  useEffect(() => {
+    fetchPlayers();
   }, []);
 
-  const savePlayers = (updated: any[]) => {
-    setPlayers(updated);
-    localStorage.setItem("kabaddihub_global_players", JSON.stringify(updated));
+  const toggleStatus = async (id: string, currentStatus: string) => {
+    const newStatus = currentStatus === "ENABLED" ? "DISABLED" : "ENABLED";
+    const { error } = await supabase
+      .from('athletes')
+      .update({ status: newStatus })
+      .eq('id', id);
+
+    if (error) {
+      console.error("Error updating status:", error);
+      return;
+    }
+    fetchPlayers();
   };
 
-  const toggleStatus = (id: string) => {
-    const updated = players.map(p => 
-      p.id === id ? { ...p, status: p.status === "ENABLED" ? "DISABLED" : "ENABLED" } : p
-    );
-    savePlayers(updated);
-  };
+  const handleRegister = async (data: AthleteFormData) => {
+    const { error } = await supabase
+      .from('athletes')
+      .insert([{
+        name: data.name,
+        number: data.number,
+        phone: data.phone,
+        email: data.email,
+        role: data.role,
+        weight: data.weight,
+        height: data.height,
+        city: data.city,
+        pan: data.pan,
+        aadhar: data.aadhar,
+        photo: data.photo,
+        kyc_status: "PENDING",
+        status: "ENABLED"
+      }]);
 
-  const handleRegister = (data: AthleteFormData) => {
-    const newPlayer = {
-      ...data,
-      stats: { raidPoints: 0, tacklePoints: 0 }
-    };
-    savePlayers([...players, newPlayer]);
+    if (error) {
+      console.error("Error registering athlete:", error);
+      return;
+    }
+    
+    fetchPlayers();
     setIsRegisterOpen(false);
+  };
+
+  const handleUpdate = async () => {
+    if (!editingPlayer) return;
+
+    const { error } = await supabase
+      .from('athletes')
+      .update({
+        name: editingPlayer.name,
+        number: editingPlayer.number,
+        phone: editingPlayer.phone,
+        email: editingPlayer.email,
+        weight: editingPlayer.weight,
+        height: editingPlayer.height,
+        city: editingPlayer.city,
+        pan: editingPlayer.pan,
+        aadhar: editingPlayer.aadhar,
+        status: editingPlayer.status,
+        kyc_status: editingPlayer.kycStatus
+      })
+      .eq('id', editingPlayer.id);
+
+    if (error) {
+      console.error("Error updating athlete:", error);
+      return;
+    }
+
+    fetchPlayers();
+    setIsModalOpen(false);
   };
 
   const filteredPlayers = players.filter(p => 
@@ -101,77 +171,83 @@ export default function GlobalPlayersPoolPage() {
             />
           </div>
 
-          <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-slate-50/50 border-b border-slate-100 text-[10px] font-black uppercase tracking-widest text-slate-400">
-                    <th className="px-8 py-6">Athlete Profile</th>
-                    <th className="px-8 py-6">Identity Docs</th>
-                    <th className="px-8 py-6">Compliance</th>
-                    <th className="px-8 py-6 text-center">Score Card</th>
-                    <th className="px-8 py-6 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-50">
-                  {filteredPlayers.map((p) => (
-                    <tr key={p.id} className="group hover:bg-slate-50/30 transition-all">
-                      <td className="px-8 py-6">
-                        <div className="flex items-center gap-4">
-                          <img src={p.photo} alt={p.name} className="w-12 h-12 rounded-2xl object-cover shadow-lg border-2 border-white" />
-                          <div>
-                            <div className="text-sm font-black uppercase tracking-tight text-slate-900">{p.name}</div>
-                            <div className="text-[9px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                               JERSEY #{p.number} • {p.city}
+          {isLoading ? (
+            <div className="h-64 flex items-center justify-center">
+              <div className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
+            </div>
+          ) : (
+            <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-slate-50/50 border-b border-slate-100 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                      <th className="px-8 py-6">Athlete Profile</th>
+                      <th className="px-8 py-6">Identity Docs</th>
+                      <th className="px-8 py-6">Compliance</th>
+                      <th className="px-8 py-6 text-center">Score Card</th>
+                      <th className="px-8 py-6 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-50">
+                    {filteredPlayers.map((p) => (
+                      <tr key={p.id} className="group hover:bg-slate-50/30 transition-all">
+                        <td className="px-8 py-6">
+                          <div className="flex items-center gap-4">
+                            <img src={p.photo} alt={p.name} className="w-12 h-12 rounded-2xl object-cover shadow-lg border-2 border-white" />
+                            <div>
+                              <div className="text-sm font-black uppercase tracking-tight text-slate-900">{p.name}</div>
+                              <div className="text-[9px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                                 JERSEY #{p.number} • {p.city}
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      </td>
-                      <td className="px-8 py-6">
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2 text-[9px] font-black text-slate-500 uppercase">
-                             <IdCard className="w-3 h-3" /> PAN: {p.pan}
+                        </td>
+                        <td className="px-8 py-6">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2 text-[9px] font-black text-slate-500 uppercase">
+                               <IdCard className="w-3 h-3" /> PAN: {p.pan}
+                            </div>
+                            <div className="flex items-center gap-2 text-[9px] font-bold text-slate-300 uppercase">
+                               <AlertCircle className="w-3 h-3" /> UID: {p.aadhar}
+                            </div>
                           </div>
-                          <div className="flex items-center gap-2 text-[9px] font-bold text-slate-300 uppercase">
-                             <AlertCircle className="w-3 h-3" /> UID: {p.aadhar}
+                        </td>
+                        <td className="px-8 py-6">
+                          <div className={cn(
+                            "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest",
+                            p.kycStatus === "VERIFIED" ? "bg-emerald-50 text-emerald-600" : p.kycStatus === "REJECTED" ? "bg-red-50 text-red-600" : "bg-amber-50 text-amber-600"
+                          )}>
+                             {p.kycStatus === "VERIFIED" ? <CheckCircle2 className="w-3 h-3" /> : p.kycStatus === "REJECTED" ? <XCircle className="w-3 h-3" /> : <Activity className="w-3 h-3" />}
+                             {p.kycStatus}
                           </div>
-                        </div>
-                      </td>
-                      <td className="px-8 py-6">
-                        <div className={cn(
-                          "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest",
-                          p.kycStatus === "VERIFIED" ? "bg-emerald-50 text-emerald-600" : p.kycStatus === "REJECTED" ? "bg-red-50 text-red-600" : "bg-amber-50 text-amber-600"
-                        )}>
-                           {p.kycStatus === "VERIFIED" ? <CheckCircle2 className="w-3 h-3" /> : p.kycStatus === "REJECTED" ? <XCircle className="w-3 h-3" /> : <Activity className="w-3 h-3" />}
-                           {p.kycStatus}
-                        </div>
-                      </td>
-                      <td className="px-8 py-6 text-center">
-                         <span className="text-sm font-black italic text-slate-900">{(p.stats?.raidPoints || 0) + (p.stats?.tacklePoints || 0)}</span>
-                         <div className="text-[8px] font-black uppercase tracking-widest text-slate-400">Total Pts</div>
-                      </td>
-                      <td className="px-8 py-6 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                           <button 
-                             onClick={() => { setEditingPlayer({...p}); setIsModalOpen(true); }}
-                             className="p-2.5 bg-white border border-slate-100 rounded-xl text-slate-400 hover:text-orange-600 hover:border-orange-100 transition-all"
-                           >
-                              <Edit3 className="w-4 h-4" />
-                           </button>
-                           <button 
-                             onClick={() => toggleStatus(p.id)}
-                             className={cn("p-2.5 bg-white border border-slate-100 rounded-xl transition-all", p.status === "ENABLED" ? "text-emerald-500" : "text-slate-300")}
-                           >
-                              {p.status === "ENABLED" ? <ShieldCheck className="w-4 h-4" /> : <ShieldAlert className="w-4 h-4" />}
-                           </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                        </td>
+                        <td className="px-8 py-6 text-center">
+                           <span className="text-sm font-black italic text-slate-900">{(p.stats?.raidPoints || 0) + (p.stats?.tacklePoints || 0)}</span>
+                           <div className="text-[8px] font-black uppercase tracking-widest text-slate-400">Total Pts</div>
+                        </td>
+                        <td className="px-8 py-6 text-right">
+                          <div className="flex items-center justify-end gap-2">
+                             <button 
+                               onClick={() => { setEditingPlayer({...p}); setIsModalOpen(true); }}
+                               className="p-2.5 bg-white border border-slate-100 rounded-xl text-slate-400 hover:text-orange-600 hover:border-orange-100 transition-all"
+                             >
+                                <Edit3 className="w-4 h-4" />
+                             </button>
+                             <button 
+                               onClick={() => toggleStatus(p.id, p.status)}
+                               className={cn("p-2.5 bg-white border border-slate-100 rounded-xl transition-all", p.status === "ENABLED" ? "text-emerald-500" : "text-slate-300")}
+                             >
+                                {p.status === "ENABLED" ? <ShieldCheck className="w-4 h-4" /> : <ShieldAlert className="w-4 h-4" />}
+                             </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         <AnimatePresence>
@@ -270,7 +346,7 @@ export default function GlobalPlayersPoolPage() {
                        </button>
                        <div className="flex gap-4">
                           <button onClick={() => setIsModalOpen(false)} className="px-8 font-black uppercase text-[10px] text-slate-400">Cancel</button>
-                          <button onClick={() => { savePlayers(players.map(p => p.id === editingPlayer.id ? editingPlayer : p)); setIsModalOpen(false); }} className="px-12 py-5 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-2xl flex items-center gap-3 hover:bg-black transition-all">
+                          <button onClick={handleUpdate} className="px-12 py-5 bg-slate-900 text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-2xl flex items-center gap-3 hover:bg-black transition-all">
                              <Save className="w-4 h-4" /> Commit Profile
                           </button>
                        </div>

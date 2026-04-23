@@ -37,7 +37,7 @@ function RegisterContent() {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
@@ -58,15 +58,23 @@ function RegisterContent() {
 
     setIsLoading(true);
 
-    setTimeout(() => {
-      const user = registerUser(formData);
+    try {
+      const user = await registerUser({
+        ...formData,
+        role: accountType === "ATHLETE" ? "USER" : "USER", // Both start as USER, but Athlete info is in profile
+      });
+
       if (!user) {
-        setError("An account with this email already exists.");
+        setError("Registration failed. Email might be in use or data is invalid.");
         setIsLoading(false);
         return;
       }
+
       router.push("/user/dashboard");
-    }, 800);
+    } catch (err: any) {
+      setError(err.message || "An unexpected error occurred.");
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -361,6 +369,14 @@ function RegisterContent() {
          </div>
        </main>
     </div>
+  );
+}
+
+export default function UserRegisterPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-slate-900 flex items-center justify-center text-white font-black italic uppercase tracking-widest">Initializing Registration...</div>}>
+      <RegisterContent />
+    </Suspense>
   );
 }
 

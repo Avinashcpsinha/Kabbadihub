@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from "react";
+import { supabase } from "@/lib/supabase";
 
 export type UserRole = "PUBLIC" | "USER" | "ORGANISER" | "SUPER_ADMIN";
 
@@ -40,79 +41,116 @@ interface AuthContextType {
     panCard?: string;
     aadharCard?: string;
     photoUrl?: string;
-  }) => AppUser | null;
-  loginUser: (email: string, password: string) => { success: boolean; error?: string };
-  updateUser: (updates: Partial<AppUser>) => void;
+    role?: UserRole;
+  }) => Promise<AppUser | null>;
+  loginUser: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  updateUser: (updates: Partial<AppUser>) => Promise<void>;
   allUsers: AppUser[];
+  isLoading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const USERS_KEY = "kabaddihub_all_users";
-const USER_CREDS_KEY = "kabaddihub_user_creds";
-const SESSION_KEY = "kabaddihub_session";
-
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  // Initialize state synchronously in the client to prevent "Sign In" flash
-  const [role, setRoleState] = useState<UserRole>(() => {
-    if (typeof window !== "undefined") {
-      const session = localStorage.getItem(SESSION_KEY);
-      if (session) {
-        try {
-          return JSON.parse(session).role;
-        } catch (e) {
-          return "PUBLIC";
-        }
-      }
-      return (localStorage.getItem("kabaddihub_user_role") as UserRole) || "PUBLIC";
-    }
-    return "PUBLIC";
-  });
+  const [role, setRoleState] = useState<UserRole>("PUBLIC");
+  const [currentUser, setCurrentUser] = useState<AppUser | null>(null);
+  const [allUsers, setAllUsers] = useState<AppUser[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const [currentUser, setCurrentUser] = useState<AppUser | null>(() => {
-    if (typeof window !== "undefined") {
-      const session = localStorage.getItem(SESSION_KEY);
-      if (session) {
-        try {
-          return JSON.parse(session).user;
-        } catch (e) {
-          return null;
-        }
-      }
+  const fetchProfile = async (userId: string) => {
+    const { data: profile, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .single();
+
+    if (error) {
+      console.error("Error fetching profile:", error);
+      return null;
+    }
+
+    if (profile) {
+      const appUser: AppUser = {
+        id: profile.id,
+        name: profile.name,
+        email: profile.email || "", // Profile might not have email, we get it from auth
+        role: (profile.role as UserRole) || "USER",
+        tenantId: profile.tenant_id,
+        avatarInitial: profile.name?.charAt(0).toUpperCase() || "?",
+        position: profile.position,
+        city: profile.city,
+        height: profile.height,
+        weight: profile.weight,
+        panCard: profile.pan_card,
+        aadharCard: profile.aadhar_card,
+        photoUrl: profile.photo_url,
+        followedTeams: profile.followed_teams || [],
+        joinedAt: new Date(profile.joined_at).getTime(),
+      };
+      return appUser;
     }
     return null;
-  });
-
-  const [allUsers, setAllUsers] = useState<AppUser[]>([]);
+  };
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      // Load all users
-      const savedUsers = localStorage.getItem(USERS_KEY);
-      if (savedUsers) setAllUsers(JSON.parse(savedUsers));
-    }
-  }, []);
+    // Check active sessions and sets the user
+    const initializeAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (session?.user) {
+        const userEmail = session.user.email || "";
+        const profile = await fetchProfile(session.user.id);
+        
+        if (profile) {
+          setCurrentUser({ ...profile, email: userEmail });
+          setRoleState(profile.role);
+        } else {
+          // Fallback if profile trigger failed or hasn't run yet
+          const fallbackUser: AppUser = {
+            id: session.user.id,
+            name: session.user.user_metadata?.name || "User",
+            email: userEmail,
+            role: (session.user.user_metadata?.role as UserRole) || "USER",
+            avatarInitial: (session.user.user_metadata?.name || "U")[0].toUpperCase(),
+            followedTeams: [],
+            joinedAt: Date.now(),
+          };
+          setCurrentUser(fallbackUser);
+          setRoleState(fallbackUser.role);
+        }
+      }
+      setIsLoading(false);
+    };
 
-  const saveSession = (user: AppUser | null, userRole: UserRole) => {
-    if (user) {
-      localStorage.setItem(SESSION_KEY, JSON.stringify({ role: userRole, user }));
-    } else {
-      localStorage.removeItem(SESSION_KEY);
-    }
-  };
+    initializeAuth();
+
+    // Listen for changes on auth state (logged in, signed out, etc.)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session?.user) {
+        const profile = await fetchProfile(session.user.id);
+        if (profile) {
+          setCurrentUser({ ...profile, email: session.user.email || "" });
+          setRoleState(profile.role);
+        }
+      } else {
+        setCurrentUser(null);
+        setRoleState("PUBLIC");
+      }
+      setIsLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   const setRole = (newRole: UserRole) => {
     setRoleState(newRole);
-    localStorage.setItem("kabaddihub_user_role", newRole);
-    if (newRole === "PUBLIC") {
-      localStorage.removeItem(SESSION_KEY);
-    } else {
-      const existingSession = JSON.parse(localStorage.getItem(SESSION_KEY) || "{}");
-      localStorage.setItem(SESSION_KEY, JSON.stringify({ ...existingSession, role: newRole }));
+    if (currentUser) {
+      setCurrentUser({ ...currentUser, role: newRole });
+      // In a real app, you'd update the DB role here too if allowed
     }
   };
 
-  const registerUser = (data: { 
+  const registerUser = async (data: { 
     name: string; 
     email: string; 
     password: string; 
@@ -123,86 +161,111 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     panCard?: string;
     aadharCard?: string;
     photoUrl?: string;
+    role?: UserRole;
   }) => {
-    // Check if user already exists
-    const creds = JSON.parse(localStorage.getItem(USER_CREDS_KEY) || "[]");
-    if (creds.find((c: any) => c.email.toLowerCase() === data.email.toLowerCase())) {
-      return null; // User already exists
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email: data.email,
+      password: data.password,
+      options: {
+        data: {
+          name: data.name,
+          role: data.role || "USER",
+        }
+      }
+    });
+
+    if (authError) {
+      console.error("Sign up error:", authError.message);
+      return null;
     }
 
-    const newUser: AppUser = {
-      id: `user_${Date.now()}`,
-      name: data.name,
-      email: data.email,
-      role: "USER",
-      avatarInitial: data.name.charAt(0).toUpperCase(),
-      position: data.position as any || undefined,
-      city: data.city || undefined,
-      height: data.height || undefined,
-      weight: data.weight || undefined,
-      panCard: data.panCard || undefined,
-      aadharCard: data.aadharCard || undefined,
-      photoUrl: data.photoUrl || "https://images.unsplash.com/photo-1599566150163-29194dcaad36?q=80&w=256&h=256&auto=format&fit=crop", 
-      bio: "",
-      followedTeams: [],
-      joinedAt: Date.now(),
-    };
+    if (authData.user) {
+      // The profile is created via SQL trigger, but we update extra fields
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({
+          city: data.city,
+          position: data.position,
+          height: data.height,
+          weight: data.weight,
+          pan_card: data.panCard,
+          aadhar_card: data.aadharCard,
+          photo_url: data.photoUrl,
+        })
+        .eq('id', authData.user.id);
 
-    // Save credentials
-    creds.push({ email: data.email.toLowerCase(), password: data.password, userId: newUser.id });
-    localStorage.setItem(USER_CREDS_KEY, JSON.stringify(creds));
+      // If they provided athlete info, also register them in the global pool
+      if (data.position && data.height) {
+        await supabase
+          .from('athletes')
+          .insert([{
+            name: data.name,
+            email: data.email,
+            role: data.position,
+            city: data.city,
+            height: data.height,
+            weight: data.weight,
+            pan: data.panCard,
+            aadhar: data.aadharCard,
+            photo: data.photoUrl,
+            status: 'ENABLED',
+            kyc_status: 'PENDING'
+          }]);
+      }
 
-    // Save user
-    const updatedUsers = [...allUsers, newUser];
-    setAllUsers(updatedUsers);
-    localStorage.setItem(USERS_KEY, JSON.stringify(updatedUsers));
+      const profile = await fetchProfile(authData.user.id);
+      return profile;
+    }
 
-    // Auto-login
-    setCurrentUser(newUser);
-    setRoleState("USER");
-    saveSession(newUser, "USER");
-
-    return newUser;
+    return null;
   };
 
-  const loginUser = (email: string, password: string): { success: boolean; error?: string } => {
-    const creds = JSON.parse(localStorage.getItem(USER_CREDS_KEY) || "[]");
-    const found = creds.find((c: any) => c.email.toLowerCase() === email.toLowerCase() && c.password === password);
+  const loginUser = async (email: string, password: string): Promise<{ success: boolean; error?: string }> => {
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
 
-    if (!found) {
-      return { success: false, error: "Invalid email or password." };
+    if (error) {
+      return { success: false, error: error.message };
     }
 
-    const users = JSON.parse(localStorage.getItem(USERS_KEY) || "[]");
-    const user = users.find((u: AppUser) => u.id === found.userId);
-
-    if (!user) {
-      return { success: false, error: "User account not found." };
-    }
-
-    setCurrentUser(user);
-    setRoleState("USER");
-    saveSession(user, "USER");
     return { success: true };
   };
 
-  const updateUser = (updates: Partial<AppUser>) => {
+  const updateUser = async (updates: Partial<AppUser>) => {
     if (!currentUser) return;
-    const updated = { ...currentUser, ...updates };
-    setCurrentUser(updated);
 
-    const updatedUsers = allUsers.map(u => u.id === updated.id ? updated : u);
-    setAllUsers(updatedUsers);
-    localStorage.setItem(USERS_KEY, JSON.stringify(updatedUsers));
-    saveSession(updated, role);
+    const { error } = await supabase
+      .from('profiles')
+      .update({
+        name: updates.name,
+        city: updates.city,
+        position: updates.position,
+        height: updates.height,
+        weight: updates.weight,
+        pan_card: updates.panCard,
+        aadhar_card: updates.aadharCard,
+        photo_url: updates.photoUrl,
+        followed_teams: updates.followedTeams,
+      })
+      .eq('id', currentUser.id);
+
+    if (error) {
+      console.error("Update profile error:", error);
+      return;
+    }
+
+    const profile = await fetchProfile(currentUser.id);
+    if (profile) {
+      setCurrentUser({ ...profile, email: currentUser.email });
+    }
   };
 
-  const logout = () => {
-    setRoleState("PUBLIC");
+  const logout = async () => {
+    await supabase.auth.signOut();
     setCurrentUser(null);
-    localStorage.removeItem(SESSION_KEY);
-    localStorage.removeItem("kabaddihub_user_role");
-    localStorage.removeItem("kabaddihub_impersonated_tenant_id");
+    setRoleState("PUBLIC");
     window.location.href = "/";
   };
 
@@ -217,6 +280,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       loginUser,
       updateUser,
       allUsers,
+      isLoading,
     }}>
       {children}
     </AuthContext.Provider>
