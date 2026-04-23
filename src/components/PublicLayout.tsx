@@ -12,12 +12,9 @@ import {
 } from "lucide-react";
 
 const navLinks = [
-  { label: "Matches", href: "/matches?view=spectator" },
-  { label: "Tournaments", href: "/tournaments?view=spectator" },
-  { label: "Players", href: "/players?view=spectator" },
-  { label: "Teams", href: "/teams?view=spectator" },
-  { label: "Results", href: "/results?view=spectator" },
-  { label: "Challenges", href: "/challenges?view=spectator" },
+  { label: "Match Schedules", href: "/matches?view=spectator" },
+  { label: "Register Org", href: "/register" },
+  { label: "Join as Athlete", href: "/user/register?type=athlete" },
 ];
 
 export default function PublicLayout({ children }: { children: React.ReactNode }) {
