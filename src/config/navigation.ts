@@ -25,12 +25,10 @@ export const SUPER_ADMIN_NAV: NavItem[] = [
 export const ORGANISER_NAV: NavItem[] = [
   { label: "Organiser Dashboard", href: "/admin", icon: "LayoutDashboard" },
   { label: "Manage Tournaments", href: "/tournaments", icon: "Trophy" },
-  { label: "Team Registrations", href: "/admin", icon: "Users" },
-  { label: "Match Scheduling", href: "/tournaments", icon: "Calendar" },
+  { label: "Team Registrations", href: "/teams", icon: "Users" },
   { label: "Live Match Control", href: "/scoring", icon: "Zap" },
   { label: "Player Management", href: "/players", icon: "Target" },
   { label: "Reports & Analytics", href: "/admin/analytics", icon: "BarChart3" },
-  { label: "Payments & Fees", href: "/admin/analytics", icon: "ShoppingBag" },
   { label: "Announcements", href: "/admin/announcements", icon: "Megaphone" },
   { label: "Organiser Settings", href: "/admin/settings", icon: "Settings" },
 ];
@@ -60,7 +58,7 @@ export const FAN_NAV: NavItem[] = [
 export const SHARED_NAV: NavItem[] = [
   { label: "News & Media", href: "/", icon: "Activity" },
   { label: "Help / FAQ", href: "/developers", icon: "HelpCircle" },
-  { label: "About / Contact", href: "/developers", icon: "Mail" },
+  { label: "About / Contact", href: "/contact", icon: "Mail" },
 ];
 
 export const ICON_MAP: Record<string, any> = {
