@@ -104,7 +104,17 @@ export function MatchProvider({ children }: { children: React.ReactNode }) {
       .single();
 
     if (cloudMatch?.state && Object.keys(cloudMatch.state).length > 0) {
-      setState(cloudMatch.state as MatchState);
+      const s = cloudMatch.state as any;
+      // Defensive merge with initialState to ensure all fields exist
+      setState({
+        ...initialState,
+        ...s,
+        // Migration: Handle old 'logs' field if it exists but 'history' doesn't
+        history: s.history || s.logs || [],
+        playerStats: s.playerStats || {},
+        home: { ...initialState.home, ...s.home },
+        away: { ...initialState.away, ...s.away },
+      });
       return;
     }
 
@@ -156,7 +166,15 @@ export function MatchProvider({ children }: { children: React.ReactNode }) {
         .single();
         
       if (data?.state && Object.keys(data.state).length > 0) {
-        setState(data.state as MatchState);
+        const s = data.state as any;
+        setState({
+          ...initialState,
+          ...s,
+          history: s.history || s.logs || [],
+          playerStats: s.playerStats || {},
+          home: { ...initialState.home, ...s.home },
+          away: { ...initialState.away, ...s.away },
+        });
       }
     };
     fetchCloudState();
@@ -169,7 +187,15 @@ export function MatchProvider({ children }: { children: React.ReactNode }) {
         { event: '*', schema: 'public', table: 'live_matches', filter: `id=eq.${activeMatchId}` },
         (payload: any) => {
           if (payload.new && payload.new.state) {
-            setState(payload.new.state as MatchState);
+            const s = payload.new.state as any;
+            setState({
+              ...initialState,
+              ...s,
+              history: s.history || s.logs || [],
+              playerStats: s.playerStats || {},
+              home: { ...initialState.home, ...s.home },
+              away: { ...initialState.away, ...s.away },
+            });
           }
         }
       )
