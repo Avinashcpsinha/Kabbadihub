@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { useTenant } from "./TenantContext";
 import { useAuth } from "./AuthContext";
 import { supabase } from "@/lib/supabase";
+import { usePathname } from "next/navigation";
 
 export type Team = {
   id?: string;
@@ -87,7 +88,10 @@ const MatchContext = createContext<MatchContextType | undefined>(undefined);
 export function MatchProvider({ children }: { children: React.ReactNode }) {
   const { tenant } = useTenant();
   const { role } = useAuth();
-  const isAuthorised = role === "ORGANISER" || role === "SUPER_ADMIN";
+  
+  const pathname = usePathname();
+  // Foolproof check: If they are on the scoring dashboard, they are the official broadcaster
+  const isAuthorised = pathname?.includes('/scoring') ?? false;
   
   const [activeMatchId, setActiveMatchId] = useState<string | null>(null);
   const [isDataLoaded, setIsDataLoaded] = useState(false);

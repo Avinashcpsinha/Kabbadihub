@@ -620,14 +620,30 @@ function ScoringContent() {
 }
 
 export default function ScoringPage() {
-  const { role } = useAuth();
+  const { role, isLoading } = useAuth();
+  
+  if (isLoading) return <div style={{ minHeight: "100vh", background: "#0a0a0f", display: "flex", alignItems: "center", justifyContent: "center", color: "#555" }}>VERIFYING CREDENTIALS...</div>;
+
   const Content = (
     <Suspense fallback={<div style={{ minHeight: "100vh", background: "#0a0a0f", display: "flex", alignItems: "center", justifyContent: "center", color: "#555" }}>LOADING ARENA...</div>}>
       <ScoringContent />
     </Suspense>
   );
 
-  if (role === "PUBLIC") return <PublicLayout>{Content}</PublicLayout>;
+  // BLOCK public users from accessing the scoring console. They must be Organisers.
+  if (role === "PUBLIC" || role === "USER") {
+    return (
+      <PublicLayout>
+        <div className="min-h-screen flex items-center justify-center bg-slate-950 text-white">
+          <div className="text-center space-y-4">
+             <h1 className="text-3xl font-black uppercase text-red-500">Access Denied</h1>
+             <p className="text-slate-400">Only official Organisers can access the scoring console.</p>
+             <Link href="/matches" className="inline-block mt-4 text-orange-500 underline">Return to Schedule</Link>
+          </div>
+        </div>
+      </PublicLayout>
+    );
+  }
 
   return (
     <DashboardLayout variant="organiser">
