@@ -183,10 +183,13 @@ function ScoringContent() {
     return () => clearInterval(interval);
   }, [isRaidActive, raidTimer, addToast, playHooter]);
 
-  const handleMasterStop = () => {
-    if (state.isActive) toggleTimer();
-    setIsRaidActive(false);
-    addToast("ALL TIMERS HALTED", "#6b7280", "🛑");
+  const handleMasterToggle = () => {
+    const willBeActive = !state.isActive;
+    toggleTimer();
+    if (selectedPlayer) {
+      setIsRaidActive(willBeActive);
+    }
+    addToast(willBeActive ? "RESUMING ALL SYSTEMS" : "ALL TIMERS HALTED", willBeActive ? "#22c55e" : "#6b7280", willBeActive ? "▶" : "🛑");
   };
 
   const handlePlayerSelect = (p: any) => {
@@ -332,8 +335,8 @@ function ScoringContent() {
               <button className="arena-btn" onClick={toggleTimer} style={{ background: state.isActive ? "#ef4444" : "#22c55e", border: "none", color: "#fff", padding: "6px 12px", borderRadius: 6, fontFamily: "'Barlow Condensed'", fontWeight: 700, fontSize: 12, cursor: "pointer", letterSpacing: 1, transition: "all 0.15s" }}>
                 {state.isActive ? "⏸ STOP" : "▶ START"}
               </button>
-              <button className="arena-btn" onClick={handleMasterStop} style={{ background: "#334155", border: "none", color: "#fff", padding: "6px 12px", borderRadius: 6, fontFamily: "'Barlow Condensed'", fontWeight: 700, fontSize: 12, cursor: "pointer", letterSpacing: 1, transition: "all 0.15s" }}>
-                🛑 MASTER STOP
+              <button className="arena-btn" onClick={handleMasterToggle} style={{ background: state.isActive ? "#334155" : "#0f766e", border: "none", color: "#fff", padding: "6px 12px", borderRadius: 6, fontFamily: "'Barlow Condensed'", fontWeight: 700, fontSize: 12, cursor: "pointer", letterSpacing: 1, transition: "all 0.15s" }}>
+                {state.isActive ? "🛑 MASTER STOP" : "▶️ RESUME ALL"}
               </button>
               <button className="arena-btn" onClick={resetMatch} style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.15)", color: "#fff", padding: "6px 10px", borderRadius: 6, fontFamily: "'Barlow Condensed'", fontWeight: 700, fontSize: 12, cursor: "pointer", transition: "all 0.15s" }}>↺</button>
             </div>
