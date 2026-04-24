@@ -25,7 +25,8 @@ import {
   Video,
   Mail,
   X,
-  Eye
+  Eye,
+  Building2
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -65,39 +66,43 @@ export default function PremiumLandingPage() {
   // Function to scan for active matches globally via Supabase
   const scanMatches = React.useCallback(async () => {
     try {
-      // Fetch matches that are explicitly 'LIVE' OR updated recently
+      // Fetch matches that are explicitly 'LIVE' OR updated recently, including tenant info
       const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
       const { data, error } = await supabase
         .from('live_matches')
-        .select('id, state, status, updated_at')
+        .select('id, state, status, updated_at, tenant_id, tenants(id, name, logo_url)')
         .or(`status.eq.LIVE,updated_at.gte.${twoHoursAgo}`);
 
       if (error) throw error;
       
-      const live = (data || []).map(row => ({
-        id: row.id,
-        ...row.state
-      }));
+      // Group matches by tenant
+      const groups: { [key: string]: { tenant: any, matches: any[] } } = {};
       
-      setActiveMatches(live);
+      (data || []).forEach(row => {
+        const tenantId = row.tenant_id || 'unknown';
+        if (!groups[tenantId]) {
+          groups[tenantId] = {
+            tenant: row.tenants || { id: 'unknown', name: 'Independent Organiser' },
+            matches: []
+          };
+        }
+        groups[tenantId].matches.push({
+          id: row.id,
+          ...row.state
+        });
+      });
+      
+      setActiveMatches(Object.values(groups));
     } catch (e) {
       console.error("Error fetching live cloud matches", e);
-      // Fallback to local storage if offline
-      const liveLocal: any[] = [];
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key?.startsWith('kabaddi_match_') && key.endsWith('_state')) {
-          const matchId = key.replace('kabaddi_match_', '').replace('_state', '');
-          if (matchId && matchId !== 'fallback') {
-            try {
-              liveLocal.push({ id: matchId, ...JSON.parse(localStorage.getItem(key) || "{}") });
-            } catch(e) {}
-          }
-        }
-      }
-      setActiveMatches(liveLocal);
+      // Fallback to basic list if error
+      setActiveMatches([]);
     }
   }, []);
+
+  const totalLiveMatches = React.useMemo(() => {
+    return activeMatches.reduce((acc, group) => acc + group.matches.length, 0);
+  }, [activeMatches]);
 
   React.useEffect(() => {
     scanMatches();
@@ -197,13 +202,13 @@ export default function PremiumLandingPage() {
                   </div>
                   <div>
                      <div className="text-[8px] font-black uppercase tracking-widest text-slate-300">
-                       {activeMatches.length > 0 ? "Now Raiding" : "Next Up: Titans vs Bulls"}
+                       {totalLiveMatches > 0 ? "Now Raiding" : "Next Up: Titans vs Bulls"}
                      </div>
                      <div className="text-[10px] font-black flex items-center gap-2 text-white">
-                        {activeMatches.length === 1 
-                          ? `${activeMatches[0].home.shortName} ${activeMatches[0].home.score} - ${activeMatches[0].away.score} ${activeMatches[0].away.shortName}`
-                          : activeMatches.length > 1 
-                            ? `${activeMatches.length} Matches Live Now`
+                        {totalLiveMatches === 1 
+                          ? `${activeMatches[0].matches[0].home.shortName} ${activeMatches[0].matches[0].home.score} - ${activeMatches[0].matches[0].away.score} ${activeMatches[0].matches[0].away.shortName}`
+                          : totalLiveMatches > 1 
+                            ? `${totalLiveMatches} Matches Live Now`
                             : "Pro Season Highlights"}
                         <span className={cn("w-1.5 h-1.5 rounded-full animate-pulse", activeMatches.length > 0 ? "bg-red-500" : "bg-orange-500")} />
                         <ChevronRight className="w-3 h-3 text-white/30 group-hover:text-orange-600 transition-colors" />
@@ -234,49 +239,68 @@ export default function PremiumLandingPage() {
                 <div className="p-8 border-b border-slate-100 flex items-center justify-between bg-slate-50">
                    <div>
                       <h2 className="text-xl font-black italic uppercase tracking-tighter text-slate-900">Live Arena Center</h2>
-                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">Found {activeMatches.length} Ongoing Battles</p>
+                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-1">Found {totalLiveMatches} Ongoing Battles across {activeMatches.length} Organisers</p>
                    </div>
                    <button onClick={() => setIsWatchModalOpen(false)} className="w-10 h-10 rounded-full bg-white border border-slate-200 flex items-center justify-center text-slate-400 hover:text-red-500 transition-colors">
                       <X className="w-5 h-5" />
                    </button>
                 </div>
 
-                <div className="p-8 max-h-[60vh] overflow-y-auto space-y-4 custom-scrollbar">
-                   {activeMatches.length > 0 ? activeMatches.map((m, i) => (
-                     <div 
-                       key={m.id} 
-                       onClick={() => {
-                         setIsWatchModalOpen(false);
-                         router.push(`/scoring?id=${m.id}`);
-                       }}
-                       className="block p-8 bg-white border border-slate-100 rounded-[2rem] hover:border-orange-600/30 hover:shadow-xl transition-all group cursor-pointer"
-                     >
-                        <div className="flex items-center justify-between mb-6">
-                           <div className="px-3 py-1 bg-red-100 text-red-600 rounded-full text-[8px] font-black uppercase tracking-widest flex items-center gap-1.5">
-                              <div className="w-1 h-1 bg-red-600 rounded-full animate-pulse" /> LIVE
+                <div className="p-8 max-h-[60vh] overflow-y-auto space-y-12 custom-scrollbar">
+                   {activeMatches.length > 0 ? activeMatches.map((group: any) => (
+                     <div key={group.tenant.id} className="space-y-6">
+                       {/* Organiser Header */}
+                       <div className="flex items-center gap-4 sticky top-0 bg-white/80 backdrop-blur-md z-10 py-2">
+                          <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-400 overflow-hidden border border-slate-100 shadow-sm">
+                             {group.tenant.logo_url ? <img src={group.tenant.logo_url} alt="" className="w-full h-full object-contain" /> : <Building2 className="w-6 h-6" />}
+                          </div>
+                          <div className="flex-1">
+                             <h3 className="text-[11px] font-black uppercase tracking-widest text-slate-900">{group.tenant.name}</h3>
+                             <p className="text-[8px] font-black text-orange-600 uppercase tracking-[0.2em]">{group.matches.length} Match{group.matches.length > 1 ? 'es' : ''} Live</p>
+                          </div>
+                          <div className="h-px bg-slate-100 flex-1 ml-4" />
+                       </div>
+
+                       {/* Matches for this Organiser */}
+                       <div className="grid gap-4">
+                         {group.matches.map((m: any) => (
+                           <div 
+                             key={m.id} 
+                             onClick={() => {
+                               setIsWatchModalOpen(false);
+                               router.push(`/scoring?id=${m.id}`);
+                             }}
+                             className="block p-8 bg-white border border-slate-100 rounded-[2.5rem] hover:border-orange-600/30 hover:shadow-xl transition-all group cursor-pointer"
+                           >
+                              <div className="flex items-center justify-between mb-6">
+                                 <div className="px-3 py-1 bg-red-100 text-red-600 rounded-full text-[8px] font-black uppercase tracking-widest flex items-center gap-1.5">
+                                    <div className="w-1 h-1 bg-red-600 rounded-full animate-pulse" /> LIVE
+                                 </div>
+                                 <div className="text-[9px] font-black text-slate-300 uppercase tracking-[0.2em]">{m.id}</div>
+                              </div>
+                              <div className="flex items-center justify-between">
+                                 <div className="text-center flex-1">
+                                    <div className="text-xl font-black italic text-slate-900 uppercase leading-tight">{m.home?.name || "Team A"}</div>
+                                 </div>
+                                 <div className="px-6 flex flex-col items-center">
+                                    <div className="text-3xl font-black tabular-nums text-orange-600 leading-none">{m.home?.score || 0} : {m.away?.score || 0}</div>
+                                    <div className="text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mt-3">{Math.floor((m.timer || 0) / 60)}:{(m.timer || 0) % 60 < 10 ? '0' : ''}{(m.timer || 0) % 60} Remaining</div>
+                                 </div>
+                                 <div className="text-center flex-1">
+                                    <div className="text-xl font-black italic text-slate-900 uppercase leading-tight">{m.away?.name || "Team B"}</div>
+                                 </div>
+                              </div>
+                              <div className="mt-8 pt-6 border-t border-slate-50 flex items-center justify-between">
+                                 <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                                    {m.lastAction ? <><Activity className="w-3 h-3 text-orange-500" /> {m.lastAction}</> : "Awaiting Raid Action..."}
+                                 </div>
+                                 <div className="text-orange-600 text-[9px] font-black uppercase tracking-widest group-hover:translate-x-1 transition-transform flex items-center gap-2">
+                                    Enter Arena <ChevronRight className="w-3 h-3" />
+                                 </div>
+                              </div>
                            </div>
-                           <div className="text-[9px] font-black text-slate-300 uppercase tracking-[0.2em]">{m.id}</div>
-                        </div>
-                        <div className="flex items-center justify-between">
-                           <div className="text-center flex-1">
-                              <div className="text-2xl font-black italic text-slate-900 uppercase">{m.home?.name || "Team A"}</div>
-                           </div>
-                           <div className="px-6 flex flex-col items-center">
-                              <div className="text-4xl font-black tabular-nums text-orange-600 leading-none">{m.home?.score || 0} : {m.away?.score || 0}</div>
-                              <div className="text-[8px] font-black text-slate-400 uppercase tracking-[0.2em] mt-3">{Math.floor((m.timer || 0) / 60)}:{(m.timer || 0) % 60 < 10 ? '0' : ''}{(m.timer || 0) % 60} Remaining</div>
-                           </div>
-                           <div className="text-center flex-1">
-                              <div className="text-2xl font-black italic text-slate-900 uppercase">{m.away?.name || "Team B"}</div>
-                           </div>
-                        </div>
-                        <div className="mt-8 pt-6 border-t border-slate-50 flex items-center justify-between">
-                           <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                              {m.lastAction ? <><Activity className="w-3 h-3 text-orange-500" /> {m.lastAction}</> : "Awaiting Raid Action..."}
-                           </div>
-                           <div className="text-orange-600 text-[9px] font-black uppercase tracking-widest group-hover:translate-x-1 transition-transform flex items-center gap-2">
-                              Enter Arena <ChevronRight className="w-3 h-3" />
-                           </div>
-                        </div>
+                         ))}
+                       </div>
                      </div>
                    )) : (
                      <div className="py-20 text-center space-y-6">
