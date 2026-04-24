@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import RoleGate from "@/components/RoleGate";
 import {
   Users, Zap, Trophy, Globe, ChevronRight,
-  Shield, Lock, Plus,
+  Shield, Lock, Plus, Trash2,
   BarChart3, Megaphone, MapPin, Loader2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -72,6 +72,17 @@ export default function AdminDashboard() {
 
     fetchTenantAdminData();
   }, [tenant]);
+
+  const handleDeleteMatch = async (matchId: string) => {
+    if (!confirm("Are you sure you want to delete this match fixture?")) return;
+    const { error } = await supabase.from('live_matches').delete().eq('id', matchId);
+    if (error) {
+      alert(`Delete failed: ${error.message}`);
+    } else {
+      // Reload stats
+      window.location.reload();
+    }
+  };
 
   if (!tenant) return <div className="p-10 text-center">Loading Organisation...</div>;
 
@@ -145,9 +156,14 @@ export default function AdminDashboard() {
                             <span className="text-sm font-black italic uppercase text-slate-900 tracking-tight">{match.awayTeam}</span>
                           </div>
                         </div>
-                        <Link href={`/scoring?id=${match.id}`} className="p-3 bg-white rounded-xl text-slate-200 group-hover:text-orange-600 group-hover:shadow-lg transition-all border border-slate-100">
-                          <Zap className="w-4 h-4 fill-current" />
-                        </Link>
+                        <div className="flex items-center gap-2">
+                           <Link href={`/scoring?id=${match.id}`} className="p-3 bg-white rounded-xl text-slate-200 group-hover:text-orange-600 group-hover:shadow-lg transition-all border border-slate-100">
+                             <Zap className="w-4 h-4 fill-current" />
+                           </Link>
+                           <button onClick={() => handleDeleteMatch(match.id)} className="p-3 bg-white rounded-xl text-slate-200 hover:text-red-600 hover:shadow-lg transition-all border border-slate-100 cursor-pointer">
+                             <Trash2 className="w-4 h-4" />
+                           </button>
+                        </div>
                       </div>
                     ))}
                   </div>

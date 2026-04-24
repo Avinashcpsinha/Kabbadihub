@@ -17,7 +17,8 @@ import {
   Users,
   LayoutGrid,
   Search,
-  Loader2
+  Loader2,
+  Trash2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
@@ -176,6 +177,17 @@ function TournamentContent() {
     setIsSubmitting(false);
   };
 
+  const handleDeleteMatch = async (matchId: string) => {
+    if (!confirm("Are you sure you want to delete this match fixture? This action cannot be undone.")) return;
+    
+    const { error } = await supabase.from('live_matches').delete().eq('id', matchId);
+    if (error) {
+      alert(`Failed to delete match: ${error.message}`);
+    } else {
+      fetchData();
+    }
+  };
+
   const Content = (
     <div className="min-h-screen bg-transparent text-slate-900 font-sans pb-40">
        {(role === "PUBLIC" || isSpectator) && (
@@ -251,10 +263,15 @@ function TournamentContent() {
                                     <div className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{away?.city || "Regional"} Squad</div>
                                  </div>
                               </div>
-                              <div className="p-8 border-t md:border-t-0 md:border-l border-slate-50">
+                              <div className="p-8 border-t md:border-t-0 md:border-l border-slate-50 flex flex-col gap-3">
                                  <Link href={role !== "PUBLIC" ? `/scoring?id=${match.id}` : `/overlay?id=${match.id}`} className="w-12 h-12 bg-slate-100 rounded-xl flex items-center justify-center text-slate-400 hover:bg-orange-600 hover:text-white transition-all transform hover:scale-105 active:scale-95">
                                     <ChevronRight className="w-6 h-6" />
                                  </Link>
+                                 {role && role !== "PUBLIC" && (
+                                   <button onClick={() => handleDeleteMatch(match.id)} className="w-12 h-12 bg-slate-50 rounded-xl flex items-center justify-center text-slate-300 hover:bg-red-50 hover:text-red-600 transition-all border-none cursor-pointer">
+                                      <Trash2 className="w-4 h-4" />
+                                   </button>
+                                 )}
                               </div>
                            </div>
                         </motion.div>
