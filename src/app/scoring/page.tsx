@@ -94,13 +94,11 @@ function ScoringContent() {
           .single();
 
         if (match) {
-          // 1. Fetch junction table records
           const [{ data: hTA }, { data: aTA }] = await Promise.all([
             supabase.from('team_athletes').select('*').eq('team_id', match.home_team_id),
             supabase.from('team_athletes').select('*').eq('team_id', match.away_team_id)
           ]);
 
-          // 2. Fetch all unique athletes
           const allAthleteIds = [...(hTA || []), ...(aTA || [])].map(ta => ta.athlete_id);
           const { data: athletesData } = await supabase
             .from('athletes')
@@ -137,7 +135,6 @@ function ScoringContent() {
 
   const fmt = (s: number) => `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
 
-  // Hooter Sound Generator
   const playHooter = React.useCallback((type: "warning" | "final") => {
     try {
       const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
@@ -162,24 +159,21 @@ function ScoringContent() {
     }
   }, []);
 
-  // Raid Timer Effect
   React.useEffect(() => {
     let interval: any;
     if (isRaidActive && raidTimer > 0) {
       interval = setInterval(() => {
         setRaidTimer(t => {
           const next = t - 1;
-          // Trigger Hooters
-          if (next === 10) playHooter("warning"); // 20s passed
-          if (next === 5) playHooter("warning");  // 25s passed
+          if (next === 10) playHooter("warning");
+          if (next === 5) playHooter("warning");
           return next;
         });
       }, 1000);
     } else if (raidTimer === 0 && isRaidActive) {
       setIsRaidActive(false);
-      playHooter("final"); // 30s reached
+      playHooter("final");
       
-      // Record Time Over Event
       recordEvent({ 
         team: activeTeam, 
         points: 0, 
@@ -192,7 +186,7 @@ function ScoringContent() {
       setSelectedPlayer(null);
     }
     return () => clearInterval(interval);
-  }, [isRaidActive, raidTimer, addToast, playHooter]);
+  }, [isRaidActive, raidTimer, addToast, playHooter, activeTeam, selectedPlayer, recordEvent, state.timer]);
 
   const handleMasterToggle = () => {
     const willBeActive = !state.isActive;
@@ -211,7 +205,7 @@ function ScoringContent() {
       setSelectedPlayer(p);
       setRaidTimer(30);
       setIsRaidActive(true);
-      if (!state.isActive) toggleTimer(); // Also start match timer if it's not running
+      if (!state.isActive) toggleTimer();
     }
   };
 
@@ -223,7 +217,6 @@ function ScoringContent() {
 
     recordEvent({ team: scoringTeam, points: outcome.pts, type: outcome.type, raider: selectedPlayer ? `#${selectedPlayer.number} ${selectedPlayer.name}` : undefined, gameTime: state.timer });
 
-    // Update local player stats
     setPlayerStats(prev => {
       const s = { ...prev };
       if (!s[selectedPlayer.id]) s[selectedPlayer.id] = { touchPoints: 0, bonusPoints: 0, tackles: 0, active: true };
@@ -273,11 +266,6 @@ function ScoringContent() {
     addToast(`↑ ${team === "home" ? state.home.shortName : state.away.shortName} Revived`, "#22c55e", "↑");
   };
 
-  const activePlayersCount = (team: "home" | "away") => {
-    const roster = team === "home" ? rosters.home : rosters.away;
-    return roster.filter((p: any) => playerStats[p.id]?.active !== false).length;
-  };
-
   const currentTeamColor = activeTeam === "home" ? homeColor : awayColor;
 
   return (
@@ -319,14 +307,13 @@ function ScoringContent() {
             )}
 
             {role === "PUBLIC" && (
-              <Link href="/tournaments" style={{ color: "#555", fontSize: 12, textDecoration: "none", marginLeft: 8 }}>← Back</Link>
+              <Link href="/" style={{ color: "#555", fontSize: 12, textDecoration: "none", marginLeft: 8 }}>← Back</Link>
             )}
           </div>
         </div>
 
         {/* Scoreboard */}
         <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", alignItems: "center", padding: "14px 12px", background: "linear-gradient(180deg, rgba(255,255,255,0.04) 0%, transparent 100%)", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-          {/* Home */}
           <div style={{ textAlign: "center" }}>
             <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: 3, color: homeColor, marginBottom: 3, textTransform: "uppercase" }}>Home</div>
             <div style={{ fontSize: 13, fontWeight: 800, letterSpacing: 1, marginBottom: 6, color: "#fff" }}>{state.home.name}</div>
@@ -339,11 +326,9 @@ function ScoringContent() {
             <div style={{ fontSize: 10, color: "#555", marginTop: 3 }}>{state.home.matCount} on mat</div>
           </div>
 
-          {/* Timer */}
           <div style={{ textAlign: "center", padding: "0 14px" }}>
             <div style={{ fontSize: 30, fontWeight: 900, letterSpacing: 3, color: state.isActive ? "#22c55e" : "#f59e0b", fontVariantNumeric: "tabular-nums" }}>{fmt(state.timer)}</div>
             
-            {/* BIG RAID TIMER */}
             {isRaidActive && (
               <div style={{ marginTop: 4, display: "flex", flexDirection: "column", alignItems: "center" }}>
                 <div style={{ fontSize: 42, fontWeight: 900, color: raidTimer < 10 ? "#ef4444" : "#f97316", fontVariantNumeric: "tabular-nums", lineHeight: 1, textShadow: `0 0 20px ${raidTimer < 10 ? "#ef4444" : "#f97316"}44` }}>
@@ -367,7 +352,6 @@ function ScoringContent() {
             <div style={{ fontSize: 10, color: "#444", marginTop: 7, letterSpacing: 1 }}>VS</div>
           </div>
 
-          {/* Away */}
           <div style={{ textAlign: "center" }}>
             <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: 3, color: awayColor, marginBottom: 3, textTransform: "uppercase" }}>Away</div>
             <div style={{ fontSize: 13, fontWeight: 800, letterSpacing: 1, marginBottom: 6, color: "#fff" }}>{state.away.name}</div>
@@ -410,13 +394,11 @@ function ScoringContent() {
         {/* Tab Content */}
         <div style={{ padding: "12px" }}>
 
-          {/* ── SCORE TAB ─────────────────────────────────────────── */}
           {activeTab === "score" && (
             <div style={{ display: "grid", gridTemplateColumns: "1fr 380px", gap: 16, alignItems: "start" }}>
-              {/* Left Column Controls - ONLY FOR NON-PUBLIC */}
+              {/* Left Column */}
               {role !== "PUBLIC" ? (
                 <div>
-                  {/* Raiding Team Toggle */}
                   <div style={{ marginBottom: 12 }}>
                     <div style={{ fontSize: 11, color: "#555", letterSpacing: 2, marginBottom: 8, textTransform: "uppercase" }}>Raiding Team</div>
                     <div style={{ display: "flex", gap: 8 }}>
@@ -433,7 +415,6 @@ function ScoringContent() {
                     </div>
                   </div>
 
-                  {/* Player Selection Grid */}
                   <div style={{ marginBottom: 12 }}>
                     <div style={{ fontSize: 11, color: "#555", letterSpacing: 2, marginBottom: 8, textTransform: "uppercase" }}>Select Raider</div>
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 6 }}>
@@ -450,7 +431,7 @@ function ScoringContent() {
                       })}
                     </div>
                     {selectedPlayer && (
-                      <div style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 12 }}>
+                      <div style={{ marginTop: 10 }}>
                         <div style={{ fontSize: 11, color: currentTeamColor, fontWeight: 700, letterSpacing: 1 }}>
                           ▸ #{selectedPlayer.number} {selectedPlayer.name} selected
                         </div>
@@ -458,7 +439,6 @@ function ScoringContent() {
                     )}
                   </div>
 
-                  {/* Raid Outcome Grid */}
                   <div style={{ marginBottom: 12 }}>
                     <div style={{ fontSize: 11, color: "#555", letterSpacing: 2, marginBottom: 8, textTransform: "uppercase" }}>Raid Outcome</div>
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
@@ -474,7 +454,6 @@ function ScoringContent() {
                     </div>
                   </div>
 
-                  {/* Penalties */}
                   <div style={{ marginBottom: 12 }}>
                     <div style={{ fontSize: 11, color: "#555", letterSpacing: 2, marginBottom: 8, textTransform: "uppercase" }}>Penalties & Actions</div>
                     <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
@@ -486,7 +465,6 @@ function ScoringContent() {
                     </div>
                   </div>
 
-                  {/* All Out */}
                   <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
                     <button className="arena-btn" onClick={() => handleAllOut("home")} style={{ flex: 1, padding: "12px", borderRadius: 8, border: "1px solid #ef444444", background: "#ef444411", color: "#ef4444", fontFamily: "'Barlow Condensed'", fontWeight: 800, fontSize: 13, cursor: "pointer", letterSpacing: 1, transition: "all 0.15s" }}>
                       🏆 ALL OUT — {state.home.shortName}
@@ -496,7 +474,6 @@ function ScoringContent() {
                     </button>
                   </div>
 
-                  {/* Revive + Undo */}
                   <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
                     <button className="arena-btn" onClick={() => handleRevive("home")} style={{ flex: 1, padding: "10px", borderRadius: 8, border: "1px solid #22c55e44", background: "#22c55e11", color: "#22c55e", fontFamily: "'Barlow Condensed'", fontWeight: 700, fontSize: 12, cursor: "pointer", letterSpacing: 1, transition: "all 0.15s" }}>
                       ↑ Revive {state.home.shortName}
@@ -509,7 +486,6 @@ function ScoringContent() {
                     </button>
                   </div>
 
-                  {/* Half Time */}
                   {state.half === 1 && (
                     <button className="arena-btn" onClick={switchHalf} style={{ width: "100%", marginTop: 8, padding: "12px", borderRadius: 8, border: "1px solid #f97316", background: "#f9731611", color: "#f97316", fontFamily: "'Barlow Condensed'", fontWeight: 800, fontSize: 14, cursor: "pointer", letterSpacing: 2, transition: "all 0.15s" }}>
                       ⏱️ START HALF TIME → 2ND HALF
@@ -523,266 +499,115 @@ function ScoringContent() {
                    <p style={{ fontSize: 12, color: "#555", marginTop: 8, lineHeight: 1.6 }}>You are currently watching the live battle. The score and commentary will update automatically in real-time as the action unfolds on the mat.</p>
                 </div>
               )}
-            </div>{/* end LEFT */}
 
-            {/* ── RIGHT: Live Commentary Panel ── */}
-            <div style={{ display: "flex", flexDirection: "column", background: "#111827", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, height: "fit-content", minHeight: 400, maxHeight: "80vh", overflow: "hidden" }}>
-
-              {/* Panel Header */}
-              <div style={{ padding: "12px 14px", borderBottom: "1px solid rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0, background: "#0f172a" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                  <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#22c55e", animation: "pulseLive 1.4s ease-in-out infinite", flexShrink: 0 }} />
-                  <span style={{ fontSize: 13, fontWeight: 800, letterSpacing: 2, color: "#e2e8f0", textTransform: "uppercase" }}>🎙️ Live Commentary</span>
-                </div>
-                <span style={{ fontSize: 11, color: "#64748b", letterSpacing: 1, background: "rgba(255,255,255,0.05)", padding: "2px 8px", borderRadius: 10 }}>{state.history.length} events</span>
-              </div>
-
-              {/* Current Raider Banner */}
-              {state.currentRaider && (
-                <div style={{ padding: "8px 14px", background: `${homeColor}25`, borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}>
-                  <span style={{ fontSize: 16 }}>🏃</span>
-                  <div>
-                    <div style={{ fontSize: 10, color: "#94a3b8", letterSpacing: 1, textTransform: "uppercase" }}>Now Raiding</div>
-                    <div style={{ fontSize: 13, fontWeight: 800, color: homeColor }}>{state.currentRaider}</div>
+              {/* Right Column */}
+              <div style={{ display: "flex", flexDirection: "column", background: "#111827", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, height: "fit-content", minHeight: 400, maxHeight: "80vh", overflow: "hidden" }}>
+                <div style={{ padding: "12px 14px", borderBottom: "1px solid rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "space-between", flexShrink: 0, background: "#0f172a" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#22c55e", animation: "pulseLive 1.4s ease-in-out infinite", flexShrink: 0 }} />
+                    <span style={{ fontSize: 13, fontWeight: 800, letterSpacing: 2, color: "#e2e8f0", textTransform: "uppercase" }}>🎙️ Live Commentary</span>
                   </div>
+                  <span style={{ fontSize: 11, color: "#64748b", letterSpacing: 1, background: "rgba(255,255,255,0.05)", padding: "2px 8px", borderRadius: 10 }}>{state.history.length} events</span>
                 </div>
-              )}
 
-              {/* Commentary Feed — scrollable */}
-              <div style={{ flex: 1, overflowY: "auto", minHeight: 0 }}>
-
-                {state.history.length === 0 ? (
-                  <div style={{ padding: "40px 16px", textAlign: "center", fontSize: 13, lineHeight: 1.8 }}>
-                    <div style={{ fontSize: 32, marginBottom: 12 }}>🎙️</div>
-                    <div style={{ color: "#475569", fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", fontSize: 11 }}>No events yet</div>
-                    <div style={{ color: "#334155", fontSize: 12, marginTop: 4 }}>Record a raid outcome to begin</div>
-                  </div>
-                ) : (
-                  state.history.map((e, idx) => {
-                    const isHome = e.team === "home";
-                    const tColor  = isHome ? homeColor : awayColor;
-                    const tName   = isHome ? state.home.name  : state.away.name;
-                    const tShort  = isHome ? state.home.shortName : state.away.shortName;
-                    const fmtT    = (s: number) => `${Math.floor(s/60)}:${String(s%60).padStart(2,"0")}`;
-
-                    const ICONS: Record<string,string> = {
-                      TOUCH:           "✋",
-                      BONUS:           "⭐",
-                      SUPER_RAID:      "🔥",
-                      TACKLE:          "🛡️",
-                      SUPER_TACKLE:    "💥",
-                      ALL_OUT:         "🏆",
-                      TECHNICAL_POINT: "🔄",
-                      TIMEOUT:         "⏱️",
-                    };
-                    const icon = ICONS[e.type] ?? "📌";
-
-                    const TEXTS: Record<string,string> = {
-                      TOUCH:           e.raider ? `${e.raider} scores a Touch Point!` : `Touch Point for ${tName}!`,
-                      BONUS:           e.raider ? `${e.raider} crosses the Bonus Line!` : `Bonus Point — ${tName}!`,
-                      SUPER_RAID:      e.raider ? `SUPER RAID! ${e.raider} overwhelms the defence!` : `Super Raid — ${tName}!`,
-                      SUPER_TACKLE:    `SUPER TACKLE! ${tName} hold the raider!`,
-                      TACKLE:          e.raider ? `${e.raider} is tackled out! ${tName} scores.` : `Tackle Out — ${tName} earns a point!`,
-                      ALL_OUT:         `ALL OUT! ${tName} eliminates the full squad — +2 bonus!`,
-                      TECHNICAL_POINT: `Technical point awarded to ${tName}.`,
-                      TIMEOUT:         `${tName} calls a Timeout.`,
-                    };
-                    const commentary = e.type === "TECHNICAL_POINT" && e.raider?.includes("TIME OVER")
-                      ? `TIME OVER! ${e.raider}`
-                      : (TEXTS[e.type] ?? `${e.type.replace(/_/g, " ")} — ${tName}`);
-                    const isLatest   = idx === 0;
-
-                    return (
-                      <div
-                        key={e.id}
-                        className="comm-row"
-                        style={{
-                          display: "flex",
-                          alignItems: "flex-start",
-                          gap: 10,
-                          padding: "12px 14px",
-                          borderBottom: "1px solid rgba(255,255,255,0.05)",
-                          background: isLatest ? `${tColor}18` : "transparent",
-                          borderLeft: `3px solid ${isLatest ? tColor : "transparent"}`,
-                        }}
-                      >
-                        {/* Icon */}
-                        <div style={{ fontSize: 20, lineHeight: 1.2, flexShrink: 0 }}>{icon}</div>
-
-                        {/* Commentary text block */}
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          {isLatest && (
-                            <div style={{ fontSize: 9, fontWeight: 900, letterSpacing: 2, color: tColor, textTransform: "uppercase", marginBottom: 3 }}>● LATEST</div>
-                          )}
-                          <div style={{
-                            fontSize: 13,
-                            fontWeight: isLatest ? 800 : 600,
-                            color: isLatest ? "#f1f5f9" : "#94a3b8",
-                            lineHeight: 1.5,
-                            wordBreak: "break-word",
-                          }}>
-                            {commentary}
-                          </div>
-                          <div style={{ display: "flex", alignItems: "center", gap: 6, marginTop: 5, flexWrap: "wrap" }}>
-                            <span style={{ fontSize: 10, color: "#475569", fontVariantNumeric: "tabular-nums", background: "rgba(255,255,255,0.05)", padding: "1px 6px", borderRadius: 4 }}>{fmtT(e.gameTime)}</span>
-                            <span style={{ fontSize: 9, fontWeight: 800, color: tColor, letterSpacing: 1, background: `${tColor}20`, padding: "1px 6px", borderRadius: 4, textTransform: "uppercase" }}>{tShort}</span>
-                            {e.points > 0 && (
-                              <span style={{ fontSize: 12, fontWeight: 900, color: "#4ade80", background: "rgba(74,222,128,0.1)", padding: "1px 6px", borderRadius: 4 }}>+{e.points} pts</span>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Revert button */}
-                        <button
-                          onClick={() => undoToEvent(e.id)}
-                          title="Revert match to this point"
-                          style={{
-                            background: "rgba(239,68,68,0.08)",
-                            border: "1px solid rgba(239,68,68,0.2)",
-                            color: "#ef4444",
-                            cursor: "pointer",
-                            fontSize: 11,
-                            fontWeight: 700,
-                            padding: "3px 7px",
-                            borderRadius: 5,
-                            flexShrink: 0,
-                            fontFamily: "'Barlow Condensed', sans-serif",
-                            letterSpacing: 0.5,
-                          }}
-                        >↩</button>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-
-              {/* Panel Footer — score summary */}
-              <div style={{ padding: "10px 14px", borderTop: "1px solid rgba(255,255,255,0.08)", display: "flex", justifyContent: "space-between", alignItems: "center", flexShrink: 0, background: "#0f172a" }}>
-                <div style={{ textAlign: "center" }}>
-                  <div style={{ fontSize: 24, fontWeight: 900, color: homeColor, lineHeight: 1 }}>{state.home.score}</div>
-                  <div style={{ fontSize: 9, fontWeight: 700, color: "#64748b", letterSpacing: 1, textTransform: "uppercase", marginTop: 2 }}>{state.home.shortName}</div>
-                </div>
-                <div style={{ fontSize: 11, color: "#475569", fontWeight: 700, letterSpacing: 3 }}>VS</div>
-                <div style={{ textAlign: "center" }}>
-                  <div style={{ fontSize: 24, fontWeight: 900, color: awayColor, lineHeight: 1 }}>{state.away.score}</div>
-                  <div style={{ fontSize: 9, fontWeight: 700, color: "#64748b", letterSpacing: 1, textTransform: "uppercase", marginTop: 2 }}>{state.away.shortName}</div>
-                </div>
-              </div>
-
-            </div>{/* end RIGHT */}
-
-            </div>/* end two-col grid */
-          )}
-
-          {/* ── EVENTS TAB ─────────────────────────────────────────── */}
-          {activeTab === "events" && (
-            <div>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
-                <div style={{ fontSize: 13, fontWeight: 700, color: "#888", letterSpacing: 2 }}>MATCH EVENTS ({state.history.length})</div>
-              </div>
-              {state.history.length === 0 && <div style={{ textAlign: "center", color: "#333", padding: "40px 0", fontSize: 14 }}>No events yet. Start scoring!</div>}
-              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                {state.history.map((e) => {
-                  const isHome = e.team === "home";
-                  const tColor = isHome ? homeColor : awayColor;
-                  const tShort = isHome ? state.home.shortName : state.away.shortName;
-                  const icons: Record<string, string> = { TOUCH: "✋", BONUS: "⭐", SUPER_RAID: "🔥", TACKLE: "🛡️", SUPER_TACKLE: "💥", ALL_OUT: "🏆", TECHNICAL_POINT: "🔄", TIMEOUT: "⏱️" };
-                  const fmt2 = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
-                  return (
-                    <div key={e.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", borderRadius: 8, background: "rgba(255,255,255,0.03)", borderLeft: `3px solid ${tColor}` }}>
-                      <div style={{ fontSize: 20 }}>{icons[e.type] || "📌"}</div>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ fontSize: 13, fontWeight: 700 }}>{e.type.replace("_", " ")}</div>
-                        <div style={{ fontSize: 11, color: "#555" }}>{e.raider || "—"} · {fmt2(e.gameTime)}</div>
-                      </div>
-                      <div>
-                        <div style={{ fontSize: 10, fontWeight: 700, color: tColor, textAlign: "right" }}>{tShort}</div>
-                        {e.points > 0 && <div style={{ fontSize: 16, fontWeight: 900, color: "#22c55e", textAlign: "right" }}>+{e.points}</div>}
-                      </div>
-                      <button onClick={() => undoToEvent(e.id)} style={{ background: "none", border: "none", color: "#444", cursor: "pointer", fontSize: 11, fontFamily: "'Barlow Condensed'", fontWeight: 700, padding: "4px 6px" }} title="Revert to this point">↩</button>
+                <div style={{ flex: 1, overflowY: "auto", minHeight: 0 }}>
+                  {state.history.length === 0 ? (
+                    <div style={{ padding: "40px 16px", textAlign: "center", fontSize: 13, lineHeight: 1.8 }}>
+                      <div style={{ fontSize: 32, marginBottom: 12 }}>🎙️</div>
+                      <div style={{ color: "#475569", fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", fontSize: 11 }}>No events yet</div>
                     </div>
-                  );
-                })}
+                  ) : (
+                    state.history.map((e, idx) => {
+                      const isHome = e.team === "home";
+                      const tColor  = isHome ? homeColor : awayColor;
+                      const tShort  = isHome ? state.home.shortName : state.away.shortName;
+                      const tName   = isHome ? state.home.name : state.away.name;
+                      const fmtT    = (s: number) => `${Math.floor(s/60)}:${String(s%60).padStart(2,"0")}`;
+
+                      const ICONS: Record<string,string> = {
+                        TOUCH:           "✋",
+                        BONUS:           "⭐",
+                        SUPER_RAID:      "🔥",
+                        TACKLE:          "🛡️",
+                        SUPER_TACKLE:    "💥",
+                        ALL_OUT:         "🏆",
+                        TECHNICAL_POINT: "🔄",
+                        TIMEOUT:         "⏱️",
+                      };
+                      const icon = ICONS[e.type] ?? "📌";
+
+                      const TEXTS: Record<string,string> = {
+                        TOUCH:           e.raider ? `${e.raider} scores a Touch Point!` : `Touch Point for ${tName}!`,
+                        BONUS:           e.raider ? `${e.raider} crosses the Bonus Line!` : `Bonus Point — ${tName}!`,
+                        SUPER_RAID:      e.raider ? `SUPER RAID! ${e.raider} overwhelms the defence!` : `Super Raid — ${tName}!`,
+                        SUPER_TACKLE:    `SUPER TACKLE! ${tName} hold the raider!`,
+                        TACKLE:          e.raider ? `${e.raider} is tackled out! ${tName} scores.` : `Tackle Out — ${tName} earns a point!`,
+                        ALL_OUT:         `ALL OUT! ${tName} eliminates the full squad!`,
+                        TECHNICAL_POINT: `Technical point awarded to ${tName}.`,
+                        TIMEOUT:         `${tName} calls a Timeout.`,
+                      };
+                      const commentary = e.type === "TECHNICAL_POINT" && e.raider?.includes("TIME OVER")
+                        ? `TIME OVER! ${e.raider}`
+                        : (TEXTS[e.type] ?? `${e.type.replace(/_/g, " ")} — ${tName}`);
+                      const isLatest   = idx === 0;
+
+                      return (
+                        <div key={e.id} style={{ display: "flex", gap: 10, padding: "12px 14px", borderBottom: "1px solid rgba(255,255,255,0.05)", background: isLatest ? `${tColor}18` : "transparent", borderLeft: `3px solid ${isLatest ? tColor : "transparent"}` }}>
+                          <div style={{ fontSize: 20, flexShrink: 0 }}>{icon}</div>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontSize: 13, fontWeight: isLatest ? 800 : 600, color: isLatest ? "#f1f5f9" : "#94a3b8" }}>{commentary}</div>
+                            <div style={{ display: "flex", gap: 6, marginTop: 5 }}>
+                              <span style={{ fontSize: 10, color: "#475569" }}>{fmtT(e.gameTime)}</span>
+                              <span style={{ fontSize: 9, fontWeight: 800, color: tColor, textTransform: "uppercase" }}>{tShort}</span>
+                            </div>
+                          </div>
+                          {role !== "PUBLIC" && (
+                            <button onClick={() => undoToEvent(e.id)} style={{ background: "none", border: "none", color: "#ef4444", cursor: "pointer", fontSize: 11 }}>↩</button>
+                          )}
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+
+                <div style={{ padding: "10px 14px", borderTop: "1px solid rgba(255,255,255,0.08)", display: "flex", justifyContent: "space-between", alignItems: "center", flexShrink: 0, background: "#0f172a" }}>
+                  <div style={{ textAlign: "center" }}>
+                    <div style={{ fontSize: 24, fontWeight: 900, color: homeColor }}>{state.home.score}</div>
+                    <div style={{ fontSize: 9, color: "#64748b" }}>{state.home.shortName}</div>
+                  </div>
+                  <div style={{ fontSize: 11, color: "#475569" }}>VS</div>
+                  <div style={{ textAlign: "center" }}>
+                    <div style={{ fontSize: 24, fontWeight: 900, color: awayColor }}>{state.away.score}</div>
+                    <div style={{ fontSize: 9, color: "#64748b" }}>{state.away.shortName}</div>
+                  </div>
+                </div>
               </div>
             </div>
           )}
 
-          {/* ── PLAYERS TAB ─────────────────────────────────────────── */}
-          {activeTab === "players" && (
-            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-              {([["home", state.home.name, homeColor, rosters.home], ["away", state.away.name, awayColor, rosters.away]] as const).map(([team, tName, tColor, roster]) => (
-                <div key={team}>
-                  <div style={{ fontSize: 12, fontWeight: 800, color: tColor, letterSpacing: 3, marginBottom: 8 }}>{tName}</div>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                    {roster.map((p: any) => {
-                      const ps = playerStats[p.id] || { touchPoints: 0, bonusPoints: 0, tackles: 0, active: true };
-                      const isOut = ps.active === false;
-                      return (
-                        <div key={p.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", borderRadius: 8, background: isOut ? "rgba(0,0,0,0.3)" : "rgba(255,255,255,0.04)", opacity: isOut ? 0.5 : 1 }}>
-                          <div style={{ width: 32, height: 32, borderRadius: "50%", background: isOut ? "#333" : tColor, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 900, flexShrink: 0 }}>#{p.number}</div>
-                          <div style={{ flex: 1 }}>
-                            <div style={{ fontSize: 13, fontWeight: 700 }}>{p.name}</div>
-                            <div style={{ fontSize: 10, color: "#555", textTransform: "uppercase", letterSpacing: 1 }}>{isOut ? "OUT" : "Active"}</div>
-                          </div>
-                          <div style={{ display: "flex", gap: 12, fontSize: 11 }}>
-                            <div style={{ textAlign: "center" }}><div style={{ color: "#22c55e", fontWeight: 900, fontSize: 16 }}>{ps.touchPoints}</div><div style={{ color: "#444" }}>Touch</div></div>
-                            <div style={{ textAlign: "center" }}><div style={{ color: "#eab308", fontWeight: 900, fontSize: 16 }}>{ps.bonusPoints}</div><div style={{ color: "#444" }}>Bonus</div></div>
-                            <div style={{ textAlign: "center" }}><div style={{ color: "#f97316", fontWeight: 900, fontSize: 16 }}>{ps.tackles}</div><div style={{ color: "#444" }}>Tackle</div></div>
-                          </div>
-                        </div>
-                      );
-                    })}
+          {activeTab === "events" && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              {state.history.map((e) => (
+                <div key={e.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 12px", background: "rgba(255,255,255,0.03)", borderRadius: 8 }}>
+                  <div style={{ fontSize: 20 }}>📌</div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 13, fontWeight: 700 }}>{e.type}</div>
+                    <div style={{ fontSize: 11, color: "#555" }}>{e.raider || "—"}</div>
+                  </div>
+                  <div style={{ textAlign: "right" }}>
+                    <div style={{ fontSize: 10, color: e.team === "home" ? homeColor : awayColor }}>{e.team === "home" ? state.home.shortName : state.away.shortName}</div>
+                    <div style={{ fontSize: 16, fontWeight: 900 }}>+{e.points}</div>
                   </div>
                 </div>
               ))}
             </div>
           )}
 
-          {/* ── STATS TAB ─────────────────────────────────────────── */}
-          {activeTab === "stats" && (
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {([
-                ["Total Raids", raidCount.home, raidCount.away, "#3b82f6"],
-                ["Super Raids", superRaids.home, superRaids.away, "#f97316"],
-                ["Successful Tackles", successTackles.home, successTackles.away, "#a855f7"],
-                ["On Mat", state.home.matCount, state.away.matCount, "#22c55e"],
-                ["Timeouts Left", state.home.timeouts, state.away.timeouts, "#f59e0b"],
-                ["Reviews Left", reviewsHome, reviewsAway, "#8b5cf6"],
-              ] as [string, number, number, string][]).map(([label, a, b, color]) => {
-                const total = (a + b) || 1;
-                return (
-                  <div key={label} style={{ padding: "12px", borderRadius: 8, background: "rgba(255,255,255,0.03)" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6, fontSize: 12, fontWeight: 700, letterSpacing: 1, color: "#777" }}>
-                      <span style={{ color: homeColor }}>{a}</span>
-                      <span>{label}</span>
-                      <span style={{ color: awayColor }}>{b}</span>
-                    </div>
-                    <div style={{ display: "flex", height: 6, borderRadius: 4, overflow: "hidden", background: "rgba(255,255,255,0.08)" }}>
-                      <div style={{ width: `${(a / total) * 100}%`, background: homeColor, transition: "width 0.5s" }} />
-                      <div style={{ width: `${(b / total) * 100}%`, background: awayColor, transition: "width 0.5s" }} />
-                    </div>
-                  </div>
-                );
-              })}
-
-              {/* Score Breakdown */}
-              <div style={{ padding: "16px", borderRadius: 8, background: "rgba(255,255,255,0.03)", marginTop: 8 }}>
-                <div style={{ fontSize: 11, color: "#555", letterSpacing: 2, marginBottom: 12, textTransform: "uppercase" }}>Score Breakdown</div>
-                <div style={{ display: "flex", justifyContent: "space-around" }}>
-                  {([["HOME", state.home.score, homeColor, state.home.shortName], ["AWAY", state.away.score, awayColor, state.away.shortName]] as const).map(([label, score, color, short]) => (
-                    <div key={label} style={{ textAlign: "center" }}>
-                      <div style={{ fontSize: 48, fontWeight: 900, color: "#fff", textShadow: `0 0 30px ${color}88` }}>{score}</div>
-                      <div style={{ fontSize: 12, fontWeight: 700, color, letterSpacing: 2 }}>{short}</div>
-                      <div style={{ fontSize: 10, color: "#444" }}>{label}</div>
-                    </div>
-                  ))}
-                </div>
-                {state.home.score !== state.away.score && (
-                  <div style={{ textAlign: "center", marginTop: 12, fontSize: 13, fontWeight: 700, color: state.home.score > state.away.score ? homeColor : awayColor }}>
-                    {state.home.score > state.away.score ? `${state.home.name} leads by ${state.home.score - state.away.score}` : `${state.away.name} leads by ${state.away.score - state.home.score}`}
-                  </div>
-                )}
-              </div>
+          {activeTab === "players" && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              {rosters.home.map(p => (
+                <div key={p.id} style={{ padding: "10px", background: "rgba(255,255,255,0.03)", borderRadius: 8 }}>#{p.number} {p.name}</div>
+              ))}
             </div>
           )}
 
@@ -792,16 +617,16 @@ function ScoringContent() {
   );
 }
 
-// ─── Page Wrapper ─────────────────────────────────────────────────────────────
 export default function ScoringPage() {
   const { role } = useAuth();
   const Content = (
-    <Suspense fallback={<div style={{ minHeight: "100vh", background: "#0a0a0f", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Barlow Condensed', sans-serif", color: "#555", fontSize: 18, letterSpacing: 3 }}>LOADING ARENA...</div>}>
+    <Suspense fallback={<div style={{ minHeight: "100vh", background: "#0a0a0f", display: "flex", alignItems: "center", justifyContent: "center", color: "#555" }}>LOADING ARENA...</div>}>
       <ScoringContent />
     </Suspense>
   );
 
   if (role === "PUBLIC") return <PublicLayout>{Content}</PublicLayout>;
+
   return (
     <DashboardLayout variant="organiser">
       {Content}
