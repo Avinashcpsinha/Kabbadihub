@@ -400,7 +400,20 @@ function ScoringContent() {
           {(["score", "events", "players", "stats"] as const).map((tab) => {
             const labels: Record<string, string> = { score: "⚡ SCORE", events: "📋 EVENTS", players: "👤 PLAYERS", stats: "📊 STATS" };
             return (
-              <button key={tab} onClick={() => setActiveTab(tab)} style={{ flex: 1, padding: "12px 0", background: "none", border: "none", borderBottom: activeTab === tab ? "2px solid #f97316" : "2px solid transparent", color: activeTab === tab ? "#fff" : "#555", fontFamily: "'Barlow Condensed'", fontWeight: 700, fontSize: 12, letterSpacing: 1, cursor:               {/* Left Column Controls - ONLY FOR NON-PUBLIC */}
+              <button key={tab} onClick={() => setActiveTab(tab)} style={{ flex: 1, padding: "12px 0", background: "none", border: "none", borderBottom: activeTab === tab ? "2px solid #f97316" : "2px solid transparent", color: activeTab === tab ? "#fff" : "#555", fontFamily: "'Barlow Condensed'", fontWeight: 700, fontSize: 12, letterSpacing: 1, cursor: "pointer", textTransform: "uppercase", transition: "all 0.2s" }}>
+                {labels[tab]}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Tab Content */}
+        <div style={{ padding: "12px" }}>
+
+          {/* ── SCORE TAB ─────────────────────────────────────────── */}
+          {activeTab === "score" && (
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 380px", gap: 16, alignItems: "start" }}>
+              {/* Left Column Controls - ONLY FOR NON-PUBLIC */}
               {role !== "PUBLIC" ? (
                 <div>
                   {/* Raiding Team Toggle */}
