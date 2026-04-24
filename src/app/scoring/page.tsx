@@ -523,17 +523,6 @@ function ScoringContent() {
                    <p style={{ fontSize: 12, color: "#555", marginTop: 8, lineHeight: 1.6 }}>You are currently watching the live battle. The score and commentary will update automatically in real-time as the action unfolds on the mat.</p>
                 </div>
               )}
- transition: "all 0.15s" }}>
-                  ↩ Undo
-                </button>
-              </div>
-
-              {/* Half Time */}
-              {state.half === 1 && (
-                <button className="arena-btn" onClick={switchHalf} style={{ width: "100%", marginTop: 8, padding: "12px", borderRadius: 8, border: "1px solid #f97316", background: "#f9731611", color: "#f97316", fontFamily: "'Barlow Condensed'", fontWeight: 800, fontSize: 14, cursor: "pointer", letterSpacing: 2, transition: "all 0.15s" }}>
-                  ⏱️ START HALF TIME → 2ND HALF
-                </button>
-              )}
             </div>{/* end LEFT */}
 
             {/* ── RIGHT: Live Commentary Panel ── */}
