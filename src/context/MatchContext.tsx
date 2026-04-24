@@ -181,7 +181,7 @@ export function MatchProvider({ children }: { children: React.ReactNode }) {
 
     // 2. Subscribe to Global Broadcast Changes
     const channel = supabase
-      .channel(`schema-db-changes-${activeMatchId}`)
+      .channel(`match:${activeMatchId}`)
       .on(
         'postgres_changes',
         { event: '*', schema: 'public', table: 'live_matches', filter: `id=eq.${activeMatchId}` },
@@ -199,6 +199,11 @@ export function MatchProvider({ children }: { children: React.ReactNode }) {
           }
         }
       )
+      .on('broadcast', { event: 'state_update' }, (payload: any) => {
+        if (payload.payload) {
+          setState(payload.payload);
+        }
+      })
       .subscribe();
 
     return () => {
@@ -209,27 +214,26 @@ export function MatchProvider({ children }: { children: React.ReactNode }) {
   const saveAndSetState = (newState: MatchState) => {
     setState(newState);
     
-    // Local offline cache
     const key = getStorageKey(activeMatchId);
     if (activeMatchId) localStorage.setItem(key, JSON.stringify(newState));
     
-    // Broadcast to the World via Supabase
     if (activeMatchId) {
+      // 1. FAST SYNC: Broadcast to anyone listening (Overlay/Other Admins)
+      // This is near-instant (10ms) and doesn't hit the DB
+      supabase.channel(`match:${activeMatchId}`).send({
+        type: 'broadcast',
+        event: 'state_update',
+        payload: newState
+      });
+
+      // 2. PERSISTENT SYNC: Save to DB for history/refresh
       supabase.from('live_matches').upsert({
         id: activeMatchId,
         state: newState,
         status: 'LIVE',
         updated_at: new Date().toISOString()
       }).then(({ error }) => {
-        if (error) {
-          console.error("Cloud Broadcast Error:", error);
-          // Fallback: try to update just the state if upsert is restricted
-          supabase.from('live_matches').update({ 
-            state: newState, 
-            status: 'LIVE',
-            updated_at: new Date().toISOString() 
-          }).eq('id', activeMatchId).then();
-        }
+        if (error) console.error("Cloud Persist Error:", error);
       });
     }
   };
