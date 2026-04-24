@@ -105,9 +105,9 @@ function ScoringContent() {
             .select('*')
             .in('id', allAthleteIds);
 
-          const athleteMap = new Map(athletesData?.map(a => [a.id, a]));
+          const athleteMap = new Map((athletesData || []).map(a => [a.id, a]));
 
-          const mapRoster = (taList: any[]) => taList.map(ta => {
+          const mapRoster = (taList: any[]) => (taList || []).map(ta => {
             const a = athleteMap.get(ta.athlete_id);
             return {
               id: ta.athlete_id,

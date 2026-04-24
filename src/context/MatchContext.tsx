@@ -115,8 +115,18 @@ export function MatchProvider({ children }: { children: React.ReactNode }) {
       
       const newMatchState: MatchState = {
         ...initialState,
-        home: { ...initialState.home, id: homeT.id, name: homeT?.name || "HOME", shortName: homeT?.short_name || "HME" },
-        away: { ...initialState.away, id: awayT.id, name: awayT?.name || "AWAY", shortName: awayT?.short_name || "AWY" }
+        home: { 
+          ...initialState.home, 
+          id: homeT?.id || cloudMatch.home_team_id || "home-id", 
+          name: homeT?.name || "HOME TEAM", 
+          shortName: homeT?.short_name || "HOME" 
+        },
+        away: { 
+          ...initialState.away, 
+          id: awayT?.id || cloudMatch.away_team_id || "away-id", 
+          name: awayT?.name || "AWAY TEAM", 
+          shortName: awayT?.short_name || "AWAY" 
+        }
       };
       
       setState(newMatchState);
@@ -376,7 +386,14 @@ export function MatchProvider({ children }: { children: React.ReactNode }) {
         // Persist to storage and cloud every 5 seconds (broadcaster live sync)
         if (updated.timer % 5 === 0 && activeMatchId) {
           localStorage.setItem(getStorageKey(activeMatchId), JSON.stringify(updated));
-          supabase.from('live_matches').upsert({ id: activeMatchId, state: updated, updated_at: new Date().toISOString() }).then();
+          supabase.from('live_matches').upsert({ 
+            id: activeMatchId, 
+            state: updated, 
+            status: 'LIVE',
+            updated_at: new Date().toISOString() 
+          }).then(({ error }) => {
+            if (error) console.error("Timer Sync Error:", error);
+          });
         }
 
         return updated;  // ← merges with latest state, NEVER overwrites history
