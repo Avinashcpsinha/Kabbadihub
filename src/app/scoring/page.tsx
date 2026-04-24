@@ -66,6 +66,8 @@ function ScoringContent() {
   const [reviewsHome, setReviewsHome] = React.useState(2);
   const [reviewsAway, setReviewsAway] = React.useState(2);
   const [playerStats, setPlayerStats] = React.useState<{ [id: string]: { touchPoints: number; bonusPoints: number; tackles: number; active: boolean } }>({});
+  const [raidCount, setRaidCount] = React.useState({ home: 0, away: 0 });
+  const [superRaids, setSuperRaids] = React.useState({ home: 0, away: 0 });
   const [successTackles, setSuccessTackles] = React.useState({ home: 0, away: 0 });
   const [raidTimer, setRaidTimer] = React.useState(30);
   const [isRaidActive, setIsRaidActive] = React.useState(false);
