@@ -92,15 +92,30 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(false);
   }, []);
 
-  const { currentUser, role } = useAuth();
+  const { currentUser, role, isLoading: isAuthLoading } = useAuth();
+
+  // Safety Break: Never let the spinner run for more than 3 seconds
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (isLoading) {
+        console.warn("Tenant Safety Break: Force-clearing organisation loader.");
+        setIsLoading(false);
+      }
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [isLoading]);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
       const savedSuper = localStorage.getItem("kabaddihub_is_super");
       if (savedSuper === "true") setIsSuperAdmin(true);
     }
-    fetchTenants();
-  }, [fetchTenants]);
+    
+    // Only fetch tenants once Auth has settled
+    if (!isAuthLoading) {
+      fetchTenants();
+    }
+  }, [fetchTenants, isAuthLoading]);
 
   // Auto-select tenant based on logged-in user's tenantId
   useEffect(() => {

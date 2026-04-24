@@ -110,6 +110,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         if (session?.user) {
           setIsLoading(true);
+          // Small buffer to let session locks settle
+          await new Promise(r => setTimeout(r, 150));
           const profile = await fetchProfile(session.user.id);
           if (profile) {
             setCurrentUser({ ...profile, email: session.user.email || "" });
