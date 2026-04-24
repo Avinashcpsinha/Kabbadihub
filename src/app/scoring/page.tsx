@@ -137,19 +137,51 @@ function ScoringContent() {
 
   const fmt = (s: number) => `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
 
+  // Hooter Sound Generator
+  const playHooter = React.useCallback((type: "warning" | "final") => {
+    try {
+      const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioContext) return;
+      const ctx = new AudioContext();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.type = type === "warning" ? "square" : "sawtooth";
+      osc.frequency.setValueAtTime(type === "warning" ? 880 : 440, ctx.currentTime);
+      
+      gain.gain.setValueAtTime(0.1, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + (type === "warning" ? 0.3 : 1.5));
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start();
+      osc.stop(ctx.currentTime + (type === "warning" ? 0.3 : 1.5));
+    } catch (e) {
+      console.error("Audio failed", e);
+    }
+  }, []);
+
   // Raid Timer Effect
   React.useEffect(() => {
     let interval: any;
     if (isRaidActive && raidTimer > 0) {
       interval = setInterval(() => {
-        setRaidTimer(t => t - 1);
+        setRaidTimer(t => {
+          const next = t - 1;
+          // Trigger Hooters
+          if (next === 10) playHooter("warning"); // 20s passed
+          if (next === 5) playHooter("warning");  // 25s passed
+          return next;
+        });
       }, 1000);
-    } else if (raidTimer === 0) {
+    } else if (raidTimer === 0 && isRaidActive) {
       setIsRaidActive(false);
+      playHooter("final"); // 30s reached
       addToast("RAID TIME UP!", "#ef4444", "⏰");
     }
     return () => clearInterval(interval);
-  }, [isRaidActive, raidTimer, addToast]);
+  }, [isRaidActive, raidTimer, addToast, playHooter]);
 
   const handleMasterStop = () => {
     if (state.isActive) toggleTimer();
