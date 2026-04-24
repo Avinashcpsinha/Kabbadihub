@@ -56,7 +56,7 @@ type MatchContextType = {
   state: MatchState;
   activeMatchId: string | null;
   isDataLoaded: boolean;
-  setMatchId: (id: string) => void;
+  setMatchId: (id: string) => Promise<void>;
   recordEvent: (event: Omit<MatchEvent, "id" | "timestamp" | "isUndoable">) => void;
   undoLastAction: () => void;
   toggleTimer: () => void;
