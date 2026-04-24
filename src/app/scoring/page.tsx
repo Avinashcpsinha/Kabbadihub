@@ -331,7 +331,18 @@ function ScoringContent() {
           {/* Timer */}
           <div style={{ textAlign: "center", padding: "0 14px" }}>
             <div style={{ fontSize: 30, fontWeight: 900, letterSpacing: 3, color: state.isActive ? "#22c55e" : "#f59e0b", fontVariantNumeric: "tabular-nums" }}>{fmt(state.timer)}</div>
-            <div style={{ display: "flex", gap: 6, marginTop: 8, justifyContent: "center" }}>
+            
+            {/* BIG RAID TIMER */}
+            {isRaidActive && (
+              <div style={{ marginTop: 4, display: "flex", flexDirection: "column", alignItems: "center" }}>
+                <div style={{ fontSize: 42, fontWeight: 900, color: raidTimer < 10 ? "#ef4444" : "#f97316", fontVariantNumeric: "tabular-nums", lineHeight: 1, textShadow: `0 0 20px ${raidTimer < 10 ? "#ef4444" : "#f97316"}44` }}>
+                  {raidTimer}
+                </div>
+                <div style={{ fontSize: 8, fontWeight: 900, letterSpacing: 2, color: "#444", textTransform: "uppercase" }}>RAID TIME</div>
+              </div>
+            )}
+
+            <div style={{ display: "flex", gap: 6, marginTop: 12, justifyContent: "center" }}>
               <button className="arena-btn" onClick={toggleTimer} style={{ background: state.isActive ? "#ef4444" : "#22c55e", border: "none", color: "#fff", padding: "6px 12px", borderRadius: 6, fontFamily: "'Barlow Condensed'", fontWeight: 700, fontSize: 12, cursor: "pointer", letterSpacing: 1, transition: "all 0.15s" }}>
                 {state.isActive ? "⏸ STOP" : "▶ START"}
               </button>
@@ -428,10 +439,6 @@ function ScoringContent() {
                   <div style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 12 }}>
                     <div style={{ fontSize: 11, color: currentTeamColor, fontWeight: 700, letterSpacing: 1 }}>
                       ▸ #{selectedPlayer.number} {selectedPlayer.name} selected
-                    </div>
-                    <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 8, background: "rgba(0,0,0,0.4)", padding: "4px 12px", borderRadius: 20, border: "1px solid rgba(255,255,255,0.1)" }}>
-                      <span style={{ fontSize: 10, color: "#555", fontWeight: 800 }}>RAID TIMER</span>
-                      <span style={{ fontSize: 20, fontWeight: 900, color: raidTimer < 10 ? "#ef4444" : "#22c55e", fontVariantNumeric: "tabular-nums", width: 24, textAlign: "center" }}>{raidTimer}</span>
                     </div>
                   </div>
                 )}
