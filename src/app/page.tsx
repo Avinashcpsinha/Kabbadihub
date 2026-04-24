@@ -65,12 +65,12 @@ export default function PremiumLandingPage() {
   // Function to scan for active matches globally via Supabase
   const scanMatches = React.useCallback(async () => {
     try {
-      // Fetch live matches updated in the last 2 hours to avoid stale matches
+      // Fetch matches that are explicitly 'LIVE' OR updated recently
       const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
       const { data, error } = await supabase
         .from('live_matches')
-        .select('id, state')
-        .gte('updated_at', twoHoursAgo);
+        .select('id, state, status, updated_at')
+        .or(`status.eq.LIVE,updated_at.gte.${twoHoursAgo}`);
 
       if (error) throw error;
       

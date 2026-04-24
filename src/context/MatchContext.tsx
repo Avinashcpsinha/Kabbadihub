@@ -182,9 +182,18 @@ export function MatchProvider({ children }: { children: React.ReactNode }) {
       supabase.from('live_matches').upsert({
         id: activeMatchId,
         state: newState,
+        status: 'LIVE',
         updated_at: new Date().toISOString()
       }).then(({ error }) => {
-        if (error) console.error("Cloud Broadcast Error:", error);
+        if (error) {
+          console.error("Cloud Broadcast Error:", error);
+          // Fallback: try to update just the state if upsert is restricted
+          supabase.from('live_matches').update({ 
+            state: newState, 
+            status: 'LIVE',
+            updated_at: new Date().toISOString() 
+          }).eq('id', activeMatchId).then();
+        }
       });
     }
   };
