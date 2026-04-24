@@ -101,6 +101,10 @@ export function MatchProvider({ children }: { children: React.ReactNode }) {
   // Handle Match ID switching
   const setMatchId = useCallback(async (id: string) => {
     setActiveMatchId(id);
+    setIsDataLoaded(false);
+
+    // Safety Timeout: Force load after 5 seconds if cloud is slow
+    const timer = setTimeout(() => setIsDataLoaded(true), 5000);
     
     // 1. Try to fetch existing state from Cloud
     const { data: cloudMatch, error: cloudError } = await supabase
@@ -120,6 +124,7 @@ export function MatchProvider({ children }: { children: React.ReactNode }) {
           away: { ...initialState.away, ...s.away },
         });
         setIsDataLoaded(true);
+        clearTimeout(timer);
         return;
       }
 
@@ -152,10 +157,14 @@ export function MatchProvider({ children }: { children: React.ReactNode }) {
         state: newMatchState, 
         updated_at: new Date().toISOString() 
       });
+      clearTimeout(timer);
+      setIsDataLoaded(true);
       return;
     }
 
     setState(initialState);
+    clearTimeout(timer);
+    setIsDataLoaded(true);
   }, []);
 
   // Sync with Supabase Realtime (Global Cloud Sync)
