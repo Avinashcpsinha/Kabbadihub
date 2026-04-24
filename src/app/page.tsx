@@ -183,7 +183,7 @@ export default function PremiumLandingPage() {
                  transition={{ delay: 1 }}
                  onClick={() => {
                    if (activeMatches.length === 1) {
-                     router.push(`/overlay?id=${activeMatches[0].id}`);
+                     router.push(`/scoring?id=${activeMatches[0].id}`);
                    } else {
                      scanMatches();
                      setIsWatchModalOpen(true);
@@ -247,7 +247,7 @@ export default function PremiumLandingPage() {
                        key={m.id} 
                        onClick={() => {
                          setIsWatchModalOpen(false);
-                         router.push(`/overlay?id=${m.id}`);
+                         router.push(`/scoring?id=${m.id}`);
                        }}
                        className="block p-8 bg-white border border-slate-100 rounded-[2rem] hover:border-orange-600/30 hover:shadow-xl transition-all group cursor-pointer"
                      >

@@ -353,15 +353,17 @@ function ScoringContent() {
               </div>
             )}
 
-            <div style={{ display: "flex", gap: 6, marginTop: 12, justifyContent: "center" }}>
-              <button className="arena-btn" onClick={toggleTimer} style={{ background: state.isActive ? "#ef4444" : "#22c55e", border: "none", color: "#fff", padding: "6px 12px", borderRadius: 6, fontFamily: "'Barlow Condensed'", fontWeight: 700, fontSize: 12, cursor: "pointer", letterSpacing: 1, transition: "all 0.15s" }}>
-                {state.isActive ? "⏸ STOP" : "▶ START"}
-              </button>
-              <button className="arena-btn" onClick={handleMasterToggle} style={{ background: state.isActive ? "#334155" : "#0f766e", border: "none", color: "#fff", padding: "6px 12px", borderRadius: 6, fontFamily: "'Barlow Condensed'", fontWeight: 700, fontSize: 12, cursor: "pointer", letterSpacing: 1, transition: "all 0.15s" }}>
-                {state.isActive ? "🛑 MASTER STOP" : "▶️ RESUME ALL"}
-              </button>
-              <button className="arena-btn" onClick={resetMatch} style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.15)", color: "#fff", padding: "6px 10px", borderRadius: 6, fontFamily: "'Barlow Condensed'", fontWeight: 700, fontSize: 12, cursor: "pointer", transition: "all 0.15s" }}>↺</button>
-            </div>
+            {role !== "PUBLIC" && (
+              <div style={{ display: "flex", gap: 6, marginTop: 12, justifyContent: "center" }}>
+                <button className="arena-btn" onClick={toggleTimer} style={{ background: state.isActive ? "#ef4444" : "#22c55e", border: "none", color: "#fff", padding: "6px 12px", borderRadius: 6, fontFamily: "'Barlow Condensed'", fontWeight: 700, fontSize: 12, cursor: "pointer", letterSpacing: 1, transition: "all 0.15s" }}>
+                  {state.isActive ? "⏸ STOP" : "▶ START"}
+                </button>
+                <button className="arena-btn" onClick={handleMasterToggle} style={{ background: state.isActive ? "#334155" : "#0f766e", border: "none", color: "#fff", padding: "6px 12px", borderRadius: 6, fontFamily: "'Barlow Condensed'", fontWeight: 700, fontSize: 12, cursor: "pointer", letterSpacing: 1, transition: "all 0.15s" }}>
+                  {state.isActive ? "🛑 MASTER STOP" : "▶️ RESUME ALL"}
+                </button>
+                <button className="arena-btn" onClick={resetMatch} style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.15)", color: "#fff", padding: "6px 10px", borderRadius: 6, fontFamily: "'Barlow Condensed'", fontWeight: 700, fontSize: 12, cursor: "pointer", transition: "all 0.15s" }}>↺</button>
+              </div>
+            )}
             <div style={{ fontSize: 10, color: "#444", marginTop: 7, letterSpacing: 1 }}>VS</div>
           </div>
 
@@ -398,110 +400,117 @@ function ScoringContent() {
           {(["score", "events", "players", "stats"] as const).map((tab) => {
             const labels: Record<string, string> = { score: "⚡ SCORE", events: "📋 EVENTS", players: "👤 PLAYERS", stats: "📊 STATS" };
             return (
-              <button key={tab} onClick={() => setActiveTab(tab)} style={{ flex: 1, padding: "12px 0", background: "none", border: "none", borderBottom: activeTab === tab ? "2px solid #f97316" : "2px solid transparent", color: activeTab === tab ? "#fff" : "#555", fontFamily: "'Barlow Condensed'", fontWeight: 700, fontSize: 12, letterSpacing: 1, cursor: "pointer", textTransform: "uppercase", transition: "all 0.2s" }}>
-                {labels[tab]}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Tab Content */}
-        <div style={{ padding: "12px" }}>
-
-          {/* ── SCORE TAB ─────────────────────────────────────────── */}
-          {activeTab === "score" && (
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 380px", gap: 16, alignItems: "start" }}>
-            {/* ── LEFT: Scorer Controls ── */}
-            <div>
-              {/* Raiding Team Toggle */}
-              <div style={{ marginBottom: 12 }}>
-                <div style={{ fontSize: 11, color: "#555", letterSpacing: 2, marginBottom: 8, textTransform: "uppercase" }}>Raiding Team</div>
-                <div style={{ display: "flex", gap: 8 }}>
-                  {(["home", "away"] as const).map((team) => {
-                    const tName = team === "home" ? state.home.name : state.away.name;
-                    const tColor = team === "home" ? homeColor : awayColor;
-                    const isActive = activeTeam === team;
-                    return (
-                      <button key={team} className="arena-btn" onClick={() => { setActiveTeam(team); setSelectedPlayer(null); }} style={{ flex: 1, padding: "10px", borderRadius: 8, border: `2px solid ${isActive ? tColor : "rgba(255,255,255,0.1)"}`, background: isActive ? `${tColor}22` : "rgba(255,255,255,0.03)", color: isActive ? tColor : "#555", fontFamily: "'Barlow Condensed'", fontWeight: 800, fontSize: 13, letterSpacing: 2, cursor: "pointer", transition: "all 0.2s" }}>
-                        {tName}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Player Selection Grid */}
-              <div style={{ marginBottom: 12 }}>
-                <div style={{ fontSize: 11, color: "#555", letterSpacing: 2, marginBottom: 8, textTransform: "uppercase" }}>Select Raider</div>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 6 }}>
-                  {(activeTeam === "home" ? rosters.home : rosters.away).map((p: any) => {
-                    const isOut = playerStats[p.id]?.active === false;
-                    const isSelected = selectedPlayer?.id === p.id;
-                    return (
-                      <button key={p.id} className="player-btn" onClick={() => !isOut && handlePlayerSelect(p)} style={{ padding: "8px 4px", borderRadius: 8, border: `2px solid ${isSelected ? currentTeamColor : isOut ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.12)"}`, background: isSelected ? `${currentTeamColor}33` : isOut ? "rgba(0,0,0,0.2)" : "rgba(255,255,255,0.04)", color: isOut ? "#333" : "#fff", fontFamily: "'Barlow Condensed'", cursor: isOut ? "not-allowed" : "pointer", textAlign: "center", transition: "all 0.15s", opacity: isOut ? 0.4 : 1 }}>
-                        <div style={{ fontSize: 18, fontWeight: 900, lineHeight: 1, color: isSelected ? currentTeamColor : isOut ? "#333" : "#fff" }}>#{p.number}</div>
-                        <div style={{ fontSize: 9, letterSpacing: 0.5, marginTop: 2, color: "#666", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{p.name.split(" ")[0]}</div>
-                        {isOut && <div style={{ fontSize: 8, color: "#ef4444", fontWeight: 700, marginTop: 1 }}>OUT</div>}
-                      </button>
-                    );
-                  })}
-                </div>
-                {selectedPlayer && (
-                  <div style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 12 }}>
-                    <div style={{ fontSize: 11, color: currentTeamColor, fontWeight: 700, letterSpacing: 1 }}>
-                      ▸ #{selectedPlayer.number} {selectedPlayer.name} selected
+              <button key={tab} onClick={() => setActiveTab(tab)} style={{ flex: 1, padding: "12px 0", background: "none", border: "none", borderBottom: activeTab === tab ? "2px solid #f97316" : "2px solid transparent", color: activeTab === tab ? "#fff" : "#555", fontFamily: "'Barlow Condensed'", fontWeight: 700, fontSize: 12, letterSpacing: 1, cursor:               {/* Left Column Controls - ONLY FOR NON-PUBLIC */}
+              {role !== "PUBLIC" ? (
+                <div>
+                  {/* Raiding Team Toggle */}
+                  <div style={{ marginBottom: 12 }}>
+                    <div style={{ fontSize: 11, color: "#555", letterSpacing: 2, marginBottom: 8, textTransform: "uppercase" }}>Raiding Team</div>
+                    <div style={{ display: "flex", gap: 8 }}>
+                      {(["home", "away"] as const).map((team) => {
+                        const tName = team === "home" ? state.home.name : state.away.name;
+                        const tColor = team === "home" ? homeColor : awayColor;
+                        const isActive = activeTeam === team;
+                        return (
+                          <button key={team} className="arena-btn" onClick={() => { setActiveTeam(team); setSelectedPlayer(null); }} style={{ flex: 1, padding: "10px", borderRadius: 8, border: `2px solid ${isActive ? tColor : "rgba(255,255,255,0.1)"}`, background: isActive ? `${tColor}22` : "rgba(255,255,255,0.03)", color: isActive ? tColor : "#555", fontFamily: "'Barlow Condensed'", fontWeight: 800, fontSize: 13, letterSpacing: 2, cursor: "pointer", transition: "all 0.2s" }}>
+                            {tName}
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
-                )}
-              </div>
 
-              {/* Raid Outcome Grid */}
-              <div style={{ marginBottom: 12 }}>
-                <div style={{ fontSize: 11, color: "#555", letterSpacing: 2, marginBottom: 8, textTransform: "uppercase" }}>Raid Outcome</div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
-                  {RAID_OUTCOMES.map((outcome) => (
-                    <button key={outcome.key} className="arena-btn" onClick={() => handleRaidOutcome(outcome)} style={{ padding: "12px", borderRadius: 8, border: `1px solid ${outcome.color}44`, background: `${outcome.color}11`, color: "#fff", fontFamily: "'Barlow Condensed'", fontWeight: 700, fontSize: 13, letterSpacing: 1, cursor: "pointer", display: "flex", alignItems: "center", gap: 8, transition: "all 0.15s" }}>
-                      <span style={{ fontSize: 18 }}>{outcome.icon}</span>
-                      <div style={{ textAlign: "left" }}>
-                        <div style={{ color: outcome.color }}>{outcome.label}</div>
-                        <div style={{ fontSize: 10, color: "#555" }}>+{outcome.pts} pt{outcome.pts !== 1 ? "s" : ""}</div>
+                  {/* Player Selection Grid */}
+                  <div style={{ marginBottom: 12 }}>
+                    <div style={{ fontSize: 11, color: "#555", letterSpacing: 2, marginBottom: 8, textTransform: "uppercase" }}>Select Raider</div>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 6 }}>
+                      {(activeTeam === "home" ? rosters.home : rosters.away).map((p: any) => {
+                        const isOut = playerStats[p.id]?.active === false;
+                        const isSelected = selectedPlayer?.id === p.id;
+                        return (
+                          <button key={p.id} className="player-btn" onClick={() => !isOut && handlePlayerSelect(p)} style={{ padding: "8px 4px", borderRadius: 8, border: `2px solid ${isSelected ? currentTeamColor : isOut ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.12)"}`, background: isSelected ? `${currentTeamColor}33` : isOut ? "rgba(0,0,0,0.2)" : "rgba(255,255,255,0.04)", color: isOut ? "#333" : "#fff", fontFamily: "'Barlow Condensed'", cursor: isOut ? "not-allowed" : "pointer", textAlign: "center", transition: "all 0.15s", opacity: isOut ? 0.4 : 1 }}>
+                            <div style={{ fontSize: 18, fontWeight: 900, lineHeight: 1, color: isSelected ? currentTeamColor : isOut ? "#333" : "#fff" }}>#{p.number}</div>
+                            <div style={{ fontSize: 9, letterSpacing: 0.5, marginTop: 2, color: "#666", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{p.name.split(" ")[0]}</div>
+                            {isOut && <div style={{ fontSize: 8, color: "#ef4444", fontWeight: 700, marginTop: 1 }}>OUT</div>}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {selectedPlayer && (
+                      <div style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 12 }}>
+                        <div style={{ fontSize: 11, color: currentTeamColor, fontWeight: 700, letterSpacing: 1 }}>
+                          ▸ #{selectedPlayer.number} {selectedPlayer.name} selected
+                        </div>
                       </div>
+                    )}
+                  </div>
+
+                  {/* Raid Outcome Grid */}
+                  <div style={{ marginBottom: 12 }}>
+                    <div style={{ fontSize: 11, color: "#555", letterSpacing: 2, marginBottom: 8, textTransform: "uppercase" }}>Raid Outcome</div>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
+                      {RAID_OUTCOMES.map((outcome) => (
+                        <button key={outcome.key} className="arena-btn" onClick={() => handleRaidOutcome(outcome)} style={{ padding: "12px", borderRadius: 8, border: `1px solid ${outcome.color}44`, background: `${outcome.color}11`, color: "#fff", fontFamily: "'Barlow Condensed'", fontWeight: 700, fontSize: 13, letterSpacing: 1, cursor: "pointer", display: "flex", alignItems: "center", gap: 8, transition: "all 0.15s" }}>
+                          <span style={{ fontSize: 18 }}>{outcome.icon}</span>
+                          <div style={{ textAlign: "left" }}>
+                            <div style={{ color: outcome.color }}>{outcome.label}</div>
+                            <div style={{ fontSize: 10, color: "#555" }}>+{outcome.pts} pt{outcome.pts !== 1 ? "s" : ""}</div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Penalties */}
+                  <div style={{ marginBottom: 12 }}>
+                    <div style={{ fontSize: 11, color: "#555", letterSpacing: 2, marginBottom: 8, textTransform: "uppercase" }}>Penalties & Actions</div>
+                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                      {PENALTIES.map((p) => (
+                        <button key={p.key} className="arena-btn" onClick={() => handlePenalty(p)} style={{ padding: "8px 12px", borderRadius: 6, border: `1px solid ${p.color}44`, background: `${p.color}11`, color: p.color, fontFamily: "'Barlow Condensed'", fontWeight: 700, fontSize: 12, cursor: "pointer", letterSpacing: 1, transition: "all 0.15s" }}>
+                          {p.icon} {p.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* All Out */}
+                  <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
+                    <button className="arena-btn" onClick={() => handleAllOut("home")} style={{ flex: 1, padding: "12px", borderRadius: 8, border: "1px solid #ef444444", background: "#ef444411", color: "#ef4444", fontFamily: "'Barlow Condensed'", fontWeight: 800, fontSize: 13, cursor: "pointer", letterSpacing: 1, transition: "all 0.15s" }}>
+                      🏆 ALL OUT — {state.home.shortName}
                     </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Penalties */}
-              <div style={{ marginBottom: 12 }}>
-                <div style={{ fontSize: 11, color: "#555", letterSpacing: 2, marginBottom: 8, textTransform: "uppercase" }}>Penalties & Actions</div>
-                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                  {PENALTIES.map((p) => (
-                    <button key={p.key} className="arena-btn" onClick={() => handlePenalty(p)} style={{ padding: "8px 12px", borderRadius: 6, border: `1px solid ${p.color}44`, background: `${p.color}11`, color: p.color, fontFamily: "'Barlow Condensed'", fontWeight: 700, fontSize: 12, cursor: "pointer", letterSpacing: 1, transition: "all 0.15s" }}>
-                      {p.icon} {p.label}
+                    <button className="arena-btn" onClick={() => handleAllOut("away")} style={{ flex: 1, padding: "12px", borderRadius: 8, border: "1px solid #ef444444", background: "#ef444411", color: "#ef4444", fontFamily: "'Barlow Condensed'", fontWeight: 800, fontSize: 13, cursor: "pointer", letterSpacing: 1, transition: "all 0.15s" }}>
+                      🏆 ALL OUT — {state.away.shortName}
                     </button>
-                  ))}
+                  </div>
+
+                  {/* Revive + Undo */}
+                  <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
+                    <button className="arena-btn" onClick={() => handleRevive("home")} style={{ flex: 1, padding: "10px", borderRadius: 8, border: "1px solid #22c55e44", background: "#22c55e11", color: "#22c55e", fontFamily: "'Barlow Condensed'", fontWeight: 700, fontSize: 12, cursor: "pointer", letterSpacing: 1, transition: "all 0.15s" }}>
+                      ↑ Revive {state.home.shortName}
+                    </button>
+                    <button className="arena-btn" onClick={() => handleRevive("away")} style={{ flex: 1, padding: "10px", borderRadius: 8, border: "1px solid #22c55e44", background: "#22c55e11", color: "#22c55e", fontFamily: "'Barlow Condensed'", fontWeight: 700, fontSize: 12, cursor: "pointer", letterSpacing: 1, transition: "all 0.15s" }}>
+                      ↑ Revive {state.away.shortName}
+                    </button>
+                    <button className="arena-btn" onClick={undoLastAction} style={{ padding: "10px 14px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.15)", background: "rgba(255,255,255,0.05)", color: "#888", fontFamily: "'Barlow Condensed'", fontWeight: 700, fontSize: 12, cursor: "pointer", letterSpacing: 1, transition: "all 0.15s" }}>
+                      ↩ Undo
+                    </button>
+                  </div>
+
+                  {/* Half Time */}
+                  {state.half === 1 && (
+                    <button className="arena-btn" onClick={switchHalf} style={{ width: "100%", marginTop: 8, padding: "12px", borderRadius: 8, border: "1px solid #f97316", background: "#f9731611", color: "#f97316", fontFamily: "'Barlow Condensed'", fontWeight: 800, fontSize: 14, cursor: "pointer", letterSpacing: 2, transition: "all 0.15s" }}>
+                      ⏱️ START HALF TIME → 2ND HALF
+                    </button>
+                  )}
                 </div>
-              </div>
-
-              {/* All Out */}
-              <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
-                <button className="arena-btn" onClick={() => handleAllOut("home")} style={{ flex: 1, padding: "12px", borderRadius: 8, border: "1px solid #ef444444", background: "#ef444411", color: "#ef4444", fontFamily: "'Barlow Condensed'", fontWeight: 800, fontSize: 13, cursor: "pointer", letterSpacing: 1, transition: "all 0.15s" }}>
-                  🏆 ALL OUT — {state.home.shortName}
-                </button>
-                <button className="arena-btn" onClick={() => handleAllOut("away")} style={{ flex: 1, padding: "12px", borderRadius: 8, border: "1px solid #ef444444", background: "#ef444411", color: "#ef4444", fontFamily: "'Barlow Condensed'", fontWeight: 800, fontSize: 13, cursor: "pointer", letterSpacing: 1, transition: "all 0.15s" }}>
-                  🏆 ALL OUT — {state.away.shortName}
-                </button>
-              </div>
-
-              {/* Revive + Undo */}
-              <div style={{ display: "flex", gap: 8, marginBottom: 8 }}>
-                <button className="arena-btn" onClick={() => handleRevive("home")} style={{ flex: 1, padding: "10px", borderRadius: 8, border: "1px solid #22c55e44", background: "#22c55e11", color: "#22c55e", fontFamily: "'Barlow Condensed'", fontWeight: 700, fontSize: 12, cursor: "pointer", letterSpacing: 1, transition: "all 0.15s" }}>
-                  ↑ Revive {state.home.shortName}
-                </button>
-                <button className="arena-btn" onClick={() => handleRevive("away")} style={{ flex: 1, padding: "10px", borderRadius: 8, border: "1px solid #22c55e44", background: "#22c55e11", color: "#22c55e", fontFamily: "'Barlow Condensed'", fontWeight: 700, fontSize: 12, cursor: "pointer", letterSpacing: 1, transition: "all 0.15s" }}>
-                  ↑ Revive {state.away.shortName}
-                </button>
-                <button className="arena-btn" onClick={undoLastAction} style={{ padding: "10px 14px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.15)", background: "rgba(255,255,255,0.05)", color: "#888", fontFamily: "'Barlow Condensed'", fontWeight: 700, fontSize: 12, cursor: "pointer", letterSpacing: 1, transition: "all 0.15s" }}>
+              ) : (
+                <div style={{ background: "rgba(255,255,255,0.02)", borderRadius: 20, border: "1px dashed rgba(255,255,255,0.1)", padding: "40px 20px", textAlign: "center" }}>
+                   <div style={{ fontSize: 40, marginBottom: 16 }}>🏟️</div>
+                   <h3 style={{ fontSize: 18, fontWeight: 800, color: "#fff", letterSpacing: 1, textTransform: "uppercase" }}>Spectator Mode</h3>
+                   <p style={{ fontSize: 12, color: "#555", marginTop: 8, lineHeight: 1.6 }}>You are currently watching the live battle. The score and commentary will update automatically in real-time as the action unfolds on the mat.</p>
+                </div>
+              )}
+ transition: "all 0.15s" }}>
                   ↩ Undo
                 </button>
               </div>
