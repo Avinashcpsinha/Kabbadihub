@@ -16,7 +16,8 @@ import {
   Target,
   Users,
   LayoutGrid,
-  Search
+  Search,
+  Loader2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
@@ -133,23 +134,46 @@ function TournamentContent() {
 
   const getTeam = (id: string) => teams.find(t => t.id === id);
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   const handleCreateMatch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newMatch.homeTeamId || !newMatch.awayTeamId) return;
+    if (!currentTenantId) {
+      console.error("No tenant context found for match creation");
+      return;
+    }
+
+    setIsSubmitting(true);
+    const matchId = `match_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`;
 
     const { data, error } = await supabase.from('live_matches').insert([{
+      id: matchId,
       home_team_id: newMatch.homeTeamId,
       away_team_id: newMatch.awayTeamId,
       scheduled_at: new Date(`${newMatch.date}T${newMatch.time}`).toISOString(),
       status: "UPCOMING",
-      state: {}
+      tenant_id: currentTenantId,
+      state: {
+        home: { score: 0, fouls: 0, timeouts: 0, raids: 0, tacklePoints: 0, raidPoints: 0, name: getTeam(newMatch.homeTeamId)?.name, shortName: getTeam(newMatch.homeTeamId)?.shortName },
+        away: { score: 0, fouls: 0, timeouts: 0, raids: 0, tacklePoints: 0, raidPoints: 0, name: getTeam(newMatch.awayTeamId)?.name, shortName: getTeam(newMatch.awayTeamId)?.shortName },
+        timer: 1200,
+        half: 1,
+        logs: []
+      }
     }]).select();
 
+    if (error) {
+      console.error("Match creation failed:", error);
+      alert(`Failed to create match: ${error.message}`);
+    }
+
     if (data) {
-      fetchData();
+      await fetchData();
       setIsModalOpen(false);
       setNewMatch({ homeTeamId: "", awayTeamId: "", date: "", time: "" });
     }
+    setIsSubmitting(false);
   };
 
   const Content = (
@@ -316,7 +340,9 @@ function TournamentContent() {
                             <input required type="time" className="w-full bg-slate-50 border-none rounded-2xl px-6 py-4 text-xs font-black text-slate-900 outline-none" value={newMatch.time} onChange={(e) => setNewMatch({...newMatch, time: e.target.value})} />
                          </div>
                       </div>
-                      <button type="submit" className="w-full bg-slate-900 text-white py-5 rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] flex items-center justify-center gap-3 hover:bg-black transition-all shadow-xl shadow-slate-900/20 mt-8">Confirm Fixture <Target className="w-5 h-5" /></button>
+                      <button disabled={isSubmitting} type="submit" className="w-full bg-slate-900 text-white py-5 rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] flex items-center justify-center gap-3 hover:bg-black transition-all shadow-xl shadow-slate-900/20 mt-8 disabled:opacity-50">
+                        {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Confirm Fixture <Target className="w-5 h-5" /></>}
+                      </button>
                    </form>
                 </motion.div>
              </div>
