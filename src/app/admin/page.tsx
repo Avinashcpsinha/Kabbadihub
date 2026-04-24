@@ -34,21 +34,23 @@ export default function AdminDashboard() {
     const fetchTenantAdminData = async () => {
       setIsLoading(true);
       try {
-        // 1. Fetch all teams for this tenant including players count
-        const { data: teamsData } = await supabase
+        // 1. Fetch all teams for this tenant
+        const { data: teamsData, error: teamsError } = await supabase
           .from('teams')
-          .select('*')
+          .select('id, name, short_name, primary_color, city')
           .eq('tenant_id', tenant.id);
         
+        if (teamsError) console.error("Teams fetch error:", teamsError);
+        
         // 2. Fetch matches for this tenant
-        const { data: matchesData } = await supabase
+        const { data: matchesData, error: matchesError } = await supabase
           .from('live_matches')
-          .select('*')
+          .select('id, status, updated_at, home_team_id, away_team_id, state')
           .eq('tenant_id', tenant.id)
           .order('updated_at', { ascending: false });
 
-        // Calculate player stats (In a real app, you'd use a join or aggregate function)
-        // Here we just use the counts we have
+        if (matchesError) console.error("Matches fetch error:", matchesError);
+
         setStats(prev => ({
           ...prev,
           teams: teamsData?.length || 0,
