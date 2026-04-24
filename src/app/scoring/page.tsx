@@ -66,9 +66,9 @@ function ScoringContent() {
   const [reviewsHome, setReviewsHome] = React.useState(2);
   const [reviewsAway, setReviewsAway] = React.useState(2);
   const [playerStats, setPlayerStats] = React.useState<{ [id: string]: { touchPoints: number; bonusPoints: number; tackles: number; active: boolean } }>({});
-  const [raidCount, setRaidCount] = React.useState({ home: 0, away: 0 });
-  const [superRaids, setSuperRaids] = React.useState({ home: 0, away: 0 });
   const [successTackles, setSuccessTackles] = React.useState({ home: 0, away: 0 });
+  const [raidTimer, setRaidTimer] = React.useState(30);
+  const [isRaidActive, setIsRaidActive] = React.useState(false);
 
   const homeColor = "#FF6B35";
   const awayColor = "#1A6DFF";
@@ -85,7 +85,6 @@ function ScoringContent() {
       setMatchId(matchId);
       
       const fetchRosters = async () => {
-        // Fetch Match to get Team IDs
         const { data: match } = await supabase
           .from('live_matches')
           .select('home_team_id, away_team_id')
@@ -93,33 +92,35 @@ function ScoringContent() {
           .single();
 
         if (match) {
-          // Fetch Home Roster
-          const { data: homePlayers } = await supabase
-            .from('team_athletes')
-            .select('jersey_number, athletes(*)')
-            .eq('team_id', match.home_team_id);
+          // 1. Fetch junction table records
+          const [{ data: hTA }, { data: aTA }] = await Promise.all([
+            supabase.from('team_athletes').select('*').eq('team_id', match.home_team_id),
+            supabase.from('team_athletes').select('*').eq('team_id', match.away_team_id)
+          ]);
 
-          // Fetch Away Roster
-          const { data: awayPlayers } = await supabase
-            .from('team_athletes')
-            .select('jersey_number, athletes(*)')
-            .eq('team_id', match.away_team_id);
+          // 2. Fetch all unique athletes
+          const allAthleteIds = [...(hTA || []), ...(aTA || [])].map(ta => ta.athlete_id);
+          const { data: athletesData } = await supabase
+            .from('athletes')
+            .select('*')
+            .in('id', allAthleteIds);
 
-          const homeRoster = (homePlayers || []).map((p: any) => ({
-            id: p.athletes?.id,
-            name: p.athletes?.name || "Unknown Player",
-            number: p.jersey_number || p.athletes?.jersey_no || "0",
-          })).filter(p => p.id);
+          const athleteMap = new Map(athletesData?.map(a => [a.id, a]));
 
-          const awayRoster = (awayPlayers || []).map((p: any) => ({
-            id: p.athletes?.id,
-            name: p.athletes?.name || "Unknown Player",
-            number: p.jersey_number || p.athletes?.jersey_no || "0",
-          })).filter(p => p.id);
+          const mapRoster = (taList: any[]) => taList.map(ta => {
+            const a = athleteMap.get(ta.athlete_id);
+            return {
+              id: ta.athlete_id,
+              name: a?.name || "Unknown Player",
+              number: ta.jersey_number || a?.jersey_no || "0",
+            };
+          }).filter(p => p.id);
+
+          const homeRoster = mapRoster(hTA || []);
+          const awayRoster = mapRoster(aTA || []);
 
           setRosters({ home: homeRoster, away: awayRoster });
 
-          // Init player stats
           const stats: typeof playerStats = {};
           [...homeRoster, ...awayRoster].forEach((p: any) => { 
             stats[p.id] = { touchPoints: 0, bonusPoints: 0, tackles: 0, active: true }; 
@@ -133,6 +134,38 @@ function ScoringContent() {
   }, [matchId, setMatchId]);
 
   const fmt = (s: number) => `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
+
+  // Raid Timer Effect
+  React.useEffect(() => {
+    let interval: any;
+    if (isRaidActive && raidTimer > 0) {
+      interval = setInterval(() => {
+        setRaidTimer(t => t - 1);
+      }, 1000);
+    } else if (raidTimer === 0) {
+      setIsRaidActive(false);
+      addToast("RAID TIME UP!", "#ef4444", "⏰");
+    }
+    return () => clearInterval(interval);
+  }, [isRaidActive, raidTimer, addToast]);
+
+  const handleMasterStop = () => {
+    if (state.isActive) toggleTimer();
+    setIsRaidActive(false);
+    addToast("ALL TIMERS HALTED", "#6b7280", "🛑");
+  };
+
+  const handlePlayerSelect = (p: any) => {
+    if (selectedPlayer?.id === p.id) {
+      setSelectedPlayer(null);
+      setIsRaidActive(false);
+    } else {
+      setSelectedPlayer(p);
+      setRaidTimer(30);
+      setIsRaidActive(true);
+      if (!state.isActive) toggleTimer(); // Also start match timer if it's not running
+    }
+  };
 
   const handleRaidOutcome = (outcome: typeof RAID_OUTCOMES[0]) => {
     if (!selectedPlayer) { addToast("Select a player first!", "#ef4444", "⚠️"); return; }
@@ -160,6 +193,8 @@ function ScoringContent() {
 
     addToast(`${outcome.icon} ${outcome.label} +${outcome.pts}pt${outcome.pts !== 1 ? "s" : ""}`, outcome.color, outcome.icon);
     setSelectedPlayer(null);
+    setIsRaidActive(false);
+    setRaidTimer(30);
   };
 
   const handlePenalty = (penalty: typeof PENALTIES[0]) => {
@@ -263,6 +298,9 @@ function ScoringContent() {
               <button className="arena-btn" onClick={toggleTimer} style={{ background: state.isActive ? "#ef4444" : "#22c55e", border: "none", color: "#fff", padding: "6px 12px", borderRadius: 6, fontFamily: "'Barlow Condensed'", fontWeight: 700, fontSize: 12, cursor: "pointer", letterSpacing: 1, transition: "all 0.15s" }}>
                 {state.isActive ? "⏸ STOP" : "▶ START"}
               </button>
+              <button className="arena-btn" onClick={handleMasterStop} style={{ background: "#334155", border: "none", color: "#fff", padding: "6px 12px", borderRadius: 6, fontFamily: "'Barlow Condensed'", fontWeight: 700, fontSize: 12, cursor: "pointer", letterSpacing: 1, transition: "all 0.15s" }}>
+                🛑 MASTER STOP
+              </button>
               <button className="arena-btn" onClick={resetMatch} style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.15)", color: "#fff", padding: "6px 10px", borderRadius: 6, fontFamily: "'Barlow Condensed'", fontWeight: 700, fontSize: 12, cursor: "pointer", transition: "all 0.15s" }}>↺</button>
             </div>
             <div style={{ fontSize: 10, color: "#444", marginTop: 7, letterSpacing: 1 }}>VS</div>
@@ -341,7 +379,7 @@ function ScoringContent() {
                     const isOut = playerStats[p.id]?.active === false;
                     const isSelected = selectedPlayer?.id === p.id;
                     return (
-                      <button key={p.id} className="player-btn" onClick={() => !isOut && setSelectedPlayer(isSelected ? null : p)} style={{ padding: "8px 4px", borderRadius: 8, border: `2px solid ${isSelected ? currentTeamColor : isOut ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.12)"}`, background: isSelected ? `${currentTeamColor}33` : isOut ? "rgba(0,0,0,0.2)" : "rgba(255,255,255,0.04)", color: isOut ? "#333" : "#fff", fontFamily: "'Barlow Condensed'", cursor: isOut ? "not-allowed" : "pointer", textAlign: "center", transition: "all 0.15s", opacity: isOut ? 0.4 : 1 }}>
+                      <button key={p.id} className="player-btn" onClick={() => !isOut && handlePlayerSelect(p)} style={{ padding: "8px 4px", borderRadius: 8, border: `2px solid ${isSelected ? currentTeamColor : isOut ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.12)"}`, background: isSelected ? `${currentTeamColor}33` : isOut ? "rgba(0,0,0,0.2)" : "rgba(255,255,255,0.04)", color: isOut ? "#333" : "#fff", fontFamily: "'Barlow Condensed'", cursor: isOut ? "not-allowed" : "pointer", textAlign: "center", transition: "all 0.15s", opacity: isOut ? 0.4 : 1 }}>
                         <div style={{ fontSize: 18, fontWeight: 900, lineHeight: 1, color: isSelected ? currentTeamColor : isOut ? "#333" : "#fff" }}>#{p.number}</div>
                         <div style={{ fontSize: 9, letterSpacing: 0.5, marginTop: 2, color: "#666", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{p.name.split(" ")[0]}</div>
                         {isOut && <div style={{ fontSize: 8, color: "#ef4444", fontWeight: 700, marginTop: 1 }}>OUT</div>}
@@ -350,8 +388,14 @@ function ScoringContent() {
                   })}
                 </div>
                 {selectedPlayer && (
-                  <div style={{ marginTop: 6, fontSize: 11, color: currentTeamColor, fontWeight: 700, letterSpacing: 1 }}>
-                    ▸ #{selectedPlayer.number} {selectedPlayer.name} selected
+                  <div style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 12 }}>
+                    <div style={{ fontSize: 11, color: currentTeamColor, fontWeight: 700, letterSpacing: 1 }}>
+                      ▸ #{selectedPlayer.number} {selectedPlayer.name} selected
+                    </div>
+                    <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 8, background: "rgba(0,0,0,0.4)", padding: "4px 12px", borderRadius: 20, border: "1px solid rgba(255,255,255,0.1)" }}>
+                      <span style={{ fontSize: 10, color: "#555", fontWeight: 800 }}>RAID TIMER</span>
+                      <span style={{ fontSize: 20, fontWeight: 900, color: raidTimer < 10 ? "#ef4444" : "#22c55e", fontVariantNumeric: "tabular-nums", width: 24, textAlign: "center" }}>{raidTimer}</span>
+                    </div>
                   </div>
                 )}
               </div>
