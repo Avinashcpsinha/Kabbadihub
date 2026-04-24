@@ -178,7 +178,18 @@ function ScoringContent() {
     } else if (raidTimer === 0 && isRaidActive) {
       setIsRaidActive(false);
       playHooter("final"); // 30s reached
+      
+      // Record Time Over Event
+      recordEvent({ 
+        team: activeTeam, 
+        points: 0, 
+        type: "TECHNICAL_POINT", 
+        raider: selectedPlayer ? `#${selectedPlayer.number} ${selectedPlayer.name} (TIME OVER)` : "TIME OVER",
+        gameTime: state.timer 
+      });
+      
       addToast("RAID TIME UP!", "#ef4444", "⏰");
+      setSelectedPlayer(null);
     }
     return () => clearInterval(interval);
   }, [isRaidActive, raidTimer, addToast, playHooter]);
@@ -565,7 +576,9 @@ function ScoringContent() {
                       TECHNICAL_POINT: `Technical point awarded to ${tName}.`,
                       TIMEOUT:         `${tName} calls a Timeout.`,
                     };
-                    const commentary = TEXTS[e.type] ?? `${e.type.replace(/_/g, " ")} — ${tName}`;
+                    const commentary = e.type === "TECHNICAL_POINT" && e.raider?.includes("TIME OVER")
+                      ? `TIME OVER! ${e.raider}`
+                      : (TEXTS[e.type] ?? `${e.type.replace(/_/g, " ")} — ${tName}`);
                     const isLatest   = idx === 0;
 
                     return (
