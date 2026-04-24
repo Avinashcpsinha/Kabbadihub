@@ -88,7 +88,8 @@ export default function PremiumLandingPage() {
         }
         groups[tenantId].matches.push({
           id: row.id,
-          ...row.state
+          ...row.state,
+          status: row.status
         });
       });
       
@@ -104,11 +105,25 @@ export default function PremiumLandingPage() {
     return activeMatches.reduce((acc, group) => acc + group.matches.length, 0);
   }, [activeMatches]);
 
+  // Sync with Realtime and Periodic Scan
   React.useEffect(() => {
     scanMatches();
-    // Refresh scores every 10 seconds on the landing page
-    const interval = setInterval(scanMatches, 10000);
-    return () => clearInterval(interval);
+    
+    // 1. Subscribe to any changes in live_matches
+    const channel = supabase
+      .channel('homepage-live-sync')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'live_matches' }, () => {
+        scanMatches();
+      })
+      .subscribe();
+
+    // 2. Fallback periodic scan every 15s
+    const interval = setInterval(scanMatches, 15000);
+    
+    return () => {
+      supabase.removeChannel(channel);
+      clearInterval(interval);
+    };
   }, [scanMatches]);
 
   return (
@@ -200,17 +215,17 @@ export default function PremiumLandingPage() {
                      <div className="w-8 h-8 rounded-full bg-blue-600 border-2 border-slate-900 shadow-sm flex items-center justify-center text-[10px] font-black text-white">T</div>
                      <div className="w-8 h-8 rounded-full bg-orange-600 border-2 border-slate-900 shadow-sm flex items-center justify-center text-[10px] font-black text-white">B</div>
                   </div>
-                  <div>
+                  <div className="flex flex-col items-start gap-1">
                      <div className="text-[8px] font-black uppercase tracking-widest text-slate-300">
                        {totalLiveMatches > 0 ? "Now Raiding" : "Next Up: Titans vs Bulls"}
                      </div>
                      <div className="text-[10px] font-black flex items-center gap-2 text-white">
-                        {totalLiveMatches === 1 
-                          ? `${activeMatches[0].matches[0].home.shortName} ${activeMatches[0].matches[0].home.score} - ${activeMatches[0].matches[0].away.score} ${activeMatches[0].matches[0].away.shortName}`
+                        {totalLiveMatches === 1 && activeMatches[0]?.matches?.[0]
+                          ? `${activeMatches[0].matches[0].home?.shortName || 'TBD'} ${activeMatches[0].matches[0].home?.score || 0} - ${activeMatches[0].matches[0].away?.score || 0} ${activeMatches[0].matches[0].away?.shortName || 'TBD'}`
                           : totalLiveMatches > 1 
                             ? `${totalLiveMatches} Matches Live Now`
                             : "Pro Season Highlights"}
-                        <span className={cn("w-1.5 h-1.5 rounded-full animate-pulse", activeMatches.length > 0 ? "bg-red-500" : "bg-orange-500")} />
+                        <span className={cn("w-1.5 h-1.5 rounded-full animate-pulse", totalLiveMatches > 0 ? "bg-red-500" : "bg-orange-500")} />
                         <ChevronRight className="w-3 h-3 text-white/30 group-hover:text-orange-600 transition-colors" />
                      </div>
                   </div>
