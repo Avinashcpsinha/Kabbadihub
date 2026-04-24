@@ -1,6 +1,8 @@
 import { createClient } from "@supabase/supabase-js";
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://ayuwvopuwqaqzenzwmee.supabase.co";
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "sb_publishable_nbIK2CXdNiPmNbmj-ROAuA_0b7iW6pD";
+const supabaseUrl = "https://ayuwvopuwqaqzenzwmee.supabase.co";
+const supabaseAnonKey = "sb_publishable_nbIK2CXdNiPmNbmj-ROAuA_0b7iW6pD";
+
+console.log("Supabase Init V2: Hardcoded Publishable Key Used");
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);

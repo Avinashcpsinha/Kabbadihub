@@ -291,7 +291,7 @@ function ScoringContent() {
 
         {/* Header Bar */}
         <div style={{ background: "rgba(255,255,255,0.03)", borderBottom: "1px solid rgba(255,255,255,0.08)", padding: "10px 14px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: 3, color: "#888", textTransform: "uppercase" }}>⚡ Pro Kabaddi Live</div>
+          <div style={{ fontSize: 13, fontWeight: 700, letterSpacing: 3, color: "#888", textTransform: "uppercase" }}>⚡ Pro Kabaddi Live <span style={{ fontSize: 8, opacity: 0.3 }}>v2.1</span></div>
           <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
             <span style={{ fontSize: 12, color: "#555", letterSpacing: 1 }}>Half {state.half} / 2</span>
             
