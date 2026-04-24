@@ -55,9 +55,11 @@ function ScoringContent() {
   const { tenant } = useTenant();
   const searchParams = useSearchParams();
   const matchId = searchParams.get("id");
-  const { state, activeMatchId, setMatchId, recordEvent, undoLastAction, undoToEvent, toggleTimer, resetMatch, setRaider, setDoOrDie, switchHalf } = useMatch();
+  const { state, isDataLoaded, activeMatchId, setMatchId, recordEvent, undoLastAction, undoToEvent, toggleTimer, resetMatch, setRaider, setDoOrDie, switchHalf } = useMatch();
 
   const [rosters, setRosters] = React.useState<{ home: any[], away: any[] }>({ home: [], away: [] });
+
+  if (!isDataLoaded) return <div style={{ minHeight: "100vh", background: "#0a0a0f", display: "flex", alignItems: "center", justifyContent: "center", color: "#555", fontFamily: "'Barlow Condensed'", letterSpacing: 4, fontWeight: 900 }}>INITIALIZING BATTLE...</div>;
   const [activeTab, setActiveTab] = React.useState<"score" | "events" | "players" | "stats">("score");
   const [activeTeam, setActiveTeam] = React.useState<"home" | "away">("home");
   const [selectedPlayer, setSelectedPlayer] = React.useState<any>(null);

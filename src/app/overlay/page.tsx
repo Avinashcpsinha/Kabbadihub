@@ -12,13 +12,15 @@ import { Suspense } from "react";
 function OverlayContent() {
   const searchParams = useSearchParams();
   const matchId = searchParams.get("id");
-  const { state, setMatchId } = useMatch();
+  const { state, isDataLoaded, setMatchId } = useMatch();
 
   React.useEffect(() => {
     if (matchId) {
       setMatchId(matchId);
     }
   }, [matchId, setMatchId]);
+
+  if (!isDataLoaded) return <div className="w-full h-screen bg-slate-950 flex flex-col items-center justify-center font-black italic text-white uppercase tracking-[0.5em] animate-pulse">Synchronizing Arena Stream...</div>;
 
   const formatTime = (seconds: number) => {
     const min = Math.floor(seconds / 60);

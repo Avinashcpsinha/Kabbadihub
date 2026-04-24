@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { useTenant } from "./TenantContext";
+import { useAuth } from "./AuthContext";
 import { supabase } from "@/lib/supabase";
 
 export type Team = {
@@ -54,6 +55,7 @@ export type MatchState = {
 type MatchContextType = {
   state: MatchState;
   activeMatchId: string | null;
+  isDataLoaded: boolean;
   setMatchId: (id: string) => void;
   recordEvent: (event: Omit<MatchEvent, "id" | "timestamp" | "isUndoable">) => void;
   undoLastAction: () => void;
@@ -84,7 +86,11 @@ const MatchContext = createContext<MatchContextType | undefined>(undefined);
 
 export function MatchProvider({ children }: { children: React.ReactNode }) {
   const { tenant } = useTenant();
+  const { role } = useAuth();
+  const isAuthorised = role === "ORGANISER" || role === "SUPER_ADMIN";
+  
   const [activeMatchId, setActiveMatchId] = useState<string | null>(null);
+  const [isDataLoaded, setIsDataLoaded] = useState(false);
   const [state, setState] = useState<MatchState>(initialState);
 
   const getStorageKey = useCallback((id: string | null) => {
@@ -103,20 +109,19 @@ export function MatchProvider({ children }: { children: React.ReactNode }) {
       .eq('id', id)
       .single();
 
-    if (cloudMatch?.state && Object.keys(cloudMatch.state).length > 0) {
-      const s = cloudMatch.state as any;
-      // Defensive merge with initialState to ensure all fields exist
-      setState({
-        ...initialState,
-        ...s,
-        // Migration: Handle old 'logs' field if it exists but 'history' doesn't
-        history: s.history || s.logs || [],
-        playerStats: s.playerStats || {},
-        home: { ...initialState.home, ...s.home },
-        away: { ...initialState.away, ...s.away },
-      });
-      return;
-    }
+      if (cloudMatch?.state && Object.keys(cloudMatch.state).length > 0) {
+        const s = cloudMatch.state as any;
+        setState({
+          ...initialState,
+          ...s,
+          history: s.history || s.logs || [],
+          playerStats: s.playerStats || {},
+          home: { ...initialState.home, ...s.home },
+          away: { ...initialState.away, ...s.away },
+        });
+        setIsDataLoaded(true);
+        return;
+      }
 
     // 2. If no state exists, initialize from Team identities
     if (cloudMatch) {
@@ -217,16 +222,17 @@ export function MatchProvider({ children }: { children: React.ReactNode }) {
     const key = getStorageKey(activeMatchId);
     if (activeMatchId) localStorage.setItem(key, JSON.stringify(newState));
     
-    if (activeMatchId) {
-      // 1. FAST SYNC: Broadcast to anyone listening (Overlay/Other Admins)
-      // This is near-instant (10ms) and doesn't hit the DB
+    // ONLY the Organiser/SuperAdmin can broadcast and persist to Cloud
+    // Spectators just listen
+    if (activeMatchId && isAuthorised) {
+      // 1. FAST SYNC: Broadcast to anyone listening
       supabase.channel(`match:${activeMatchId}`).send({
         type: 'broadcast',
         event: 'state_update',
         payload: newState
       });
 
-      // 2. PERSISTENT SYNC: Save to DB for history/refresh
+      // 2. PERSISTENT SYNC: Save to DB
       supabase.from('live_matches').upsert({
         id: activeMatchId,
         state: newState,
@@ -413,16 +419,20 @@ export function MatchProvider({ children }: { children: React.ReactNode }) {
           raidClock: prev.currentRaider ? Math.max(0, prev.raidClock - 1) : prev.raidClock,
         };
 
-        // Persist to storage and cloud every 5 seconds (broadcaster live sync)
-        if (updated.timer % 5 === 0 && activeMatchId) {
-          localStorage.setItem(getStorageKey(activeMatchId), JSON.stringify(updated));
+        // ONLY the Authorised Scorer should persist timer updates to Cloud
+        if (isAuthorised && updated.timer % 5 === 0 && activeMatchId) {
           supabase.from('live_matches').upsert({ 
             id: activeMatchId, 
             state: updated, 
             status: 'LIVE',
             updated_at: new Date().toISOString() 
-          }).then(({ error }) => {
-            if (error) console.error("Timer Sync Error:", error);
+          }).catch(e => console.error("Timer Sync Error", e));
+          
+          // Also broadcast the timer to spectators
+          supabase.channel(`match:${activeMatchId}`).send({
+            type: 'broadcast',
+            event: 'state_update',
+            payload: updated
           });
         }
 
@@ -437,6 +447,7 @@ export function MatchProvider({ children }: { children: React.ReactNode }) {
     <MatchContext.Provider value={{ 
       state, 
       activeMatchId, 
+      isDataLoaded,
       setMatchId, 
       recordEvent, 
       undoLastAction, 
