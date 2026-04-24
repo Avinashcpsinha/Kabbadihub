@@ -306,8 +306,15 @@ export default function PremiumLandingPage() {
                                  </div>
                               </div>
                               <div className="mt-8 pt-6 border-t border-slate-50 flex items-center justify-between">
-                                 <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                                    {m.lastAction ? <><Activity className="w-3 h-3 text-orange-500" /> {m.lastAction}</> : "Awaiting Raid Action..."}
+                                 <div className="flex items-center gap-4">
+                                   <div className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                                      {m.lastAction ? <><Activity className="w-3 h-3 text-orange-500" /> {m.lastAction}</> : "Awaiting Raid Action..."}
+                                   </div>
+                                   {m.currentRaider && (
+                                      <div className="flex items-center gap-1.5 px-3 py-1 bg-slate-900 text-white rounded-full text-[9px] font-black uppercase tracking-widest">
+                                         <Zap className="w-3 h-3 text-orange-500" /> Raid: {m.raidClock}s
+                                      </div>
+                                   )}
                                  </div>
                                  <div className="text-orange-600 text-[9px] font-black uppercase tracking-widest group-hover:translate-x-1 transition-transform flex items-center gap-2">
                                     Enter Arena <ChevronRight className="w-3 h-3" />

@@ -436,8 +436,10 @@ export function MatchProvider({ children }: { children: React.ReactNode }) {
             status: 'LIVE',
             updated_at: new Date().toISOString() 
           }).then(({ error }) => { if (error) console.error("Timer Sync Error", error); });
-          
-          // Also broadcast the timer to spectators
+        }
+        
+        // Broadcast the timer to spectators every second (true real-time)
+        if (isAuthorised && activeMatchId) {
           supabase.channel(`match:${activeMatchId}`).send({
             type: 'broadcast',
             event: 'state_update',
