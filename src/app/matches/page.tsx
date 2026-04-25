@@ -1,4 +1,6 @@
 "use client";
+export const revalidate = 0;
+
 
 import React, { useState, useEffect } from "react";
 import PublicLayout from "@/components/PublicLayout";
@@ -87,6 +89,22 @@ function MatchesIndexContent() {
     };
 
     fetchMatches();
+
+    // Realtime Sync: Listen for any changes in live_matches table
+    const channel = supabase
+      .channel('match-center-sync')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'live_matches' },
+        () => {
+          fetchMatches();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const filtered = matches.filter(m => {
