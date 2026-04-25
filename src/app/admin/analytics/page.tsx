@@ -32,7 +32,7 @@ export default function AdminAnalyticsPage() {
         // 1. Fetch teams for tenant
         const { data: teams } = await supabase
           .from('teams')
-          .select('*, athletes!team_athletes(*)')
+          .select('*, team_athletes(athletes(*))')
           .eq('tenant_id', tenant.id);
         
         // 2. Fetch matches for tenant
@@ -47,7 +47,7 @@ export default function AdminAnalyticsPage() {
         const mappedTeams: any[] = [];
 
         teams?.forEach(t => {
-          const players = (t as any).athletes || [];
+          const players = (t as any).team_athletes?.map((ta: any) => ta.athletes).filter(Boolean) || [];
           totalPlayers += players.length;
           
           let teamRaid = 0;

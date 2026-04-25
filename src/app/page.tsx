@@ -1,5 +1,4 @@
 "use client";
-export const revalidate = 0;
 
 
 import React from "react";
@@ -72,7 +71,7 @@ export default function PremiumLandingPage() {
       const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString();
       const { data, error } = await supabase
         .from('live_matches')
-        .select('id, state, status, updated_at, tenant_id, tenants(id, name, logo_url)')
+        .select('id, state, status, updated_at, tenant_id, tenants(id, name)')
         .or(`status.eq.LIVE,updated_at.gte.${twoHoursAgo}`);
 
       if (error) throw error;
@@ -269,7 +268,7 @@ export default function PremiumLandingPage() {
                        {/* Organiser Header */}
                        <div className="flex items-center gap-4 sticky top-0 bg-white/80 backdrop-blur-md z-10 py-2">
                           <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-400 overflow-hidden border border-slate-100 shadow-sm">
-                             {group.tenant.logo_url ? <img src={group.tenant.logo_url} alt="" className="w-full h-full object-contain" /> : <Building2 className="w-6 h-6" />}
+                             <Building2 className="w-6 h-6" />
                           </div>
                           <div className="flex-1">
                              <h3 className="text-[11px] font-black uppercase tracking-widest text-slate-900">{group.tenant.name}</h3>

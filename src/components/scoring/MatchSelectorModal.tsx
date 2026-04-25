@@ -40,7 +40,6 @@ export default function MatchSelectorModal({ isOpen, onClose }: MatchSelectorMod
           primaryColor: t.primary_color,
           secondaryColor: t.secondary_color,
           city: t.city,
-          logoUrl: t.logo_url,
           players: []
         })));
       }

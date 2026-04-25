@@ -65,8 +65,6 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
         id: t.id,
         name: t.name,
         slug: t.slug,
-        logoUrl: t.logo_url,
-        bannerUrl: t.banner_url,
         primaryColor: t.primary_color,
         secondaryColor: t.secondary_color,
         subscriptionTier: t.subscription_tier as any,
@@ -168,8 +166,6 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
       .update({
         name: newTenant.name,
         slug: newTenant.slug,
-        logo_url: newTenant.logoUrl,
-        banner_url: newTenant.bannerUrl,
         primary_color: newTenant.primaryColor,
         secondary_color: newTenant.secondaryColor,
         subscription_tier: newTenant.subscriptionTier,

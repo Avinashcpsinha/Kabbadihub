@@ -62,9 +62,8 @@ function TeamsContent() {
         name: t.name,
         shortName: t.short_name,
         primaryColor: t.primary_color,
-        secondaryColor: t.secondary_color,
+        primaryColor: t.primary_color,
         city: t.city,
-        logoUrl: t.logo_url,
         players: [] 
       })));
     }
